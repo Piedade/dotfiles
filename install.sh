@@ -222,13 +222,13 @@ linkConfig() {
 }
 
 customizeLightdm() {
-    LIGHTDM_IMAGES="/usr/share/images/"
-    lightdm_icon="lightdm_icon.png"
-    lightdm_background="lightdm_background.jpg"
+    LIGHTDM_IMAGES="/usr/share/images"
+    lightdm_icon="red.png"
+    lightdm_background="SL-093020-35920-01.jpg"
 
     echo "${YELLOW}Customizing lightdm...${RC}"
-    "${SUDO_CMD}" cp "$GITPATH/$lightdm_icon" "$LIGHTDM_IMAGES"
-    "${SUDO_CMD}" cp "$GITPATH/$lightdm_background" "$LIGHTDM_IMAGES"
+    "${SUDO_CMD}" cp "$GITPATH/lightdm/images/$lightdm_icon" "$LIGHTDM_IMAGES/lightdm_icon.png"
+    "${SUDO_CMD}" cp "$GITPATH/lightdm/images/$lightdm_background" "$LIGHTDM_IMAGES/lightdm_background.png"
     "${SUDO_CMD}" chown root:root "$LIGHTDM_IMAGES/$lightdm_icon" "$LIGHTDM_IMAGES/$lightdm_background"
 
     ## Check if conf file is already there.
