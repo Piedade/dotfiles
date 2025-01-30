@@ -1,0 +1,19 @@
+#!/bin/bash
+# Display an icon if the microphone is muted.
+
+case "$BUTTON" in
+	1) pactl set-source-mute $(pactl get-default-source) toggle ;;
+   2) exit 1 ;;
+esac
+
+muted=`wpctl get-volume @DEFAULT_AUDIO_SOURCE@ | awk '{print $3;}'`; \
+volume=`wpctl get-volume @DEFAULT_AUDIO_SOURCE@ | awk '{print ($2*100);}'`; \
+
+if [ -z ${muted} ]; then
+   mic=$(printf "%4s\n" "$volume%")
+else 
+   mic="Off ";
+fi
+
+
+echo " $mic"

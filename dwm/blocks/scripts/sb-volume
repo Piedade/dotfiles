@@ -1,0 +1,67 @@
+#!/bin/bash
+
+toggleDefaultSink(){
+    # Get the current default sink
+    current_sink=$(pactl get-default-sink)
+
+    # Get all available sinks (you can filter them based on specific criteria if needed)
+    sinks=$(pactl list short sinks | awk '{print $2}')
+
+    # Convert sinks into an array using a while loop
+    sink_array=()
+    while IFS= read -r sink; do
+        # Skip empty lines
+        [[ -z "$sink" ]] && continue
+        sink_array+=("$sink")
+    done <<< "$sinks"
+
+    # Logic to toggle between the sinks
+    for sink in "${sink_array[@]}"; do
+        if [ "$sink" != "$current_sink" ]; then
+            new_sink="$sink"
+            break
+        fi
+    done
+
+    # Set the new default sink
+    pactl set-default-sink "$new_sink"
+}
+
+case "$BUTTON" in
+	1) toggleDefaultSink ;;
+    2) pavucontrol ;;
+    3) pactl set-sink-mute @DEFAULT_SINK@ toggle ;;
+esac
+
+if wpctl get-volume @DEFAULT_AUDIO_SINK@ | grep -q "[MUTED]"; then
+    # echo ""
+    echo "󰕿 Off "
+    exit
+fi
+
+volume_frac="$(wpctl get-volume @DEFAULT_AUDIO_SINK@ | cut -d' ' -f2)"
+volume="$(echo "$volume_frac * 100 / 1" | bc)"
+
+if [ -z "$volume" ]; then
+    exit 1
+fi
+
+# volume="$(pactl get-sink-volume @DEFAULT_SINK@ | awk '{print $5}' | xargs)"
+
+current_sink=$(pactl get-default-sink)
+if [[ $current_sink == *"analog"* ]]; then
+    icon="󰋋 "
+else
+    # if [ "$volume" -gt 40 ]; then
+    #     icon="󰕾 "
+    # elif [ "$volume" -gt 15 ]; then
+    #     icon="󰖀 "
+    # else
+    #     icon="󰕿 "
+    # fi
+    icon="󰕿 "
+fi
+
+volume=$(printf "%-4s\n" "$volume%")
+
+echo "$icon$volume"

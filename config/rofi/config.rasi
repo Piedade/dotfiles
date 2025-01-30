@@ -1,0 +1,17 @@
+/** Basic config file **/
+
+configuration {
+  show-icons: true;
+  icon-theme: "Papirus";
+  display-drun: "  ";
+  display-window: "﩯 ";
+  display-combi: "  ";
+}
+//@theme "themes/arc_dark_transparent_colors.rasi"
+//@theme "/home/piedade/.config/rofi/themes/rounded-gray-dark.rasi"
+//@theme "/home/piedade/.config/rofi/themes/spotlight.rasi"
+//@theme "/home/piedade/.config/rofi/themes/rounded-gray-dark.rasi"
+//@theme "/home/piedade/.config/rofi/themes/rounded-gray-dark.rasi"
+//@theme "/home/piedade/.config/rofi/themes/spotlight-dark.rasi"
+//@theme "/home/piedade/.config/rofi/themes/spotlight.rasi"
+@theme "/home/piedade/.config/rofi/themes/rounded-gray-dark.rasi"

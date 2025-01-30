@@ -1,0 +1,12 @@
+#!/bin/bash
+
+case "$BUTTON" in
+    6) terminal -e "$EDITOR" "$0" ;;
+esac
+
+load=$(grep 'cpu ' /proc/stat | awk '{usage=100-($5*100)/($2+$3+$4+$5+$6+$7+$8)} END {print usage}')
+percentage=$(printf "%.2f" $load)
+
+#fix space flick
+percentage=$(printf "%-4s\n" "$percentage%")
+echo "󰒋 $percentage "
