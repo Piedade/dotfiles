@@ -229,7 +229,7 @@ customizeLightdm() {
     echo "${YELLOW}Customizing lightdm...${RC}"
     "${SUDO_CMD}" cp "$GITPATH/lightdm/images/$lightdm_icon" "$LIGHTDM_IMAGES/lightdm_icon.png"
     "${SUDO_CMD}" cp "$GITPATH/lightdm/images/$lightdm_background" "$LIGHTDM_IMAGES/lightdm_background.png"
-    "${SUDO_CMD}" chown root:root "$LIGHTDM_IMAGES/$lightdm_icon" "$LIGHTDM_IMAGES/$lightdm_background"
+    # "${SUDO_CMD}" chown root:root "$LIGHTDM_IMAGES/lightdm_icon.png" "$LIGHTDM_IMAGES/lightdm_background.png"
 
     ## Check if conf file is already there.
     THEME_CONF="/etc/lightdm/lightdm-gtk-greeter.conf"
