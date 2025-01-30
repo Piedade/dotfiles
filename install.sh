@@ -64,7 +64,7 @@ installDependencies() {
     "${SUDO_CMD}" apt-get install file-roller numlockx feh rofi unzip wget fontconfig pipewire pipewire-pulse pavucontrol libx11-dev libxft-dev libxinerama-dev libx11-xcb-dev libxcb-res0-dev xdg-utils libimlib2-dev policykit-1-gnome git -y
 
     # Installing Other less important Programs
-    "${SUDO_CMD}" apt-get install fzf libnotify-bin trash-cli flameshot psmisc neovim lxappearance lightdm xclip bat multitail tree zoxide bash-completion ripgrep -y
+    "${SUDO_CMD}" apt-get install fzf libnotify-bin trash-cli flameshot psmisc neovim lxappearance lightdm xclip bat multitail tree zoxide bash-completion ripgrep gimp -y
 
     # Enable graphical login and change target from CLI to GUI
     systemctl enable lightdm
@@ -193,7 +193,7 @@ linkConfig() {
     }
     
     echo "${YELLOW}Linking config files...${RC}"
-    for file in $GITPATH/config/*; do
+    for file in "$GITPATH/config/*"; do
         filename=$(basename "$file") 
 
         ln -svf "$file" "$USER_HOME/.config/$filename" || {
@@ -202,15 +202,46 @@ linkConfig() {
         }
     done
 
-    echo "${YELLOW}Linking dwmblocks scripts to /usr/bin...${RC}"
-    for file in $GITPATH/dwm/blocks/scripts/*; do
+    DWMPATH="$GITPATH/dwm"
+    DWMBLOCKSPATH="$DWMPATH/blocks"
+
+    echo "${YELLOW}Linking dwmblocks scripts to /usr/local/bin...${RC}"
+    for file in "$DWMBLOCKSPATH/scripts/*"; do
         filename=$(basename "$file") 
 
-        "${SUDO_CMD}" ln -svf "$file" "/usr/bin/$filename" || {
+        "${SUDO_CMD}" ln -svf "$file" "/usr/local/bin/$filename" || {
             echo "${RED}Failed to create symbolic link for $filename${RC}"
             exit 1
         }
     done
+
+    echo "${YELLOW}Compiling dwm and dwmblocks...${RC}"
+    cd "$DWMPATH" && "${SUDO_CMD}" make clean install
+    cd "$DWMBLOCKSPATH" && "${SUDO_CMD}" make clean install
+    cd "$GITPATH" # reset pwd
+}
+
+customizeLightdm() {
+    LIGHTDM_IMAGES="/usr/share/images/"
+    lightdm_icon="lightdm_icon.png"
+    lightdm_background="lightdm_background.jpg"
+
+    echo "${YELLOW}Customizing lightdm...${RC}"
+    "${SUDO_CMD}" cp "$GITPATH/$lightdm_icon" "$LIGHTDM_IMAGES"
+    "${SUDO_CMD}" cp "$GITPATH/$lightdm_background" "$LIGHTDM_IMAGES"
+    "${SUDO_CMD}" chown root:root "$LIGHTDM_IMAGES/$lightdm_icon" "$LIGHTDM_IMAGES/$lightdm_background"
+
+    ## Check if conf file is already there.
+    THEME_CONF="/etc/lightdm/lightdm-gtk-greeter.conf"
+    if [ -e "$THEME_CONF" ]; then
+        echo "${YELLOW}Moving old theme config file to $THEME_CONF.bak${RC}"
+        if ! "${SUDO_CMD}" mv "$THEME_CONF" "$THEME_CONF.bak"; then
+            echo "${RED}Can't move theme config file!${RC}"
+            exit 1
+        fi
+    fi
+
+    "${SUDO_CMD}" cp "$GITPATH/lightdm-gtk-greeter.conf" "$THEME_CONF"
 }
 
 checkEnv
@@ -224,6 +255,8 @@ installNerdFont
 installStarship
 
 installZoxide
+
+customizeLightdm
 
 linkConfig
 

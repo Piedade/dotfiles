@@ -58,7 +58,7 @@ static const char *const autostart[] = {
 	editor, NULL,
     browser, NULL,
 	"sh", "-c", "pactl set-source-mute $(pactl get-default-source) true", NULL,
-	"sh", "-c", "sleep 0.5 && pkill -SIGUSR1 dwmblocks", NULL,
+	"sh", "-c", "sleep 1 && pkill -SIGUSR1 dwmblocks", NULL,
     NULL /* terminate */
 };
 
