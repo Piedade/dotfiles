@@ -1,23 +1,24 @@
 /* See LICENSE file for copyright and license details. */
 
 /* appearance */
+#define ICONSIZE                              16     /* icon size */
+#define ICONSPACING                           8      /* space between icon and title */
+#define SHOWWINICON                           1      /* 0 means no winicon */
+
 static const unsigned int borderpx  = 1;        /* border pixel of windows */
 static const unsigned int snap      = 32;       /* snap pixel */
 static const unsigned int systraypinning = 0;   /* 0: sloppy systray follows selected monitor, >0: pin systray to monitor X */
 static const unsigned int systrayonleft = 0;    /* 0: systray in the right corner, >0: systray on left of status text */
-static const unsigned int systrayspacing = 8;   /* systray spacing */
+static const unsigned int systrayspacing = ICONSPACING;   /* systray spacing */
 static const int systraypinningfailfirst = 1;   /* 1: if pinning fails, display systray on the first monitor, False: display systray on the last monitor*/
 static const int showsystray        = 1;        /* 0 means no systray */
 static const int swallowfloating    = 0;        /* 1 means swallow floating windows by default */
 static const int showbar            = 1;        /* 0 means no bar */
 static const int topbar             = 1;        /* 0 means bottom bar */
-#define ICONSIZE                              16     /* icon size */
-// #define ICONSPACING                           5      /* space between icon and title */
-// #define SHOWWINICON                           1      /* 0 means no winicon */
 
 static const char *fonts[]          = { 
-	"monospace:size=12",
-	// "MesloLGS Nerd Font Mono:size=12",
+	// "monospace:size=12",
+	"MesloLGS Nerd Font Mono:size=12",
 };
 static const char dmenufont[]       = "monospace:size=10";
 // default colors
@@ -57,7 +58,7 @@ static const char *const autostart[] = {
 	editor, NULL,
     browser, NULL,
 	"sh", "-c", "pactl set-source-mute $(pactl get-default-source) true", NULL,
-	"sh", "-c", "pkill -SIGUSR1 dwmblocks", NULL,
+	"sh", "-c", "sleep 0.5 && pkill -SIGUSR1 dwmblocks", NULL,
     NULL /* terminate */
 };
 
@@ -82,7 +83,7 @@ static const Rule rules[] = {
 };
 
 /* layout(s) */
-static const float mfact     = 0.55; /* factor of master area size [0.05..0.95] */
+static const float mfact     = 0.65; /* factor of master area size [0.05..0.95] */
 static const int nmaster     = 1;    /* number of clients in master area */
 static const int resizehints = 1;    /* 1 means respect size hints in tiled resizals */
 static const int lockfullscreen = 1; /* 1 will force focus on the fullscreen window */
@@ -135,10 +136,10 @@ static const Key keys[] = {
     { 0,                            XF86XK_AudioMute,          	spawn,          	SHCMD ("amixer sset Master $(amixer get Master | grep -q '\\[on\\]' && echo 'mute' || echo 'unmute'); pkill -RTMIN+4 dwmblocks")},
     { 0,                            XF86XK_AudioRaiseVolume,   	spawn,          	SHCMD ("amixer sset Master 5%+ unmute; pkill -RTMIN+4 dwmblocks")},
 	{ MODKEY,                       XK_f,      togglebar,       {0} },
-	{ MODKEY,                       XK_j,      focusstack,     {.i = +1 } },
-	{ MODKEY,                       XK_k,      focusstack,     {.i = -1 } },
-	{ MODKEY,                       XK_i,      incnmaster,     {.i = +1 } },
-	{ MODKEY,                       XK_d,      incnmaster,     {.i = -1 } },
+	{ MODKEY,                       XK_j,      focusstack,     {.i = -1 } },
+	{ MODKEY,                       XK_k,      focusstack,     {.i = +1 } },
+	{ MODKEY,                       XK_i,      incnmaster,     {.i = -1 } },
+	{ MODKEY,                       XK_u,      incnmaster,     {.i = +1 } },
 	{ MODKEY,                       XK_h,      setmfact,       {.f = -0.05} },
 	{ MODKEY,                       XK_l,      setmfact,       {.f = +0.05} },
 	{ MODKEY|ShiftMask,             XK_h,      setcfact,       {.f = +0.25} },
@@ -185,7 +186,17 @@ static const Button buttons[] = {
 	{ ClkStatusText,        0,              Button1,        sigstatusbar,   {.i = 1} },
 	{ ClkStatusText,        0,              Button2,        sigstatusbar,   {.i = 2} },
 	{ ClkStatusText,        0,              Button3,        sigstatusbar,   {.i = 3} },
-	{ ClkClientWin,         MODKEY,         Button1,        movemouse,      {0} },
+	/* placemouse options, choose which feels more natural:
+	 *    0 - tiled position is relative to mouse cursor
+	 *    1 - tiled postiion is relative to window center
+	 *    2 - mouse pointer warps to window center
+	 *
+	 * The moveorplace uses movemouse or placemouse depending on the floating state
+	 * of the selected client. Set up individual keybindings for the two if you want
+	 * to control these separately (i.e. to retain the feature to move a tiled window
+	 * into a floating position).
+	 */
+	{ ClkClientWin,         MODKEY,         Button1,        moveorplace,    {.i = 1} },
 	{ ClkClientWin,         MODKEY,         Button2,        togglefloating, {0} },
 	{ ClkClientWin,         MODKEY,         Button3,        resizemouse,    {0} },
 	{ ClkTagBar,            0,              Button1,        view,           {0} },
