@@ -61,10 +61,10 @@ installDependencies() {
     "${SUDO_CMD}" apt upgrade -y
 
     # Installing Essential Programs 
-    "${SUDO_CMD}" apt-get install file-roller slick-greeter numlockx feh rofi unzip wget fontconfig pipewire pipewire-pulse pavucontrol libx11-dev libxft-dev libxinerama-dev libx11-xcb-dev libxcb-res0-dev xdg-utils libimlib2-dev policykit-1-gnome git -y
+    "${SUDO_CMD}" apt-get install file-roller numlockx feh rofi unzip wget fontconfig pipewire pipewire-pulse pavucontrol libx11-dev libxft-dev libxinerama-dev libx11-xcb-dev libxcb-res0-dev xdg-utils libimlib2-dev policykit-1-gnome git -y
 
     # Installing Other less important Programs
-    "${SUDO_CMD}" apt-get install fzf libnotify-bin trash-cli flameshot psmisc neovim lxappearance papirus-icon-theme fonts-noto-color-emoji lightdm xclip bat multitail tree zoxide bash-completion ripgrep -y
+    "${SUDO_CMD}" apt-get install fzf libnotify-bin trash-cli flameshot psmisc neovim lxappearance lightdm xclip bat multitail tree zoxide bash-completion ripgrep -y
 
     # Enable graphical login and change target from CLI to GUI
     systemctl enable lightdm

@@ -16,9 +16,8 @@ static const int topbar             = 1;        /* 0 means bottom bar */
 // #define SHOWWINICON                           1      /* 0 means no winicon */
 
 static const char *fonts[]          = { 
-	// "monospace:size=10",
-	"MesloLGS Nerd Font Mono:size=12", 
-    "NotoColorEmoji:pixelsize=16:antialias=true:autohint=true" 
+	"monospace:size=12",
+	// "MesloLGS Nerd Font Mono:size=12",
 };
 static const char dmenufont[]       = "monospace:size=10";
 // default colors
