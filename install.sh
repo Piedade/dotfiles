@@ -67,7 +67,7 @@ installDependencies() {
     "${SUDO_CMD}" apt-get install build-essential libxcb-util-dev numlockx feh rofi unzip wget pipewire wireplumber pavucontrol libx11-dev libxft-dev libxinerama-dev libx11-xcb-dev libxcb-res0-dev xdg-utils libimlib2-dev policykit-1-gnome thunar file-roller dunst -y
 
     # Installing Other less important Programs
-    "${SUDO_CMD}" apt-get install fzf libnotify-bin trash-cli flameshot psmisc neovim lxappearance lightdm xclip bat multitail tree zoxide bash-completion ripgrep alacritty gimp -y
+    "${SUDO_CMD}" apt-get install fzf libnotify-bin trash-cli flameshot psmisc neovim lxappearance lightdm xclip bat multitail tree zoxide bash-completion ripgrep alacritty gimp fonts-liberation -y
 
     # Enable graphical login and change target from CLI to GUI
     systemctl enable lightdm
@@ -204,7 +204,7 @@ installStarship() {
         return
     fi
 
-    if ! curl -sS https://starship.rs/install.sh | sh; then
+    if ! curl -sS https://starship.rs/install.sh | sh -s -- -y; then
         echo "${RED}Something went wrong during starship install!${RC}"
         exit 1
     fi
@@ -212,10 +212,6 @@ installStarship() {
 
 
 linkConfig() {
-    git config --global init.defaultBranch main
-    git config --global user.email "pedro@imaginedesign.pt"
-    git config --global user.name "Pedro Piedade"
-
     ## Check if a bashrc file is already there.
     OLD_BASHRC="$USER_HOME/.bashrc"
     if [ -e "$OLD_BASHRC" ]; then
