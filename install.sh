@@ -193,6 +193,9 @@ installFonts() {
         echo "Failed to clean $FONT_ZIP"
         return 1
     }
+
+    #FIX PERMISSIONS
+    "${SUDO_CMD}" chown -R piedade:piedade "$USER_HOME/.local"
 }
 
 installStarship() {
@@ -250,6 +253,9 @@ linkConfig() {
 		}
 	done
 
+    #FIX PERMISSIONS
+	"${SUDO_CMD}" chown -R piedade:piedade $CONFIG_DIR
+
     DWMPATH="$GITPATH/dwm"
     DWMBLOCKSPATH="$DWMPATH/blocks"
 
@@ -269,11 +275,6 @@ linkConfig() {
     cd "$DWMPATH" && "${SUDO_CMD}" make clean install
     cd "$DWMBLOCKSPATH" && "${SUDO_CMD}" make clean install
     cd "$GITPATH" # reset pwd
-
-    #FIX PERMISSIONS
-	"${SUDO_CMD}" chown -R piedade:piedade $CONFIG_DIR
-    "${SUDO_CMD}" chown -R piedade:piedade "$USER_HOME/.local"
-
 }
 
 customizeLightdm() {
