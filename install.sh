@@ -338,10 +338,4 @@ installVsCode
 installChrome
 
 customizeLightdm
-
-if linkConfig; then
-    echo "${GREEN}Done!\nMove dotfiles to ~/.dotfiles and restart your shell to see the changes.${RC}"
-else
-    echo "${RED}Something went wrong!${RC}"
-fi
-
+linkConfig
