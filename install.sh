@@ -61,7 +61,7 @@ installDependencies() {
     "${SUDO_CMD}" apt upgrade -y
 
     # Installing Essential Programs 
-    "${SUDO_CMD}" apt-get install file-roller numlockx feh rofi unzip wget fontconfig pipewire pipewire-pulse pavucontrol libx11-dev libxft-dev libxinerama-dev libx11-xcb-dev libxcb-res0-dev xdg-utils libimlib2-dev policykit-1-gnome git -y
+    "${SUDO_CMD}" apt-get install numlockx feh rofi unzip wget fontconfig pipewire wireplumber pavucontrol libx11-dev libxft-dev libxinerama-dev libx11-xcb-dev libxcb-res0-dev xdg-utils libimlib2-dev policykit-1-gnome thunar thunar-archive-plugin file-roller git -y
 
     # Installing Other less important Programs
     "${SUDO_CMD}" apt-get install fzf libnotify-bin trash-cli flameshot psmisc neovim lxappearance lightdm xclip bat multitail tree zoxide bash-completion ripgrep gimp -y
