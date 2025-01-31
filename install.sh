@@ -1,4 +1,4 @@
-#!/bin/sh -e
+#!/bin/bash
 
 RC='\033[0m'
 RED='\033[31m'
@@ -64,7 +64,7 @@ installDependencies() {
     "${SUDO_CMD}" apt upgrade -y
 
     # Installing Essential Programs 
-    "${SUDO_CMD}" apt-get install numlockx feh rofi unzip wget fontconfig pipewire wireplumber pavucontrol libx11-dev libxft-dev libxinerama-dev libx11-xcb-dev libxcb-res0-dev xdg-utils libimlib2-dev policykit-1-gnome thunar file-roller git -y
+    "${SUDO_CMD}" apt-get install build-essential libxcb-util-dev numlockx feh rofi unzip wget pipewire wireplumber pavucontrol libx11-dev libxft-dev libxinerama-dev libx11-xcb-dev libxcb-res0-dev xdg-utils libimlib2-dev policykit-1-gnome thunar file-roller dunst -y
 
     # Installing Other less important Programs
     "${SUDO_CMD}" apt-get install fzf libnotify-bin trash-cli flameshot psmisc neovim lxappearance lightdm xclip bat multitail tree zoxide bash-completion ripgrep gimp -y
@@ -207,17 +207,6 @@ installStarship() {
     fi
 }
 
-installZoxide() {
-    if command_exists zoxide; then
-        echo "Zoxide already installed"
-        return
-    fi
-
-    if ! curl -sS https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh; then
-        echo "${RED}Something went wrong during zoxide install!${RC}"
-        exit 1
-    fi
-}
 
 linkConfig() {
     git config --global init.defaultBranch main
@@ -239,28 +228,42 @@ linkConfig() {
         echo "${RED}Failed to create symbolic link for .bashrc${RC}"
         exit 1
     }
-    
-    echo "${YELLOW}Linking config files...${RC}"
-    for file in "$GITPATH/config/*"; do
-        filename=$(basename "$file") 
-
-        ln -svf "$file" "$USER_HOME/.config/$filename" || {
-            echo "${RED}Failed to create symbolic link for $filename${RC}"
-            exit 1
+   
+    CONFIG_DIR="$USER_HOME/.config"
+    # Create the config directory if it doesn't exist
+    if [ ! -d "$CONFIG_DIR" ]; then
+        mkdir -p "$CONFIG_DIR" || {
+            echo "Failed to create directory: $CONFIG_DIR"
+            return 1
         }
-    done
+    else
+        echo "$CONFIG_DIR exists, skipping creation."
+    fi
+
+    echo "${YELLOW}Linking config files...${RC}"
+	for file in "$GITPATH/config"/*; do
+		filename=$(basename "$file")
+
+		"${SUDO_CMD}" ln -svf "$file" "$CONFIG_DIR/$filename" || {
+		    echo "${RED}Failed to create symbolic link for $filename${RC}"
+		    exit 1
+		}
+	done
+
+	#chown -R piedade:piedade $CONFIG_DIR
+
 
     DWMPATH="$GITPATH/dwm"
     DWMBLOCKSPATH="$DWMPATH/blocks"
 
     echo "${YELLOW}Linking dwmblocks scripts to /usr/local/bin...${RC}"
-    for file in "$DWMBLOCKSPATH/scripts/*"; do
-        filename=$(basename "$file") 
+    for file in "$DWMBLOCKSPATH/scripts"/*; do
+		filename=$(basename "$file") 
 
-        "${SUDO_CMD}" ln -svf "$file" "/usr/local/bin/$filename" || {
-            echo "${RED}Failed to create symbolic link for $filename${RC}"
-            exit 1
-        }
+		"${SUDO_CMD}" ln -svf "$file" "/usr/local/bin/$filename" || {
+		    echo "${RED}Failed to create symbolic link for $filename${RC}"
+		    exit 1
+		}
     done
 
     echo "${YELLOW}Compiling dwm and dwmblocks...${RC}"
@@ -289,7 +292,24 @@ customizeLightdm() {
         fi
     fi
 
-    "${SUDO_CMD}" cp "$GITPATH/lightdm-gtk-greeter.conf" "$THEME_CONF"
+    "${SUDO_CMD}" cp "$GITPATH/lightdm/lightdm-gtk-greeter.conf" "$THEME_CONF"
+}
+
+installVsCode() {
+        printf "%b\n" "${YELLOW}Installing VS Code..${RC}."
+	wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg
+        "${SUDO_CMD}" install -D -o root -g root -m 644 packages.microsoft.gpg /etc/apt/keyrings/packages.microsoft.gpg
+        echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" | "${SUDO_CMD}" tee /etc/apt/sources.list.d/vscode.list > /dev/null
+        rm -f packages.microsoft.gpg
+       	"${SUDO_CMD}" apt update
+       	"${SUDO_CMD}" apt install -y apt-transport-https code
+}
+
+installChrome() {
+	wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+	"${SUDO_CMD}" dpkg -i ./google-chrome-stable_current_amd64.deb
+	"${SUDO_CMD}" apt-get -f install
+	rm ./google-chrome-stable_current_amd64.deb
 }
 
 checkEnv
@@ -298,13 +318,15 @@ installDependencies
 installGitHubCLI
 installFonts
 installStarship
-installZoxide
+
+installVsCode
+installChrome
 
 customizeLightdm
-linkConfig
 
 if linkConfig; then
     echo "${GREEN}Done!\nMove dotfiles to ~/.dotfiles and restart your shell to see the changes.${RC}"
 else
     echo "${RED}Something went wrong!${RC}"
 fi
+
