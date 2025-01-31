@@ -250,9 +250,6 @@ linkConfig() {
 		}
 	done
 
-	#chown -R piedade:piedade $CONFIG_DIR
-
-
     DWMPATH="$GITPATH/dwm"
     DWMBLOCKSPATH="$DWMPATH/blocks"
 
@@ -266,10 +263,17 @@ linkConfig() {
 		}
     done
 
+    "${SUDO_CMD}" cp "$DWMPATH/dwm.desktop" /usr/share/xsessions
+
     echo "${YELLOW}Compiling dwm and dwmblocks...${RC}"
     cd "$DWMPATH" && "${SUDO_CMD}" make clean install
     cd "$DWMBLOCKSPATH" && "${SUDO_CMD}" make clean install
     cd "$GITPATH" # reset pwd
+
+    #FIX PERMISSIONS
+	"${SUDO_CMD}" chown -R piedade:piedade $CONFIG_DIR
+    "${SUDO_CMD}" chown -R piedade:piedade "$USER_HOME/.local"
+
 }
 
 customizeLightdm() {
@@ -282,6 +286,18 @@ customizeLightdm() {
     "${SUDO_CMD}" cp "$GITPATH/lightdm/images/$lightdm_background" "$LIGHTDM_IMAGES/lightdm_background.png"
     # "${SUDO_CMD}" chown root:root "$LIGHTDM_IMAGES/lightdm_icon.png" "$LIGHTDM_IMAGES/lightdm_background.png"
 
+
+    LIGHT_CONF="/etc/lightdm/lightdm.conf"
+    if [ -e "$LIGHT_CONF" ]; then
+        echo "${YELLOW}Moving old theme config file to $LIGHT_CONF.bak${RC}"
+        if ! "${SUDO_CMD}" mv "$LIGHT_CONF" "$LIGHT_CONF.bak"; then
+            echo "${RED}Can't move theme config file!${RC}"
+            exit 1
+        fi
+    fi
+    "${SUDO_CMD}" cp "$GITPATH/lightdm/lightdm.conf" "$LIGHT_CONF"
+
+
     ## Check if conf file is already there.
     THEME_CONF="/etc/lightdm/lightdm-gtk-greeter.conf"
     if [ -e "$THEME_CONF" ]; then
@@ -291,7 +307,6 @@ customizeLightdm() {
             exit 1
         fi
     fi
-
     "${SUDO_CMD}" cp "$GITPATH/lightdm/lightdm-gtk-greeter.conf" "$THEME_CONF"
 }
 
