@@ -1,7 +1,7 @@
 /* See LICENSE file for copyright and license details. */
 
 /* appearance */
-#define ICONSIZE                              16     /* icon size */
+#define ICONSIZE                              14     /* icon size */
 #define ICONSPACING                           8      /* space between icon and title */
 #define SHOWWINICON                           1      /* 0 means no winicon */
 
@@ -18,7 +18,8 @@ static const int topbar             = 1;        /* 0 means bottom bar */
 
 static const char *fonts[]          = { 
 	// "monospace:size=12",
-	"MesloLGS Nerd Font Mono:size=12",
+	"SF Mono:size=12",
+	"MesloLGS Nerd Font Mono:size=11",
 };
 static const char dmenufont[]       = "monospace:size=10";
 // default colors

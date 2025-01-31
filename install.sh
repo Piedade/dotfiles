@@ -61,7 +61,7 @@ installDependencies() {
     "${SUDO_CMD}" apt upgrade -y
 
     # Installing Essential Programs 
-    "${SUDO_CMD}" apt-get install numlockx feh rofi unzip wget fontconfig pipewire wireplumber pavucontrol libx11-dev libxft-dev libxinerama-dev libx11-xcb-dev libxcb-res0-dev xdg-utils libimlib2-dev policykit-1-gnome thunar thunar-archive-plugin file-roller git -y
+    "${SUDO_CMD}" apt-get install numlockx feh rofi unzip wget fontconfig pipewire wireplumber pavucontrol libx11-dev libxft-dev libxinerama-dev libx11-xcb-dev libxcb-res0-dev xdg-utils libimlib2-dev policykit-1-gnome thunar file-roller git -y
 
     # Installing Other less important Programs
     "${SUDO_CMD}" apt-get install fzf libnotify-bin trash-cli flameshot psmisc neovim lxappearance lightdm xclip bat multitail tree zoxide bash-completion ripgrep gimp -y
@@ -82,20 +82,8 @@ installGitHubCLI() {
 	&& "${SUDO_CMD}" apt install gh -y
 }
 
-# Function to install Meslo Nerd font for dwm and rofi icons to work
-installNerdFont() {
+installFonts() {
     FONT_DIR="$HOME/.local/share/fonts"
-    FONT_ZIP="$FONT_DIR/Meslo.zip"
-    FONT_URL="https://github.com/ryanoasis/nerd-fonts/releases/latest/download/Meslo.zip"
-    FONT_INSTALLED=$(fc-list | grep -i "Meslo")
-
-    # Check if Meslo Nerd-font is already installed
-    if [ -n "$FONT_INSTALLED" ]; then
-        echo "Meslo Nerd-fonts are already installed."
-        return 0
-    fi
-
-    echo "Installing Meslo Nerd-fonts"
 
     # Create the fonts directory if it doesn't exist
     if [ ! -d "$FONT_DIR" ]; then
@@ -107,32 +95,89 @@ installNerdFont() {
         echo "$FONT_DIR exists, skipping creation."
     fi
 
-    # Check if the font zip file already exists
-    if [ ! -f "$FONT_ZIP" ]; then
-        # Download the font zip file
-        wget -P "$FONT_DIR" "$FONT_URL" || {
-            echo "Failed to download Meslo Nerd-fonts from $FONT_URL"
+    # INSTALL Meslo Fonts
+    FONT_ZIP="$FONT_DIR/Meslo.zip"
+    FONT_URL="https://github.com/ryanoasis/nerd-fonts/releases/latest/download/Meslo.zip"
+    FONT_INSTALLED=$(fc-list | grep -i "Meslo")
+
+    if [ -n "$FONT_INSTALLED" ]; then
+        echo "Meslo Nerd-fonts are already installed."
+    else
+        echo "${YELLOW}Installing Meslo Nerd-fonts${RC}"
+
+        # Check if the font zip file already exists
+        if [ ! -f "$FONT_ZIP" ]; then
+            # Download the font zip file
+            wget -P "$FONT_DIR" "$FONT_URL" || {
+                echo "Failed to download Meslo Nerd-fonts from $FONT_URL"
+                return 1
+            }
+        else
+            echo "Meslo.zip already exists in $FONT_DIR, skipping download."
+        fi
+
+        # Unzip the font file if it hasn't been unzipped yet
+        if [ ! -d "$FONT_DIR/Meslo" ]; then
+            unzip "$FONT_ZIP" -d "$FONT_DIR" || {
+                echo "Failed to unzip $FONT_ZIP"
+                return 1
+            }
+        else
+            echo "Meslo font files already unzipped in $FONT_DIR, skipping unzip."
+        fi
+
+        # Remove the zip file
+        rm "$FONT_ZIP" || {
+            echo "Failed to remove $FONT_ZIP"
             return 1
         }
-    else
-        echo "Meslo.zip already exists in $FONT_DIR, skipping download."
+
+        echo "${GREEN}Meslo Nerd-fonts installed successfully${RC}"
     fi
 
-    # Unzip the font file if it hasn't been unzipped yet
-    if [ ! -d "$FONT_DIR/Meslo" ]; then
-        unzip "$FONT_ZIP" -d "$FONT_DIR" || {
-            echo "Failed to unzip $FONT_ZIP"
+    # INSTALL Apple Fonts
+    FONT_ZIP="$FONT_DIR/Apple-Fonts.zip"
+    FONT_URL="https://github.com/oyezcubed/Apple-Fonts-San-Francisco-New-York/archive/refs/heads/master.zip"
+    FONT_INSTALLED=$(fc-list | grep -i "SF-")
+
+    if [ -n "$FONT_INSTALLED" ]; then
+        echo "Apple fonts are already installed."
+    else
+        echo "${YELLOW}Installing Apple fonts${RC}"
+
+        # Check if the font zip file already exists
+        if [ ! -f "$FONT_ZIP" ]; then
+            # Download the font zip file
+            wget -O "$FONT_ZIP" "$FONT_URL" || {
+                echo "Failed to download Apple fonts from $FONT_URL"
+                return 1
+            }
+        else
+            echo "Apple-Fonts.zip already exists in $FONT_DIR, skipping download."
+        fi
+
+        # Unzip the font file if it hasn't been unzipped yet
+        if [ ! -d "$FONT_DIR/Apple-Fonts-San-Francisco-New-York-master" ]; then
+            unzip "$FONT_ZIP" -d "$FONT_DIR" || {
+                echo "Failed to unzip $FONT_ZIP"
+                return 1
+            }
+        else
+            echo "Apple fonts files already unzipped in $FONT_DIR, skipping unzip."
+        fi
+
+        # Move fonts
+        find "$FONT_DIR/Apple-Fonts-San-Francisco-New-York-master" -type f -exec mv {} "$FONT_DIR/" \; || {
+            echo "Failed to move Apple-Fonts-San-Francisco-New-York-master files to $FONT_DIR"
             return 1
         }
-    else
-        echo "Meslo font files already unzipped in $FONT_DIR, skipping unzip."
-    fi
 
-    # Remove the zip file
-    rm "$FONT_ZIP" || {
-        echo "Failed to remove $FONT_ZIP"
-        return 1
-    }
+        # Remove the zip file
+        rm -rf "$FONT_ZIP" "$FONT_DIR/Apple-Fonts-San-Francisco-New-York-master" || {
+            echo "Failed to remove $FONT_ZIP"
+            return 1
+        }
+    fi
 
     # Rebuild the font cache
     fc-cache -fv || {
@@ -140,7 +185,11 @@ installNerdFont() {
         return 1
     }
 
-    echo "Meslo Nerd-fonts installed successfully"
+    # clean
+    rm "$FONT_DIR"/*.txt "$FONT_DIR"/*.md || {
+        echo "Failed to clean $FONT_ZIP"
+        return 1
+    }
 }
 
 installStarship() {
@@ -154,8 +203,6 @@ installStarship() {
         exit 1
     fi
 }
-
-
 
 installZoxide() {
     if command_exists zoxide; then
@@ -247,17 +294,12 @@ customizeLightdm() {
 checkEnv
 
 installDependencies
-
 installGitHubCLI
-
-installNerdFont
-
+installFonts
 installStarship
-
 installZoxide
 
 customizeLightdm
-
 linkConfig
 
 if linkConfig; then
