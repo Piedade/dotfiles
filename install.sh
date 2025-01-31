@@ -10,6 +10,9 @@ SUDO_CMD=""
 SUGROUP=""
 GITPATH=""
 
+## Get the correct user home directory.
+USER_HOME=$(getent passwd "${SUDO_USER:-$USER}" | cut -d: -f6)
+
 command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
@@ -83,7 +86,7 @@ installGitHubCLI() {
 }
 
 installFonts() {
-    FONT_DIR="$HOME/.local/share/fonts"
+    FONT_DIR="$USER_HOME/.local/share/fonts"
 
     # Create the fonts directory if it doesn't exist
     if [ ! -d "$FONT_DIR" ]; then
@@ -221,8 +224,6 @@ linkConfig() {
     git config --global user.email "pedro@imaginedesign.pt"
     git config --global user.name "Pedro Piedade"
 
-    ## Get the correct user home directory.
-    USER_HOME=$(getent passwd "${SUDO_USER:-$USER}" | cut -d: -f6)
     ## Check if a bashrc file is already there.
     OLD_BASHRC="$USER_HOME/.bashrc"
     if [ -e "$OLD_BASHRC" ]; then
