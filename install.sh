@@ -336,3 +336,5 @@ installChrome
 
 customizeLightdm
 linkConfig
+
+"${SUDO_CMD}" systemctl reboot
