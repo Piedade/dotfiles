@@ -67,7 +67,7 @@ installDependencies() {
     "${SUDO_CMD}" apt-get install build-essential libxcb-util-dev numlockx feh rofi unzip wget pipewire wireplumber pavucontrol libx11-dev libxft-dev libxinerama-dev libx11-xcb-dev libxcb-res0-dev alsa-utils xdg-utils libimlib2-dev policykit-1-gnome thunar file-roller dunst -y
 
     # Installing Other less important Programs
-    "${SUDO_CMD}" apt-get install fzf libnotify-bin trash-cli flameshot psmisc neovim lxappearance lightdm xclip bat multitail tree zoxide bash-completion ripgrep alacritty gimp fonts-liberation -y
+    "${SUDO_CMD}" apt-get install fzf libnotify-bin trash-cli flameshot psmisc neovim papirus-icon-theme lxappearance lightdm xclip bat multitail tree zoxide bash-completion ripgrep alacritty gimp fonts-liberation -y
 
     # Enable graphical login and change target from CLI to GUI
     systemctl enable lightdm
