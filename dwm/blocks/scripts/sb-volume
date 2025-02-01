@@ -39,8 +39,10 @@ if wpctl get-volume @DEFAULT_AUDIO_SINK@ | grep -q "[MUTED]"; then
     exit
 fi
 
-volume_frac="$(wpctl get-volume @DEFAULT_AUDIO_SINK@ | cut -d' ' -f2)"
-volume="$(echo "$volume_frac * 100 / 1" | bc)"
+#volume_frac="$(wpctl get-volume @DEFAULT_AUDIO_SINK@ | cut -d' ' -f2)"
+#volume="$(echo "$volume_frac * 100 / 1" | bc)"
+
+volume="$(pactl get-sink-volume @DEFAULT_SINK@ | awk '{print $5}' | xargs)"
 
 if [ -z "$volume" ]; then
     exit 1
@@ -62,6 +64,6 @@ else
     icon="󰕿 "
 fi
 
-volume=$(printf "%-4s\n" "$volume%")
+volume=$(printf "%-4s\n" "$volume")
 
 echo "$icon$volume"
