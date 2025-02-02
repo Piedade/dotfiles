@@ -63,11 +63,11 @@ installDependencies() {
     "${SUDO_CMD}" apt update
     "${SUDO_CMD}" apt upgrade -y
 
-    # Installing Essential Programs 
-    "${SUDO_CMD}" apt-get install build-essential libxcb-util-dev numlockx feh rofi unzip wget pipewire wireplumber pavucontrol libx11-dev libxft-dev libxinerama-dev libx11-xcb-dev libxcb-res0-dev alsa-utils xdg-utils libimlib2-dev policykit-1-gnome thunar file-roller dunst -y
+    # Installing Essential Programs
+    "${SUDO_CMD}" apt-get install build-essential libxcb-util-dev numlockx feh rofi unzip wget pipewire wireplumber pavucontrol libx11-dev libxft-dev libxinerama-dev libx11-xcb-dev libxcb-res0-dev alsa-utils xdg-utils libimlib2-dev policykit-1-gnome gnome-keyring thunar file-roller dunst -y
 
     # Installing Other less important Programs
-    "${SUDO_CMD}" apt-get install fzf libnotify-bin trash-cli flameshot psmisc neovim papirus-icon-theme lxappearance lightdm xclip bat multitail tree zoxide bash-completion ripgrep alacritty gimp fonts-liberation -y
+    "${SUDO_CMD}" apt-get install fzf libnotify-bin trash-cli flameshot psmisc neovim papirus-icon-theme lxappearance lightdm xclip bat multitail tree zoxide bash-completion ripgrep alacritty gimp fonts-liberation fonts-noto-color-emoji -y
 
     # Enable graphical login and change target from CLI to GUI
     systemctl enable lightdm
@@ -227,7 +227,7 @@ linkConfig() {
         echo "${RED}Failed to create symbolic link for .bashrc${RC}"
         exit 1
     }
-   
+
     CONFIG_DIR="$USER_HOME/.config"
     # Create the config directory if it doesn't exist
     if [ ! -d "$CONFIG_DIR" ]; then
@@ -257,7 +257,7 @@ linkConfig() {
 
     echo "${YELLOW}Linking dwmblocks scripts to /usr/local/bin...${RC}"
     for file in "$DWMBLOCKSPATH/scripts"/*; do
-		filename=$(basename "$file") 
+		filename=$(basename "$file")
 
 		"${SUDO_CMD}" ln -svf "$file" "/usr/local/bin/$filename" || {
 		    echo "${RED}Failed to create symbolic link for $filename${RC}"
@@ -308,13 +308,13 @@ customizeLightdm() {
 }
 
 installVsCode() {
-        printf "%b\n" "${YELLOW}Installing VS Code..${RC}."
+    printf "%b\n" "${YELLOW}Installing VS Code..${RC}."
 	wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg
-        "${SUDO_CMD}" install -D -o root -g root -m 644 packages.microsoft.gpg /etc/apt/keyrings/packages.microsoft.gpg
-        echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" | "${SUDO_CMD}" tee /etc/apt/sources.list.d/vscode.list > /dev/null
-        rm -f packages.microsoft.gpg
-       	"${SUDO_CMD}" apt update
-       	"${SUDO_CMD}" apt install -y apt-transport-https code
+    "${SUDO_CMD}" install -D -o root -g root -m 644 packages.microsoft.gpg /etc/apt/keyrings/packages.microsoft.gpg
+    echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" | "${SUDO_CMD}" tee /etc/apt/sources.list.d/vscode.list > /dev/null
+    rm -f packages.microsoft.gpg
+    "${SUDO_CMD}" apt update
+    "${SUDO_CMD}" apt install -y apt-transport-https code
 }
 
 installChrome() {

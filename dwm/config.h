@@ -77,7 +77,7 @@ static const Rule rules[] = {
 	{ "Pavucontrol",                          	NULL,       NULL,             	0,              1,          0,          0,        -1 },
 	{ "Lightdm-settings",                      	NULL,       NULL,             	0,              1,          0,          0,        -1 },
 	{ "Alacritty",                              NULL,       NULL,             	4,              0,          1,          0,         0 },
-    { "Code",                                   NULL,       NULL,             	1,              0,          0,          0,         0 },
+    { "Code",                                   NULL,       NULL,             	1,              0,          0,          1,         0 },
     { "Google-chrome",                          NULL,       NULL,             	2,              0,          0,          0,         0 },
     { "thunar",                                 NULL,       NULL,             	1 << 4,         0,          0,          0,         0 },
 	{ NULL,                                     NULL,       "Event Tester",   	0,              0,          0,          1,        -1 }, /* xev */

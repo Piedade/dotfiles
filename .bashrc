@@ -362,9 +362,9 @@ apachelog() {
 # Edit the Apache configuration
 apacheconfig() {
 	if [ -f /etc/httpd/conf/httpd.conf ]; then
-		sedit /etc/httpd/conf/httpd.conf
+		code /etc/httpd/conf/httpd.conf
 	elif [ -f /etc/apache2/apache2.conf ]; then
-		sedit /etc/apache2/apache2.conf
+		code /etc/apache2/apache2.conf
 	else
 		echo "Error: Apache config file could not be found."
 		echo "Searching for possible locations:"
@@ -374,16 +374,8 @@ apacheconfig() {
 
 # Edit the PHP configuration file
 phpconfig() {
-	if [ -f /etc/php.ini ]; then
-		sedit /etc/php.ini
-	elif [ -f /etc/php/php.ini ]; then
-		sedit /etc/php/php.ini
-	elif [ -f /etc/php5/php.ini ]; then
-		sedit /etc/php5/php.ini
-	elif [ -f /usr/bin/php5/bin/php.ini ]; then
-		sedit /usr/bin/php5/bin/php.ini
-	elif [ -f /etc/php5/apache2/php.ini ]; then
-		sedit /etc/php5/apache2/php.ini
+	if [ -d /etc/php ]; then
+		code /etc/php
 	else
 		echo "Error: php.ini file could not be found."
 		echo "Searching for possible locations:"
@@ -394,17 +386,17 @@ phpconfig() {
 # Edit the MySQL configuration file
 mysqlconfig() {
 	if [ -f /etc/my.cnf ]; then
-		sedit /etc/my.cnf
+		code /etc/my.cnf
 	elif [ -f /etc/mysql/my.cnf ]; then
-		sedit /etc/mysql/my.cnf
+		code /etc/mysql/my.cnf
 	elif [ -f /usr/local/etc/my.cnf ]; then
-		sedit /usr/local/etc/my.cnf
+		code /usr/local/etc/my.cnf
 	elif [ -f /usr/bin/mysql/my.cnf ]; then
-		sedit /usr/bin/mysql/my.cnf
+		code /usr/bin/mysql/my.cnf
 	elif [ -f ~/my.cnf ]; then
-		sedit ~/my.cnf
+		code ~/my.cnf
 	elif [ -f ~/.my.cnf ]; then
-		sedit ~/.my.cnf
+		code ~/.my.cnf
 	else
 		echo "Error: my.cnf file could not be found."
 		echo "Searching for possible locations:"
@@ -421,6 +413,51 @@ trim() {
 	echo -n "$var"
 }
 
+createdomain() {
+	echo "Enter the domain name (e.g., example.com): "
+	read DOMAIN
+
+	# Define paths
+	VHOST_CONF="/etc/apache2/sites-available/$DOMAIN.conf"
+	WEB_ROOT="/var/www/$DOMAIN"
+
+	# Create web directory
+	sudo mkdir -p "$WEB_ROOT"
+	sudo chown -R $USER:$USER "$WEB_ROOT"
+	sudo chmod -R 755 /var/www
+
+	# Create Virtual Host Config
+	sudo tee $VHOST_CONF <<EOF
+<VirtualHost *:80>
+	ServerName $DOMAIN
+	Redirect permanent / https://$DOMAIN
+</VirtualHost>
+<VirtualHost *:443>
+	ServerName $DOMAIN
+	DocumentRoot $WEB_ROOT
+
+	SSLEngine on
+	SSLCertificateFile "/var/www/ssl/$DOMAIN.pem"
+	SSLCertificateKeyFile "/var/www/ssl/$DOMAIN-key.pem"
+
+	<FilesMatch \.php$>
+		SetHandler "proxy:unix:/run/php/php8.4-fpm.sock|fcgi://localhost"
+	</FilesMatch>
+
+	ErrorLog \${APACHE_LOG_DIR}/$DOMAIN-error.log
+	CustomLog \${APACHE_LOG_DIR}/$DOMAIN-access.log combined
+</VirtualHost>
+EOF
+
+	( cd /var/www/ssl ; mkcert $DOMAIN )
+
+	# Enable site and restart Apache
+	sudo a2ensite "$DOMAIN.conf" > /dev/null
+	sudo systemctl reload apache2 > /dev/null
+
+	echo "Virtual host for $DOMAIN has been created."
+}
+
 #######################################################
 # Set the ultimate amazing command prompt
 #######################################################
@@ -432,6 +469,10 @@ if [[ $- == *i* ]]; then
 fi
 
 export PATH=$PATH:"$HOME/.local/bin"
+
+export NVM_DIR="$HOME/.config/nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
 eval "$(starship init bash)"
 eval "$(zoxide init bash)"
