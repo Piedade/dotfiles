@@ -3,14 +3,14 @@ iatest=$(expr index "$-" i)
 
 # Source global definitions
 if [ -f /etc/bashrc ]; then
-	. /etc/bashrc
+    . /etc/bashrc
 fi
 
 # Enable bash programmable completion features in interactive shells
 if [ -f /usr/share/bash-completion/bash_completion ]; then
-	. /usr/share/bash-completion/bash_completion
+    . /usr/share/bash-completion/bash_completion
 elif [ -f /etc/bash_completion ]; then
-	. /etc/bash_completion
+    . /etc/bash_completion
 fi
 
 #######################################################
@@ -222,40 +222,56 @@ alias docker-clean=' \
 #######################################################
 # SPECIAL FUNCTIONS
 #######################################################
+
+# Define color variables
+RED='\033[31m'
+GREEN='\033[32m'
+YELLOW='\033[33m'
+BLUE='\033[34m'
+MAGENTA='\033[35m'
+CYAN='\033[36m'
+WHITE='\033[37m'
+ORANGE_LARAVEL='\033[38;5;196m'
+BLUE_PRESTASHOP='\033[38;5;123m'
+# Text
+BOLD='\033[1m'
+ITALIC='\033[3m'
+RESET='\033[0m'
+
 # Extracts any archive(s) (if unp isn't installed)
 extract() {
-	for archive in "$@"; do
-		if [ -f "$archive" ]; then
-			case $archive in
-			*.tar.bz2) tar xvjf $archive ;;
-			*.tar.gz) tar xvzf $archive ;;
-			*.bz2) bunzip2 $archive ;;
-			*.rar) rar x $archive ;;
-			*.gz) gunzip $archive ;;
-			*.tar) tar xvf $archive ;;
-			*.tbz2) tar xvjf $archive ;;
-			*.tgz) tar xvzf $archive ;;
-			*.zip) unzip $archive ;;
-			*.Z) uncompress $archive ;;
-			*.7z) 7z x $archive ;;
-			*) echo "don't know how to extract '$archive'..." ;;
-			esac
-		else
-			echo "'$archive' is not a valid file!"
-		fi
-	done
+    for archive in "$@"; do
+        if [ -f "$archive" ]; then
+            case $archive in
+            *.tar.bz2) tar xvjf $archive ;;
+            *.tar.gz) tar xvzf $archive ;;
+            *.bz2) bunzip2 $archive ;;
+            *.rar) rar x $archive ;;
+            *.gz) gunzip $archive ;;
+            *.tar) tar xvf $archive ;;
+            *.tbz2) tar xvjf $archive ;;
+            *.tgz) tar xvzf $archive ;;
+            *.zip) unzip $archive ;;
+            *.Z) uncompress $archive ;;
+            *.7z) 7z x $archive ;;
+            *) echo "don't know how to extract '$archive'..." ;;
+            esac
+        else
+            echo "'$archive' is not a valid file!"
+        fi
+    done
 }
 
 # Searches for text in all files in the current folder
 ftext() {
-	# -i case-insensitive
-	# -I ignore binary files
-	# -H causes filename to be printed
-	# -r recursive search
-	# -n causes line number to be printed
-	# optional: -F treat search term as a literal, not a regular expression
-	# optional: -l only print filenames and not the matching lines ex. grep -irl "$1" *
-	grep -iIHrn --color=always "$1" . | less -r
+    # -i case-insensitive
+    # -I ignore binary files
+    # -H causes filename to be printed
+    # -r recursive search
+    # -n causes line number to be printed
+    # optional: -F treat search term as a literal, not a regular expression
+    # optional: -l only print filenames and not the matching lines ex. grep -irl "$1" *
+    grep -iIHrn --color=always "$1" . | less -r
 }
 
 # Copy file with a progress bar
@@ -280,55 +296,55 @@ cpp() {
 
 # Copy and go to the directory
 cpg() {
-	if [ -d "$2" ]; then
-		cp "$1" "$2" && cd "$2"
-	else
-		cp "$1" "$2"
-	fi
+    if [ -d "$2" ]; then
+        cp "$1" "$2" && cd "$2"
+    else
+        cp "$1" "$2"
+    fi
 }
 
 # Move and go to the directory
 mvg() {
-	if [ -d "$2" ]; then
-		mv "$1" "$2" && cd "$2"
-	else
-		mv "$1" "$2"
-	fi
+    if [ -d "$2" ]; then
+        mv "$1" "$2" && cd "$2"
+    else
+        mv "$1" "$2"
+    fi
 }
 
 # Create and go to the directory
 mkdirg() {
-	mkdir -p "$1"
-	cd "$1"
+    mkdir -p "$1"
+    cd "$1"
 }
 
 # Goes up a specified number of directories  (i.e. up 4)
 up() {
-	local d=""
-	limit=$1
-	for ((i = 1; i <= limit; i++)); do
-		d=$d/..
-	done
-	d=$(echo $d | sed 's/^\///')
-	if [ -z "$d" ]; then
-		d=..
-	fi
-	cd $d
+    local d=""
+    limit=$1
+    for ((i = 1; i <= limit; i++)); do
+        d=$d/..
+    done
+    d=$(echo $d | sed 's/^\///')
+    if [ -z "$d" ]; then
+        d=..
+    fi
+    cd $d
 }
 
 # Automatically do an ls after each cd, z, or zoxide
 cd ()
 {
-	if [ -n "$1" ]; then
-		builtin cd "$@" && ls
-	else
-		builtin cd ~ && ls
-	fi
+    if [ -n "$1" ]; then
+        builtin cd "$@" && ls
+    else
+        builtin cd ~ && ls
+    fi
 }
 
 # Returns the last 2 fields of the working directory
 pwdtail() {
-	pwd | awk -F/ '{nlast = NF -1;print $nlast"/"$NF}'
+    pwd | awk -F/ '{nlast = NF -1;print $nlast"/"$NF}'
 }
 
 alias cat='batcat'
@@ -352,110 +368,166 @@ function whatsmyip () {
 
 # View Apache logs
 apachelog() {
-	if [ -f /etc/httpd/conf/httpd.conf ]; then
-		cd /var/log/httpd && ls -xAh && multitail --no-repeat -c -s 2 /var/log/httpd/*_log
-	else
-		cd /var/log/apache2 && ls -xAh && multitail --no-repeat -c -s 2 /var/log/apache2/*.log
-	fi
+    if [ -f /etc/httpd/conf/httpd.conf ]; then
+        cd /var/log/httpd && ls -xAh && multitail --no-repeat -c -s 2 /var/log/httpd/*_log
+    else
+        cd /var/log/apache2 && ls -xAh && multitail --no-repeat -c -s 2 /var/log/apache2/*.log
+    fi
 }
 
 # Edit the Apache configuration
 apacheconfig() {
-	if [ -f /etc/httpd/conf/httpd.conf ]; then
-		code /etc/httpd/conf/httpd.conf
-	elif [ -f /etc/apache2/apache2.conf ]; then
-		code /etc/apache2/apache2.conf
-	else
-		echo "Error: Apache config file could not be found."
-		echo "Searching for possible locations:"
-		sudo updatedb && locate httpd.conf && locate apache2.conf
-	fi
+    if [ -f /etc/httpd/conf/httpd.conf ]; then
+        code /etc/httpd/conf/httpd.conf
+    elif [ -f /etc/apache2/apache2.conf ]; then
+        code /etc/apache2/apache2.conf
+    else
+        echo "Error: Apache config file could not be found."
+        echo "Searching for possible locations:"
+        sudo updatedb && locate httpd.conf && locate apache2.conf
+    fi
 }
 
 # Edit the PHP configuration file
 phpconfig() {
-	if [ -d /etc/php ]; then
-		code /etc/php
-	else
-		echo "Error: php.ini file could not be found."
-		echo "Searching for possible locations:"
-		sudo updatedb && locate php.ini
-	fi
+    if [ -d /etc/php ]; then
+        code /etc/php
+    else
+        echo "Error: php.ini file could not be found."
+        echo "Searching for possible locations:"
+        sudo updatedb && locate php.ini
+    fi
 }
 
 # Edit the MySQL configuration file
 mysqlconfig() {
-	if [ -f /etc/my.cnf ]; then
-		code /etc/my.cnf
-	elif [ -f /etc/mysql/my.cnf ]; then
-		code /etc/mysql/my.cnf
-	elif [ -f /usr/local/etc/my.cnf ]; then
-		code /usr/local/etc/my.cnf
-	elif [ -f /usr/bin/mysql/my.cnf ]; then
-		code /usr/bin/mysql/my.cnf
-	elif [ -f ~/my.cnf ]; then
-		code ~/my.cnf
-	elif [ -f ~/.my.cnf ]; then
-		code ~/.my.cnf
-	else
-		echo "Error: my.cnf file could not be found."
-		echo "Searching for possible locations:"
-		sudo updatedb && locate my.cnf
-	fi
+    if [ -f /etc/my.cnf ]; then
+        code /etc/my.cnf
+    elif [ -f /etc/mysql/my.cnf ]; then
+        code /etc/mysql/my.cnf
+    elif [ -f /usr/local/etc/my.cnf ]; then
+        code /usr/local/etc/my.cnf
+    elif [ -f /usr/bin/mysql/my.cnf ]; then
+        code /usr/bin/mysql/my.cnf
+    elif [ -f ~/my.cnf ]; then
+        code ~/my.cnf
+    elif [ -f ~/.my.cnf ]; then
+        code ~/.my.cnf
+    else
+        echo "Error: my.cnf file could not be found."
+        echo "Searching for possible locations:"
+        sudo updatedb && locate my.cnf
+    fi
 }
 
 
 # Trim leading and trailing spaces (for scripts)
 trim() {
-	local var=$*
-	var="${var#"${var%%[![:space:]]*}"}" # remove leading whitespace characters
-	var="${var%"${var##*[![:space:]]}"}" # remove trailing whitespace characters
-	echo -n "$var"
+    local var=$*
+    var="${var#"${var%%[![:space:]]*}"}" # remove leading whitespace characters
+    var="${var%"${var##*[![:space:]]}"}" # remove trailing whitespace characters
+    echo -n "$var"
 }
 
 createdomain() {
-	echo "Enter the domain name (e.g., example.com): "
-	read DOMAIN
+    echo "Enter the domain name (e.g., example.com): "
+    read DOMAIN
 
-	# Define paths
-	VHOST_CONF="/etc/apache2/sites-available/$DOMAIN.conf"
-	WEB_ROOT="/var/www/$DOMAIN"
+    # Define paths
+    VHOST_CONF="/etc/apache2/sites-available/$DOMAIN.conf"
+    WEB_ROOT="/var/www/$DOMAIN"
 
-	# Create web directory
-	sudo mkdir -p "$WEB_ROOT"
-	sudo chown -R $USER:$USER "$WEB_ROOT"
-	sudo chmod -R 755 /var/www
+    # Create web directory
+    sudo mkdir -p "$WEB_ROOT"
+    sudo chown -R $USER:$USER "$WEB_ROOT"
+    sudo chmod -R 755 /var/www
 
-	# Create Virtual Host Config
-	sudo tee $VHOST_CONF <<EOF
+    # Create Virtual Host Config
+    sudo tee $VHOST_CONF <<EOF
 <VirtualHost *:80>
-	ServerName $DOMAIN
-	Redirect permanent / https://$DOMAIN
+    ServerName $DOMAIN
+    Redirect permanent / https://$DOMAIN
 </VirtualHost>
 <VirtualHost *:443>
-	ServerName $DOMAIN
-	DocumentRoot $WEB_ROOT
+    ServerName $DOMAIN
+    DocumentRoot $WEB_ROOT
 
-	SSLEngine on
-	SSLCertificateFile "/var/www/ssl/$DOMAIN.pem"
-	SSLCertificateKeyFile "/var/www/ssl/$DOMAIN-key.pem"
+    SSLEngine on
+    SSLCertificateFile "/var/www/ssl/$DOMAIN.pem"
+    SSLCertificateKeyFile "/var/www/ssl/$DOMAIN-key.pem"
 
-	<FilesMatch \.php$>
-		SetHandler "proxy:unix:/run/php/php8.4-fpm.sock|fcgi://localhost"
-	</FilesMatch>
+    <FilesMatch \.php$>
+        SetHandler "proxy:unix:/run/php/php8.4-fpm.sock|fcgi://localhost"
+    </FilesMatch>
 
-	ErrorLog \${APACHE_LOG_DIR}/$DOMAIN-error.log
-	CustomLog \${APACHE_LOG_DIR}/$DOMAIN-access.log combined
+    ErrorLog \${APACHE_LOG_DIR}/$DOMAIN-error.log
+    CustomLog \${APACHE_LOG_DIR}/$DOMAIN-access.log combined
 </VirtualHost>
 EOF
 
-	( cd /var/www/ssl ; mkcert $DOMAIN )
+    ( cd /var/www/ssl ; mkcert $DOMAIN )
 
-	# Enable site and restart Apache
-	sudo a2ensite "$DOMAIN.conf" > /dev/null
-	sudo systemctl reload apache2 > /dev/null
+    # Enable site and restart Apache
+    sudo a2ensite "$DOMAIN.conf" > /dev/null
+    sudo systemctl reload apache2 > /dev/null
 
-	echo "Virtual host for $DOMAIN has been created."
+    echo "Virtual host for $DOMAIN has been created."
+}
+
+fixpermissions() {
+    current_dir=$(pwd)
+
+    # Check if the current directory is inside /var/www
+    if [[ ! "$current_dir" =~ ^/var/www ]]; then
+        echo "❌ Current directory is not inside /var/www. Please navigate to the correct directory."
+        return 1
+    fi
+
+    # Check if composer.json exists
+    if [[ ! -f "composer.json" ]]; then
+        echo "This does not appear to be a valid Laravel or PrestaShop project."
+        echo "❌ composer.json not found."
+        return 1
+    fi
+
+    # Check the 'name' property in composer.json to determine the framework
+    framework=$(jq -r '.name' composer.json)
+
+    if [[ "$framework" == "laravel/laravel" ]]; then
+        folders="storage bootstrap/cache"
+        appName="$ORANGE_LARAVEL Laravel"
+
+    elif [[ "$framework" == "prestashop/prestashop" ]]; then
+        folders="admin-dev/autoupgrade app/config config download img log mails modules override themes translations upload var"
+        appName="$BLUE_PRESTASHOP󱇕 PrestaShop"
+
+    else
+        echo "❌ composer.json found, but the 'name' property does not match a recognized framework."
+        return 1
+    fi
+
+    # Ask for sudo to run the command
+    sudo -v &>/dev/null
+
+    # Apply permissions
+    current_folder=$(basename $current_dir)
+    echo -e "for $BOLD$appName$RESET $ITALIC($current_folder)$RESET on the folders:"
+
+    # FIX permissions
+    sudo chown -R $USER:www-data "$current_dir"
+    find "$current_dir" -type d -exec chmod 2755 {} \+
+    find "$current_dir" -type f -exec chmod 644 {} \+
+
+    for folder in ${folders}; do
+        if [ ! -d "$folder" ]; then
+            echo -e "- $folder $ITALIC${YELLOW}created${RESET}"
+            mkdir -p "$folder"
+        else
+            echo "- $folder"
+        fi
+        chmod -R 775 "$folder"
+    done
+    echo -e "$BOLD$GREEN Permissions have been set.$RESET"
 }
 
 #######################################################
