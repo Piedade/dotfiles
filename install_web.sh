@@ -76,11 +76,10 @@ installApache() {
 
     # Change apache user and group
     "${SUDO_CMD}" sed -i "s/^export APACHE_RUN_USER=.*/export APACHE_RUN_USER="${SUDO_USER:-$USER}"/" "/etc/apache2/envvars"
-    "${SUDO_CMD}" sed -i "s/^export APACHE_RUN_GROUP=.*/export APACHE_RUN_GROUP="${SUDO_USER:-$USER}"/" "/etc/apache2/envvars"
     "${SUDO_CMD}" systemctl restart apache2
 
     # FIX permissions
-    "${SUDO_CMD}" chown -R ${SUDO_USER:-$USER}:${SUDO_USER:-$USER} /var/www
+    "${SUDO_CMD}" chown -R ${SUDO_USER:-$USER}:www-data /var/www
     "${SUDO_CMD}" find /var/www -type d -exec chmod 2755 {} \+
     "${SUDO_CMD}" find /var/www -type f -exec chmod 644 {} \+
 }
@@ -123,14 +122,12 @@ installPHP() {
     "${SUDO_CMD}" apt-get install php7.4 php7.4-fpm php7.4-mysql php7.4-common php7.4-curl php7.4-xml php7.4-mbstring php7.4-zip php7.4-opcache php7.4-gd php7.4-intl php7.4-apcu php7.4-xdebug libapache2-mod-php7.4 php7.4-json -y
     # Change fpm user and group
     "${SUDO_CMD}" sed -i "s/^user = .*/user = "${SUDO_USER:-$USER}"/" "/etc/php/7.4/fpm/pool.d/www.conf"
-    "${SUDO_CMD}" sed -i "s/^group = .*/group = "${SUDO_USER:-$USER}"/" "/etc/php/7.4/fpm/pool.d/www.conf"
     "${SUDO_CMD}" systemctl restart php7.4-fpm
 
     echo "${YELLOW}Installing php 8.4...${RC}"
     "${SUDO_CMD}" apt-get install php8.4 php8.4-fpm php8.4-mysql php8.4-common php8.4-curl php8.4-xml php8.4-mbstring php8.4-zip php8.4-opcache php8.4-gd php8.4-intl php8.4-apcu php8.4-xdebug libapache2-mod-php8.4 -y
     # Change fpm user and group
     "${SUDO_CMD}" sed -i "s/^user = .*/user = "${SUDO_USER:-$USER}"/" "/etc/php/8.4/fpm/pool.d/www.conf"
-    "${SUDO_CMD}" sed -i "s/^group = .*/group = "${SUDO_USER:-$USER}"/" "/etc/php/8.4/fpm/pool.d/www.conf"
     "${SUDO_CMD}" systemctl restart php8.4-fpm
 
     # Select default PHP version
