@@ -139,7 +139,7 @@ installPHP() {
     # Select default PHP-fpm version
     # update-alternatives --config php-fpm.sock
 
-    "${SUDO_CMD}" a2enmod actions fcgid alias proxy_fcgi
+    "${SUDO_CMD}" a2enmod actions fcgid alias proxy_fcgi rewrite
 }
 
 installDNSmasq() {
