@@ -47,20 +47,25 @@ static const char editor[] = "code";
 static const char browser[] = "google-chrome";
 
 static const char *const autostart[] = {
-    // "xset", "s", "off", NULL, // Disables the screensaver
-    // "xset", "s", "noblank", NULL, // Prevent the screen from blanking (turning off)
-    // "xset", "-dpms", NULL, // Disables DPMS (Display Power Management Signaling)
+    /*
+    "xset", "s", "off", NULL, // Disables the screensaver
+    "xset", "s", "noblank", NULL, // Prevent the screen from blanking (turning off)
+    "xset", "-dpms", NULL, // Disables DPMS (Display Power Management Signaling)
+    */
     "dbus-update-activation-environment", "--systemd", "--all", NULL,
     "/usr/lib/policykit-1-gnome/polkit-gnome-authentication-agent-1", NULL,
     "dwmblocks", NULL,
-    // "picom", "-b", NULL,
+    /* "picom", "-b", NULL, */
     "flameshot", NULL,
     "sh", "-c", "feh --randomize --bg-fill ~/.dotfiles/backgrounds/*", NULL,
     "dunst", NULL,
+    /*
     editor, NULL,
-    browser, NULL,
+    browser, "--profile-directory=Default", NULL,
+    */
     "sh", "-c", "pactl set-source-mute $(pactl get-default-source) true", NULL,
     "sh", "-c", "sleep 1 && pkill -SIGUSR1 dwmblocks", NULL,
+    "sh", "-c", "~/.config/startup.sh", NULL,
     NULL /* terminate */
 };
 
@@ -72,20 +77,20 @@ static const Rule rules[] = {
      *	WM_CLASS(STRING) = instance, class
      *	WM_NAME(STRING) = title
      */
-    /* class     								instance  	title           	tags mask  		isfloating  isterminal  noswallow  monitor */
+    /* class instance title tags mask isfloating isterminal noswallow monitor */
     {"St", NULL, NULL, 4, 0, 1, 0, 0},
     {"Polkit-gnome-authentication-agent-1", NULL, NULL, 0, 1, 0, 0, -1},
     {"Pavucontrol", NULL, NULL, 0, 1, 0, 0, -1},
     {"Lightdm-settings", NULL, NULL, 0, 1, 0, 0, -1},
     {"Alacritty", NULL, NULL, 4, 0, 1, 0, 0},
-    {"Code", NULL, NULL, 1, 0, 0, 1, 0},
-    {"Google-chrome", NULL, NULL, 2, 0, 0, 0, 0},
-    {"thunar", NULL, NULL, 1 << 4, 0, 0, 0, 0},
+    /* {"Code", NULL, NULL, 1, 0, 0, 1, 0}, */
+    /* {"Google-chrome", NULL, NULL, 3, 0, 0, 0, 0}, */
+    {"Thunar", NULL, NULL, 0, 1, 0, 0, -1},
     {NULL, NULL, "Event Tester", 0, 0, 0, 1, -1}, /* xev */
 };
 
 /* layout(s) */
-static const float mfact = 0.65;     /* factor of master area size [0.05..0.95] */
+static const float mfact = 0.6;      /* factor of master area size [0.05..0.95] */
 static const int nmaster = 1;        /* number of clients in master area */
 static const int resizehints = 1;    /* 1 means respect size hints in tiled resizals */
 static const int lockfullscreen = 1; /* 1 will force focus on the fullscreen window */
@@ -99,11 +104,13 @@ static const Layout layouts[] = {
 
 /* key definitions */
 #define MODKEY Mod4Mask
-#define TAGKEYS(KEY, TAG)                                          \
-    {MODKEY, KEY, view, {.ui = 1 << TAG}},                         \
-        {MODKEY | ControlMask, KEY, toggleview, {.ui = 1 << TAG}}, \
-        {MODKEY | ShiftMask, KEY, tag, {.ui = 1 << TAG}},          \
-        {MODKEY | ControlMask | ShiftMask, KEY, toggletag, {.ui = 1 << TAG}},
+#define TAGKEYS(KEY, TAG)                                                  \
+    {MODKEY, KEY, view, {.ui = 1 << TAG}},                                 \
+        {MODKEY | Mod1Mask, KEY, toggleview, {.ui = 1 << TAG}},            \
+        {MODKEY | ShiftMask, KEY, tag, {.ui = 1 << TAG}},                  \
+        {MODKEY | Mod1Mask | ShiftMask, KEY, toggletag, {.ui = 1 << TAG}}, \
+        {MODKEY | ControlMask, KEY, tagnextmon, {.ui = 1 << TAG}},         \
+        {MODKEY | ControlMask | ShiftMask, KEY, tagprevmon, {.ui = 1 << TAG}},
 
 /* helper for spawning shell commands in the pre dwm-5.0 fashion */
 #define SHCMD(cmd)                                           \
