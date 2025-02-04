@@ -1,11 +1,4 @@
 #!/bin/bash
-goToNextMonitor() {
-    xdotool key Super+period
-}
-
-goToPreviousMonitor() {
-    xdotool key Super+comma
-}
 
 runApp() {
     tag=$1
@@ -13,46 +6,39 @@ runApp() {
     shift 2 # Remove first two arguments, leaving only the command
     runApp=("$@")
 
-    if [ -z "$tag" ]; then
-        echo "Error: argument tag is missing!"
+    if [[ -z "$tag" || ! "$tag" =~ ^[0-9]+$ || "$tag" -le 0 ]]; then
+        echo "Error: argument tag is missing or it should be a positive number!"
         return 1
     fi
 
-    if [ -z "$monitor" ]; then
-        echo "Error: argument monitor is missing!"
+    if [[ -z "$monitor" || ! "$monitor" =~ ^[0-9]+$ || "$monitor" -le 0 ]]; then
+        echo "Error: monitor argument is missing or it should be a positive number!"
         return 1
     fi
 
-    if [[ ! "$monitor" =~ ^(0|1|-1)$ ]]; then
-        echo "Error: monitor argument must be 0, 1, or -1!"
-        return 1
-    fi
+    # Change monitor
+    xdotool key Super+Control_L+Shift_L+$monitor
 
-    # Check if we need to change monitor
-    if [ "$monitor" -eq 1 ]; then
-        goToNextMonitor
-    elif [ "$monitor" -eq -1 ]; then
-        goToPreviousMonitor
-    fi
-
-    # go to dwm tag
+    # Go to dwm tag
     xdotool key Super+$tag
 
     # Run the command with all its arguments in the background
-    "${runApp[@]}" &  # Run command properly as an array
-    sleep 1
+    "${runApp[@]}" > /dev/null &  # Run command properly as an array
+    sleep 2
 }
 
 # VSCODE
 # https://code.visualstudio.com/docs/editor/settings-sync#_troubleshooting-keychain-issues
 app=("code" "--password-store=gnome-libsecret")
-runApp 1 0 "${app[@]}"
+runApp 1 1 "${app[@]}"
 
 # CHROME
 app=("google-chrome" "--profile-directory=Default")
-runApp 2 0 "${app[@]}"
+runApp 2 1 "${app[@]}"
 
 # CHROME
 app=("google-chrome" "--profile-directory=Profile 1")
-runApp 1 1 "${app[@]}"
-goToPreviousMonitor
+runApp 1 2 "${app[@]}"
+
+# Got to principal monitor
+xdotool key Super+Control_L+Shift_L+1

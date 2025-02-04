@@ -7,6 +7,16 @@ working_directory: '/var/www'
 #   "~/.config/alacritty/keybinds.toml"
 # ]
 
+env:
+    # TERM env customization.
+    #
+    # If this property is not set, alacritty will set it to xterm-256color.
+    #
+    # Note that some xterm terminfo databases don't declare support for italics.
+    # You can verify this by checking for the presence of `smso` and `sitm` in
+    # `infocmp xterm-256color`.
+    TERM: xterm-256color
+
 window:
     # title: 'Alacritty'
     decorations: 'none'
@@ -19,13 +29,13 @@ window:
     #    columns: 160
     #    lines: 80
 
+# Allow terminal applications to change Alacritty's window title.
+dynamic_title: true
+
 cursor:
     style:
         shape: 'Beam'
         # blinking: 'Never'
-
-env:
-    TERM: 'xterm-256color'
 
 font:
     #glyph_offset: { x: 1, y: 0 }
@@ -63,7 +73,3 @@ colors:
         magenta: '#ff6ac1'
         cyan: '#9aedfe'
         white: '#eff0eb'
-
-key_bindings:
-    - { key: V, mods: Super, action: Paste }
-    - { key: C, mods: Super, action: Copy }

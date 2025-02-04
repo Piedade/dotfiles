@@ -104,13 +104,12 @@ static const Layout layouts[] = {
 
 /* key definitions */
 #define MODKEY Mod4Mask
-#define TAGKEYS(KEY, TAG)                                                  \
-    {MODKEY, KEY, view, {.ui = 1 << TAG}},                                 \
-        {MODKEY | Mod1Mask, KEY, toggleview, {.ui = 1 << TAG}},            \
-        {MODKEY | ShiftMask, KEY, tag, {.ui = 1 << TAG}},                  \
-        {MODKEY | Mod1Mask | ShiftMask, KEY, toggletag, {.ui = 1 << TAG}}, \
-        {MODKEY | ControlMask, KEY, tagnextmon, {.ui = 1 << TAG}},         \
-        {MODKEY | ControlMask | ShiftMask, KEY, tagprevmon, {.ui = 1 << TAG}},
+#define TAGKEYS(KEY, TAG)                                                 \
+    {MODKEY, KEY, view, {.ui = 1 << TAG}},                                \
+        {MODKEY | ControlMask, KEY, toggletag, {.ui = 1 << TAG}},         \
+        {MODKEY | ShiftMask, KEY, tag, {.ui = 1 << TAG}},                 \
+        {MODKEY | ControlMask | ShiftMask, KEY, focusnthmon, {.i = TAG}}, \
+        {MODKEY | ControlMask, KEY, tagnthmon, {.i = TAG}},
 
 /* helper for spawning shell commands in the pre dwm-5.0 fashion */
 #define SHCMD(cmd)                                           \
@@ -132,11 +131,11 @@ static const char *launcherbrowser[] = {browser, NULL};
 #include "movestack.c"
 
 static const Key keys[] = {
-    /* modifier                     key        					function        	argument */
+    /* modifier                     key         function            argument */
+    {MODKEY, XK_minus, spawn, {.v = termcmd}},
     {MODKEY, XK_p, spawn, {.v = launchercmd}},
-    {MODKEY | ShiftMask, XK_Return, spawn, {.v = termcmd}},
-    {MODKEY, XK_c, spawn, {.v = launchereditor}},
-    {MODKEY, XK_b, spawn, {.v = launcherbrowser}},
+    {MODKEY, XK_comma, spawn, {.v = launchereditor}},
+    {MODKEY, XK_period, spawn, {.v = launcherbrowser}},
     {0, XK_Print, spawn, SHCMD("flameshot full -p ~/Pictures/Screenshots/")},
     {MODKEY, XK_Print, spawn, SHCMD("flameshot gui -p ~/Pictures/Screenshots/")},
     {MODKEY | ShiftMask, XK_Print, spawn, SHCMD("flameshot gui --clipboard")},
@@ -147,7 +146,7 @@ static const Key keys[] = {
     {0, XF86XK_AudioLowerVolume, spawn, SHCMD("amixer sset Master 5%- unmute; pkill -RTMIN+4 dwmblocks")},
     {0, XF86XK_AudioMute, spawn, SHCMD("amixer sset Master $(amixer get Master | grep -q '\\[on\\]' && echo 'mute' || echo 'unmute'); pkill -RTMIN+4 dwmblocks")},
     {0, XF86XK_AudioRaiseVolume, spawn, SHCMD("amixer sset Master 5%+ unmute; pkill -RTMIN+4 dwmblocks")},
-    {MODKEY, XK_f, togglebar, {0}},
+    {MODKEY, XK_b, togglebar, {0}},
     {MODKEY, XK_j, focusstack, {.i = -1}},
     {MODKEY, XK_k, focusstack, {.i = +1}},
     {MODKEY, XK_i, incnmaster, {.i = -1}},
@@ -162,16 +161,17 @@ static const Key keys[] = {
     {MODKEY, XK_Return, zoom, {0}},
     {MODKEY, XK_Tab, view, {0}},
     {MODKEY, XK_q, killclient, {0}},
-    {MODKEY, XK_n, setlayout, {.v = &layouts[0]}},
-    {MODKEY, XK_m, setlayout, {.v = &layouts[1]}},
+    {MODKEY, XK_t, setlayout, {.v = &layouts[0]}},
+    {MODKEY, XK_f, setlayout, {.v = &layouts[1]}},
+    {MODKEY, XK_m, setlayout, {.v = &layouts[2]}},
     {MODKEY, XK_space, setlayout, {0}},
     {MODKEY | ShiftMask, XK_space, togglefloating, {0}},
     {MODKEY, XK_0, view, {.ui = ~0}},
     {MODKEY | ShiftMask, XK_0, tag, {.ui = ~0}},
-    {MODKEY, XK_comma, focusmon, {.i = -1}},
-    {MODKEY, XK_period, focusmon, {.i = +1}},
-    {MODKEY | ShiftMask, XK_comma, tagmon, {.i = -1}},
-    {MODKEY | ShiftMask, XK_period, tagmon, {.i = +1}},
+    {MODKEY, XK_Left, focusmon, {.i = -1}},
+    {MODKEY, XK_Right, focusmon, {.i = +1}},
+    {MODKEY | ControlMask, XK_Left, tagmon, {.i = -1}},
+    {MODKEY | ControlMask, XK_Right, tagmon, {.i = +1}},
     TAGKEYS(XK_1, 0)
         TAGKEYS(XK_2, 1)
             TAGKEYS(XK_3, 2)
@@ -181,7 +181,7 @@ static const Key keys[] = {
                             TAGKEYS(XK_7, 6)
                                 TAGKEYS(XK_8, 7)
                                     TAGKEYS(XK_9, 8){MODKEY | ShiftMask, XK_q, quit, {0}},
-    {MODKEY | ControlMask, XK_q, spawn, SHCMD("$HOME/.config/rofi/powermenu.sh")},
+    {MODKEY | ShiftMask, XK_Return, spawn, SHCMD("$HOME/.config/rofi/powermenu/powermenu.sh")},
     {MODKEY | ControlMask | ShiftMask, XK_r, spawn, SHCMD("systemctl reboot")},
     {MODKEY | ControlMask | ShiftMask, XK_s, spawn, SHCMD("systemctl suspend")},
 };

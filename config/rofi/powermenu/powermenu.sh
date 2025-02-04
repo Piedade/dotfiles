@@ -1,70 +1,97 @@
 #!/usr/bin/env bash
 
-## Author  : Aditya Shakya
-## Mail    : adi1090x@gmail.com
-## Github  : @adi1090x
-## Twitter : @adi1090x
+## Author : Aditya Shakya (adi1090x)
+## Github : @adi1090x
 
-# Available Styles
-# >> Created and tested on : rofi 1.6.0-1
-#
-# column_circle     column_square     column_rounded     column_alt
-# card_circle     card_square     card_rounded     card_alt
-# dock_circle     dock_square     dock_rounded     dock_alt
-# drop_circle     drop_square     drop_rounded     drop_alt
-# full_circle     full_square     full_rounded     full_alt
-# row_circle      row_square      row_rounded      row_alt
-
-theme="drop_square"
+# CMDs
+theme="full_black"
 dir="$HOME/.config/rofi/powermenu"
-
-
-uptime=$(uptime -p | sed -e 's/up //g')
-
-rofi_command="rofi -theme $dir/$theme"
+uptime="`uptime -p | sed -e 's/up //g'`"
 
 # Options
-shutdown=""
-reboot=""
-lock=""
-suspend=""
-logout=""
+shutdown='󰐥'
+reboot='󰜉'
+lock=''
+suspend=''
+logout='󰍃'
 
-# Message
-msg() {
-	rofi -theme "$dir/message.rasi" -e "Available Options  -  yes / y / no / n"
+# Rofi CMD
+rofi_cmd() {
+    rofi -dmenu \
+        -p "" \
+        -mesg "Uptime: $uptime" \
+        -theme "$dir/$theme" \
+        -selected-row 1
 }
 
-# Variable passed to rofi
-options="$shutdown\n$reboot\n$lock\n$suspend\n$logout"
+# Pass variables to rofi dmenu
+run_rofi() {
+    # echo -e "$lock\n$suspend\n$logout\n$reboot\n$shutdown" | rofi_cmd
+    echo -e "$reboot\n$shutdown\n$logout" | rofi_cmd
+}
 
-chosen="$(echo -e "$options" | $rofi_command -p "Uptime: $uptime" -dmenu -selected-row 2)"
-case $chosen in
-    $shutdown)
-			systemctl poweroff
+# Execute Command
+run_cmd() {
+    # Kill all Chrome processes and wait for them to exit
+    killall --wait chrome code
+
+    case $1 in
+        --shutdown)
+            systemctl poweroff
+            ;;
+        --reboot)
+            systemctl reboot
+            ;;
+        --lock)
+            if [[ -f /usr/bin/i3lock ]]; then
+                i3lock
+            elif [[ -f /usr/bin/betterlockscreen ]]; then
+                betterlockscreen -l
+            fi
+            ;;
+        --suspend)
+            mpc -q pause
+            amixer set Master mute
+            systemctl suspend
+            ;;
+        --logout)
+            case "$DESKTOP_SESSION" in
+                openbox)
+                    openbox --exit
+                    ;;
+                bspwm)
+                    bspc quit
+                    ;;
+                dwm)
+                    pkill dwm
+                    ;;
+                i3)
+                    i3-msg exit
+                    ;;
+                plasma)
+                    qdbus org.kde.ksmserver /KSMServer logout 0 0 0
+                    ;;
+            esac
+            ;;
+    esac
+}
+
+# Actions
+chosen="$(run_rofi)"
+case "${chosen}" in
+    "${shutdown}")
+        run_cmd --shutdown
         ;;
-    $reboot)
-			systemctl reboot
+    "${reboot}")
+        run_cmd --reboot
         ;;
-    $lock)
-		if [[ -f /usr/bin/i3lock ]]; then
-			i3lock
-		elif [[ -f /usr/bin/betterlockscreen ]]; then
-			betterlockscreen -l
-		fi
+    "${lock}")
+        run_cmd --lock
         ;;
-    $suspend)
-			mpc -q pause
-			amixer set Master mute
-			systemctl suspend
+    "${suspend}")
+        run_cmd --suspend
         ;;
-    $logout)
-			if [[ "$DESKTOP_SESSION" == "Openbox" ]]; then
-				openbox --exit
-			elif [[ "$DESKTOP_SESSION" == "bspwm" ]]; then
-				bspc quit
-			elif [[ "$DESKTOP_SESSION" == "i3" ]]; then
-				i3-msg exit
-			fi
+    "${logout}")
+        run_cmd --logout
         ;;
 esac

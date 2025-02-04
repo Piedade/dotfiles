@@ -256,6 +256,7 @@ static void destroynotify(XEvent *e);
 static void detach(Client *c);
 static void detachstack(Client *c);
 static Monitor *dirtomon(int dir);
+static Monitor *numtomon(int num);
 static void drawbar(Monitor *m);
 static void drawbars(void);
 static void enternotify(XEvent *e);
@@ -263,6 +264,7 @@ static void expose(XEvent *e);
 static void focus(Client *c);
 static void focusin(XEvent *e);
 static void focusmon(const Arg *arg);
+static void focusnthmon(const Arg *arg);
 static void focusstack(const Arg *arg);
 static Atom getatomprop(Client *c, Atom prop);
 static int getrootptr(int *x, int *y);
@@ -315,19 +317,15 @@ static void spawn(const Arg *arg);
 static Monitor *systraytomon(Monitor *m);
 static void tag(const Arg *arg);
 static void tagmon(const Arg *arg);
-static void tagnextmon(const Arg *arg);
-static void tagprevmon(const Arg *arg);
-static void tagothermon(const Arg *arg, int dir);
+static void tagnthmon(const Arg *arg);
 static void tile(Monitor *m);
 static void togglebar(const Arg *arg);
 static void togglefloating(const Arg *arg);
 static void toggletag(const Arg *arg);
 static void toggleview(const Arg *arg);
-#if SHOWWINICON
 static void freeicon(Client *c);
 static Picture geticonprop(Window w, unsigned int *icw, unsigned int *ich);
 static void updateicon(Client *c);
-#endif
 static void unfocus(Client *c, int setfocus);
 static void unmanage(Client *c, int destroyed);
 static void unmapnotify(XEvent *e);
@@ -1084,6 +1082,19 @@ dirtomon(int dir)
 	return m;
 }
 
+Monitor *
+numtomon(int num)
+{
+	Monitor *m = NULL;
+	int i = 0;
+
+	for (m = mons, i = 0; m->next && i < num; m = m->next)
+	{
+		i++;
+	}
+	return m;
+}
+
 void drawbar(Monitor *m)
 {
 	// Initialize variables for drawing.
@@ -1268,6 +1279,20 @@ void focusmon(const Arg *arg)
 	if (!mons->next)
 		return;
 	if ((m = dirtomon(arg->i)) == selmon)
+		return;
+	unfocus(selmon->sel, 0);
+	selmon = m;
+	focus(NULL);
+}
+
+void focusnthmon(const Arg *arg)
+{
+	Monitor *m;
+
+	if (!mons->next)
+		return;
+
+	if ((m = numtomon(arg->i)) == selmon)
 		return;
 	unfocus(selmon->sel, 0);
 	selmon = m;
@@ -2635,32 +2660,11 @@ void tagmon(const Arg *arg)
 	sendmon(selmon->sel, dirtomon(arg->i));
 }
 
-void tagnextmon(const Arg *arg)
+void tagnthmon(const Arg *arg)
 {
-	tagothermon(arg, 1);
-}
-
-void tagprevmon(const Arg *arg)
-{
-	tagothermon(arg, -1);
-}
-
-void tagothermon(const Arg *arg, int dir)
-{
-	Client *sel;
-	Monitor *newmon;
-
 	if (!selmon->sel || !mons->next)
 		return;
-	sel = selmon->sel;
-	newmon = dirtomon(dir);
-	sendmon(sel, newmon);
-	if (arg->ui & TAGMASK)
-	{
-		sel->tags = arg->ui & TAGMASK;
-		focus(NULL);
-		arrange(newmon);
-	}
+	sendmon(selmon->sel, numtomon(arg->i));
 }
 
 void tile(Monitor *m)
