@@ -28,8 +28,7 @@ runApp() {
 }
 
 # VSCODE
-# https://code.visualstudio.com/docs/editor/settings-sync#_troubleshooting-keychain-issues
-app=("code" "--password-store=gnome-libsecret")
+app=("code")
 runApp 1 1 "${app[@]}"
 
 # CHROME

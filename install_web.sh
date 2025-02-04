@@ -82,6 +82,7 @@ installApache() {
     "${SUDO_CMD}" chown -R ${SUDO_USER:-$USER}:www-data /var/www
     "${SUDO_CMD}" find /var/www -type d -exec chmod 2755 {} \+
     "${SUDO_CMD}" find /var/www -type f -exec chmod 644 {} \+
+    "${SUDO_CMD}" find /var/www -type d -exec chmod g+s {} +
 }
 
 
