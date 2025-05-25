@@ -64,7 +64,10 @@ installDependencies() {
     "${SUDO_CMD}" apt upgrade -y
 
     # Installing Essential Programs
-    "${SUDO_CMD}" apt-get install build-essential libxcb-util-dev numlockx feh rofi unzip wget pipewire pipewire-pulse pulseaudio wireplumber pavucontrol libx11-dev libxft-dev libxinerama-dev libx11-xcb-dev libxcb-res0-dev alsa-utils xdg-utils libimlib2-dev pkexec lxpolkit gnome-keyring libsecret-1-0 gvfs gvfs-backends gvfs-fuse thunar tumbler-plugins-extra xarchiver thunar-archive-plugin dunst arandr -y
+
+
+
+    "${SUDO_CMD}" apt-get install build-essential libxcb-util-dev numlockx feh rofi unzip wget pipewire pipewire-audio-client-libraries wireplumber pipewire-pulse pipewire-alsa pavucontrol libx11-dev libxft-dev libxinerama-dev libx11-xcb-dev libxcb-res0-dev alsa-utils xdg-utils libimlib2-dev pkexec lxpolkit gnome-keyring libsecret-1-0 gvfs gvfs-backends gvfs-fuse thunar tumbler-plugins-extra xarchiver thunar-archive-plugin dunst arandr -y
 
     # Installing Other less important Programs
     "${SUDO_CMD}" apt-get install xbindkeys xdotool fzf jq libnotify-bin trash-cli flameshot psmisc neovim papirus-icon-theme lxappearance lightdm xclip bat multitail tree zoxide bash-completion ripgrep alacritty gimp inkscape gimp libreoffice fonts-liberation fonts-noto-color-emoji -y
@@ -77,13 +80,13 @@ installDependencies() {
 
 installGitHubCLI() {
     (type -p wget >/dev/null || ("${SUDO_CMD}" apt update && "${SUDO_CMD}" apt-get install wget -y)) \
-	&& "${SUDO_CMD}" mkdir -p -m 755 /etc/apt/keyrings \
+    && "${SUDO_CMD}" mkdir -p -m 755 /etc/apt/keyrings \
         && out=$(mktemp) && wget -nv -O$out https://cli.github.com/packages/githubcli-archive-keyring.gpg \
         && cat $out | "${SUDO_CMD}" tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null \
-	&& "${SUDO_CMD}" chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg \
-	&& echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | "${SUDO_CMD}" tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
-	&& "${SUDO_CMD}" apt update \
-	&& "${SUDO_CMD}" apt install gh -y
+    && "${SUDO_CMD}" chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | "${SUDO_CMD}" tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+    && "${SUDO_CMD}" apt update \
+    && "${SUDO_CMD}" apt install gh -y
 }
 
 installFont() {
@@ -251,29 +254,29 @@ linkConfig() {
     fi
 
     echo "${YELLOW}Linking config files...${RC}"
-	for file in "$GITPATH/config"/*; do
-		filename=$(basename "$file")
+    for file in "$GITPATH/config"/*; do
+        filename=$(basename "$file")
 
-		"${SUDO_CMD}" ln -svf "$file" "$CONFIG_DIR/$filename" || {
-		    echo "${RED}Failed to create symbolic link for $filename${RC}"
-		    exit 1
-		}
-	done
+        "${SUDO_CMD}" ln -svf "$file" "$CONFIG_DIR/$filename" || {
+            echo "${RED}Failed to create symbolic link for $filename${RC}"
+            exit 1
+        }
+    done
 
-    #FIX PERMISSIONS
-	"${SUDO_CMD}" chown -R piedade:piedade $CONFIG_DIR
+    # FIX PERMISSIONS
+    "${SUDO_CMD}" chown -R piedade:piedade $CONFIG_DIR
 
     DWMPATH="$GITPATH/dwm"
     DWMBLOCKSPATH="$DWMPATH/blocks"
 
     echo "${YELLOW}Linking dwmblocks scripts to /usr/local/bin...${RC}"
     for file in "$DWMBLOCKSPATH/scripts"/*; do
-		filename=$(basename "$file")
+        filename=$(basename "$file")
 
-		"${SUDO_CMD}" ln -svf "$file" "/usr/local/bin/$filename" || {
-		    echo "${RED}Failed to create symbolic link for $filename${RC}"
-		    exit 1
-		}
+        "${SUDO_CMD}" ln -svf "$file" "/usr/local/bin/$filename" || {
+            echo "${RED}Failed to create symbolic link for $filename${RC}"
+            exit 1
+        }
     done
 
     "${SUDO_CMD}" cp "$DWMPATH/dwm.desktop" /usr/share/xsessions
@@ -320,7 +323,7 @@ customizeLightdm() {
 
 installVsCode() {
     printf "%b\n" "${YELLOW}Installing VS Code..${RC}."
-	wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg
+    wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg
     "${SUDO_CMD}" install -D -o root -g root -m 644 packages.microsoft.gpg /etc/apt/keyrings/packages.microsoft.gpg
     echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" | "${SUDO_CMD}" tee /etc/apt/sources.list.d/vscode.list > /dev/null
     rm -f packages.microsoft.gpg
@@ -329,10 +332,10 @@ installVsCode() {
 }
 
 installChrome() {
-	wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-	"${SUDO_CMD}" dpkg -i ./google-chrome-stable_current_amd64.deb
-	"${SUDO_CMD}" apt-get -f install
-	rm ./google-chrome-stable_current_amd64.deb
+    wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+    "${SUDO_CMD}" dpkg -i ./google-chrome-stable_current_amd64.deb
+    "${SUDO_CMD}" apt-get -f install
+    rm ./google-chrome-stable_current_amd64.deb
 }
 
 installAnyDesk() {

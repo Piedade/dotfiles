@@ -81,7 +81,8 @@ static const Rule rules[] = {
     /* class instance title tags mask isfloating isterminal noswallow monitor */
     {"St", NULL, NULL, 4, 0, 1, 0, 0},
     {"Lxpolkit", NULL, NULL, 0, 1, 0, 0, -1},
-    {"Pavucontrol", NULL, NULL, 0, 1, 0, 0, -1},
+    {"pavucontrol", NULL, NULL, 0, 1, 0, 0, -1},
+    {"Lxappearance", NULL, NULL, 0, 1, 0, 0, -1},
     {"Lightdm-settings", NULL, NULL, 0, 1, 0, 0, -1},
     {"Alacritty", NULL, NULL, 4, 0, 1, 0, 0},
     /* {"Code", NULL, NULL, 1, 0, 0, 1, 0}, */
