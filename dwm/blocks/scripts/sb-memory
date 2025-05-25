@@ -10,4 +10,4 @@ case $BUTTON in
 	6) setsid -f "$TERMINAL" -e "$EDITOR" "$0" ;;
 esac
 
-echo "󰽙 $(free --mebi | sed -n '2{p;q}' | awk '{printf ("%.2fG/%2.0fG\n", ( $3 / 1024), ($2 / 1024))}') "
+echo " 󰽙 $(free --mebi | sed -n '2{p;q}' | awk '{printf ("%.2fG/%2.0fG\n", ( $3 / 1024), ($2 / 1024))}') "

@@ -54,6 +54,7 @@ static const char *const autostart[] = {
     */
     "dbus-update-activation-environment", "--systemd", "--all", NULL,
     "lxpolkit", NULL,
+    "sh", "-c", "~/.screenlayout/default.sh", NULL,
     "dwmblocks", NULL,
     /* "picom", "-b", NULL, */
     "flameshot", NULL,
