@@ -1,0 +1,181 @@
+{
+    "window.titleBarStyle": "native",
+    "window.commandCenter": false,
+    "window.menuBarVisibility": "toggle",
+    "workbench.layoutControl.enabled": false,
+    "window.title": "${activeEditorShort}${separator}${rootPath}",
+    "editor.renderWhitespace": "all",
+    "[html]": {
+        "editor.defaultFormatter": "vscode.html-language-features"
+    },
+    "[scss]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "files.exclude": {
+        "**/.angular": true,
+        "**/.firebase": true,
+        "**/img/p": true,
+        "**/node_modules": true,
+        "platforms": true,
+        "www": true
+    },
+    "redhat.telemetry.enabled": false,
+    "git.autofetch": true,
+    "[smarty]": {
+        "editor.defaultFormatter": "aswinkumar863.smarty-template-support"
+    },
+    "[javascript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[css]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "security.workspace.trust.untrustedFiles": "open",
+    "[json]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[xml]": {
+        "editor.defaultFormatter": "DotJoshJohnson.xml"
+    },
+    "[jsonc]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "window.newWindowDimensions": "offset",
+    "git.mergeEditor": false,
+    "merge-conflict.autoNavigateNextConflict.enabled": true,
+    "git.enableSmartCommit": true,
+    "git.confirmSync": false,
+    "search.exclude": {
+        "**/classic": true,
+        "modules/red_mypets/public": true
+    },
+    "workbench.startupEditor": "none",
+    "prettier.jsxSingleQuote": true,
+    "prettier.singleQuote": true,
+    "prettier.useTabs": false,
+    "typescript.preferences.quoteStyle": "single",
+    "javascript.preferences.quoteStyle": "single",
+    "[python]": {
+        "editor.formatOnType": true,
+        "editor.defaultFormatter": "ms-python.black-formatter"
+    },
+    "editor.formatOnSave": true,
+    "git.openRepositoryInParentFolders": "never",
+    "todohighlight.isEnable": true,
+    "diffEditor.ignoreTrimWhitespace": true,
+    "typescript.format.semicolons": "insert",
+    "git.repositoryScanIgnoredFolders": ["node_modules", "vendor"],
+    "[vue]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.indentSize": "tabSize",
+        "editor.tabSize": 4,
+        "editor.detectIndentation": false
+    },
+    "[typescript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.indentSize": "tabSize",
+        "editor.tabSize": 4,
+        "editor.detectIndentation": false
+    },
+    "files.insertFinalNewline": true,
+    "editor.rulers": [80],
+    "files.trimTrailingWhitespace": true,
+    "todohighlight.keywords": [
+        {
+            "text": "RED Piedade:",
+            "color": "#fff",
+            "backgroundColor": "#e40d23"
+        }
+    ],
+    "application.shellEnvironmentResolutionTimeout": 20,
+    "html.format.wrapAttributes": "force",
+    "prettier.proseWrap": "always",
+    "prettier.singleAttributePerLine": true,
+    "editor.wordWrapColumn": 80,
+    "html.format.wrapLineLength": 80,
+    "vscode-erb-beautify.tabStops": 4,
+    "prettier.tabWidth": 4,
+    "editor.tabSize": 4,
+    "bashBeautify.tabSize": 4,
+    "liveServer.settings.donotShowInfoMsg": true,
+    "codeium.enableConfig": {
+        "*": true,
+        "tailwindcss": true
+    },
+    "[shellscript]": {
+        "editor.formatOnSave": false
+    },
+    "update.mode": "none",
+    "settingsSync.ignoredSettings": [
+        "-php.validate.executablePath",
+        "-php.debug.executablePath"
+    ],
+    "tailwindCSS.lint.invalidApply": "warning",
+    "tailwindCSS.lint.invalidConfigPath": "warning",
+    "tailwindCSS.lint.invalidScreen": "warning",
+    "tailwindCSS.files.exclude": [
+        "**/.git/**",
+        "**/node_modules/**",
+        "**/.hg/**",
+        "**/.svn/**",
+        "**/@red/**",
+        "style.scss"
+    ],
+    "[typescriptreact]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "liveServer.settings.donotVerifyTags": true,
+    "xml.format.enforceQuoteStyle": "preferred",
+    "xml.preferences.quoteStyle": "single",
+    "black-formatter.args": [" --skip-string-normalization"],
+    "Odoo.configurations": {
+        "0": {
+            "id": 0,
+            "name": "v17",
+            "odooPath": "/Users/piedade/Sites/odoo/odoo",
+            "rawOdooPath": "${workspaceFolder}",
+            "addons": ["/Users/piedade/Sites/odoo/odoo/addons"],
+            "pythonPath": "python3"
+        }
+    },
+    "security.promptForLocalFileProtocolHandling": false,
+    "editor.quickSuggestions": {
+        "strings": "on"
+    },
+    "emmet.includeLanguages": {
+        "postcss": "css"
+    },
+    "typescript.preferences.importModuleSpecifier": "non-relative",
+    "terminal.external.osxExec": "iTerm.app",
+    "terminal.integrated.defaultProfile.osx": "zsh",
+    "java.saveActions.organizeImports": true,
+    "javascript.updateImportsOnFileMove.enabled": "always",
+    "typescript.updateImportsOnFileMove.enabled": "always",
+    "[postcss]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "terminal.integrated.copyOnSelection": true,
+    "editor.minimap.enabled": false,
+    "terminal.integrated.fontFamily": "FiraCode Nerd Font",
+    "terminal.integrated.fontSize": 12,
+    "window.confirmSaveUntitledWorkspace": false,
+    "explorer.confirmDelete": false,
+    "files.associations": {
+        "*.h": "cpp",
+        ".xbindkeysrc": "properties"
+    },
+    "cloudcode.duetAI.project": "dev-gemini-450516",
+    "geminicodeassist.project": "dev-gemini-450516",
+    "tailwindCSS.includeLanguages": {
+        "smarty": "html"
+    },
+    "tailwindCSS.experimental.classRegex": [],
+    "tailwindCSS.classAttributes": [
+        "class",
+        "className",
+        "ngClass",
+        "class:list",
+        "classNames"
+    ],
+    "workbench.activityBar.location": "hidden"
+}
