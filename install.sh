@@ -54,6 +54,9 @@ checkEnv() {
         echo "${RED}You need to be a member of the sudo group to run me!${RC}"
         exit 1
     fi
+
+    # Add user to adm group for log access
+    sudo usermod -aG adm $USER
 }
 
 installDependencies() {
@@ -72,7 +75,7 @@ installDependencies() {
     # For flameshot screenshots
     mkdir -p "$USER_HOME/Pictures"
     # fix permissions
-    "${SUDO_CMD}" chown -R piedade:piedade "$USER_HOME/Pictures"
+    "${SUDO_CMD}" chown -R $USER:$USER "$USER_HOME/Pictures"
 
     # Enable graphical login and change target from CLI to GUI
     systemctl enable lightdm
@@ -148,7 +151,7 @@ installFonts() {
     fi
 
     #FIX PERMISSIONS
-    "${SUDO_CMD}" chown -R piedade:piedade "$USER_HOME/.local"
+    "${SUDO_CMD}" chown -R $USER:$USER "$USER_HOME/.local"
 
 
     installFont "Meslo" https://github.com/ryanoasis/nerd-fonts/releases/latest/download/Meslo.zip
@@ -265,7 +268,7 @@ linkConfig() {
     done
 
     # FIX PERMISSIONS
-    "${SUDO_CMD}" chown -R piedade:piedade $CONFIG_DIR
+    "${SUDO_CMD}" chown -R $USER:$USER $CONFIG_DIR
 
     DWMPATH="$GITPATH/dwm"
     DWMBLOCKSPATH="$DWMPATH/blocks"
