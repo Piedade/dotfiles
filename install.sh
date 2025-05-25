@@ -64,10 +64,10 @@ installDependencies() {
     "${SUDO_CMD}" apt upgrade -y
 
     # Installing Essential Programs
-    "${SUDO_CMD}" apt-get install build-essential libxcb-util-dev numlockx feh rofi unzip wget pipewire pipewire-pulse pulseaudio wireplumber pavucontrol libx11-dev libxft-dev libxinerama-dev libx11-xcb-dev libxcb-res0-dev alsa-utils xdg-utils libimlib2-dev pkexec lxpolkit gnome-keyring thunar file-roller dunst -y
+    "${SUDO_CMD}" apt-get install build-essential libxcb-util-dev numlockx feh rofi unzip wget pipewire pipewire-pulse pulseaudio wireplumber pavucontrol libx11-dev libxft-dev libxinerama-dev libx11-xcb-dev libxcb-res0-dev alsa-utils xdg-utils libimlib2-dev pkexec lxpolkit gnome-keyring libsecret-1-0 gvfs gvfs-backends gvfs-fuse thunar tumbler-plugins-extra xarchiver thunar-archive-plugin dunst arandr -y
 
     # Installing Other less important Programs
-    "${SUDO_CMD}" apt-get install xbindkeys xdotool fzf jq libnotify-bin trash-cli flameshot psmisc neovim papirus-icon-theme lxappearance lightdm xclip bat multitail tree zoxide bash-completion ripgrep alacritty gimp fonts-liberation fonts-noto-color-emoji -y
+    "${SUDO_CMD}" apt-get install xbindkeys xdotool fzf jq libnotify-bin trash-cli flameshot psmisc neovim papirus-icon-theme lxappearance lightdm xclip bat multitail tree zoxide bash-completion ripgrep alacritty gimp inkscape gimp libreoffice fonts-liberation fonts-noto-color-emoji -y
 
 
     # Enable graphical login and change target from CLI to GUI
@@ -364,7 +364,6 @@ customizeLightdm
 
 linkConfig
 
-"${SUDO_CMD}" apt install inkscape gimp libreoffice -y
 "${SUDO_CMD}" apt modernize-sources
 
 "${SUDO_CMD}" systemctl reboot

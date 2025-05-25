@@ -28,42 +28,4 @@
 	<text-files/>
 	<video-files/>
 </action>
-<action>
-	<icon>ark</icon>
-	<name>Extract Here</name>
-	<submenu></submenu>
-	<unique-id>1738324359403148-1</unique-id>
-	<command>file-roller --extract-here %F</command>
-	<description></description>
-	<range></range>
-	<patterns>*.tar;*.gz;*.zip;*.rar;*.7z;*.bz2;*.xz;*.tar.gz;*.tar.bz2;*.tar.xz;*.lz;*.lzma;*.iso;*.dmg;*.cab</patterns>
-	<other-files/>
-</action>
-<action>
-	<icon>ark</icon>
-	<name>Extract To...</name>
-	<submenu></submenu>
-	<unique-id>1738325754341613-2</unique-id>
-	<command>file-roller --extract</command>
-	<description></description>
-	<range></range>
-	<patterns>*.tar;*.gz;*.zip;*.rar;*.7z;*.bz2;*.xz;*.tar.gz;*.tar.bz2;*.tar.xz;*.lz;*.lzma;*.iso;*.dmg;*.cab</patterns>
-	<other-files/>
-</action>
-<action>
-	<icon>ark</icon>
-	<name>Create Archive...</name>
-	<submenu></submenu>
-	<unique-id>1738326066719901-3</unique-id>
-	<command>file-roller --default-dir=%d --add %F</command>
-	<description></description>
-	<range></range>
-	<patterns>*</patterns>
-	<directories/>
-	<audio-files/>
-	<image-files/>
-	<other-files/>
-	<text-files/>
-	<video-files/>
-</action>
 </actions>

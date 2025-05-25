@@ -86,7 +86,7 @@ static const Rule rules[] = {
     /* {"Code", NULL, NULL, 1, 0, 0, 1, 0}, */
     /* {"Google-chrome", NULL, NULL, 3, 0, 0, 0, 0}, */
     {"Thunar", NULL, NULL, 0, 1, 0, 0, -1},
-    {"org.gnome.FileRoller", NULL, NULL, 0, 1, 0, 0, -1},
+    {"Xarchiver", NULL, NULL, 0, 1, 0, 0, -1},
     {NULL, NULL, "Event Tester", 0, 0, 0, 1, -1}, /* xev */
 };
 
@@ -137,8 +137,8 @@ static const Key keys[] = {
     {MODKEY, XK_p, spawn, {.v = launchercmd}},
     {MODKEY, XK_comma, spawn, {.v = launchereditor}},
     {MODKEY, XK_period, spawn, {.v = launcherbrowser}},
-    {0, XK_Print, spawn, SHCMD("flameshot full -p ~/Pictures/Screenshots/")},
-    {MODKEY, XK_Print, spawn, SHCMD("flameshot gui -p ~/Pictures/Screenshots/")},
+    {0, XK_Print, spawn, SHCMD("flameshot full")},
+    {MODKEY, XK_Print, spawn, SHCMD("flameshot gui")},
     {MODKEY | ShiftMask, XK_Print, spawn, SHCMD("flameshot gui --clipboard")},
     {MODKEY, XK_e, spawn, SHCMD("open .")},
     {MODKEY | ShiftMask, XK_w, spawn, SHCMD("feh --randomize --bg-fill ~/.dotfiles/backgrounds/*")},
