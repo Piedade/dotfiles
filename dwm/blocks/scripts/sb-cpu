@@ -4,9 +4,44 @@ case "$BUTTON" in
     6) terminal -e "$EDITOR" "$0" ;;
 esac
 
-load=$(grep 'cpu ' /proc/stat | awk '{usage=100-($5*100)/($2+$3+$4+$5+$6+$7+$8)} END {print usage}')
-percentage=$(printf "%.2f" $load)
+# load=$(grep 'cpu ' /proc/stat | awk '{usage=100-($5*100)/($2+$3+$4+$5+$6+$7+$8)} END {print usage}')
+# percentage=$(printf "%.2f" $load)
+# #fix space flick
+# percentage=$(printf "%-4s\n" "$percentage%")
 
-#fix space flick
-percentage=$(printf "%-4s\n" "$percentage%")
-echo "󰒋 $percentage "
+# File to store previous stat
+PREV_FILE="/tmp/.cpu_prev"
+
+# Get current /proc/stat line
+curr=$(grep '^cpu ' /proc/stat)
+
+# Check if prev file exists
+if [ -f "$PREV_FILE" ]; then
+    prev=$(cat "$PREV_FILE")
+
+    # Store current for next run
+    echo "$curr" > "$PREV_FILE"
+
+    # Calculate usage
+    usage=$(awk -v a="$prev" -v b="$curr" '
+    BEGIN {
+        split(a, ap); split(b, bp);
+        idle1 = ap[5]; idle2 = bp[5];
+        total1 = 0; total2 = 0;
+        for (i = 2; i <= 8; i++) total1 += ap[i];
+        for (i = 2; i <= 8; i++) total2 += bp[i];
+        totald = total2 - total1;
+        idled = idle2 - idle1;
+        usage = (totald - idled) * 100 / totald;
+        printf("%.1f", usage);
+    }')
+else
+    # First run — save current and return dummy
+    echo "$curr" > "$PREV_FILE"
+    usage="N/A"
+fi
+
+# ola=$(top -bn1 | grep "Cpu(s)" | awk '{print "user: " $2 ", system: " $4 ", idle: " $8}')
+# echo "󰒋 $ola $usage%"
+
+echo "  󰒋 $usage%"

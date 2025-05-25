@@ -64,13 +64,11 @@ installDependencies() {
     "${SUDO_CMD}" apt upgrade -y
 
     # Installing Essential Programs
-    "${SUDO_CMD}" apt-get install build-essential libxcb-util-dev numlockx feh rofi unzip wget pipewire wireplumber pavucontrol libx11-dev libxft-dev libxinerama-dev libx11-xcb-dev libxcb-res0-dev alsa-utils xdg-utils libimlib2-dev policykit-1-gnome gnome-keyring thunar file-roller dunst -y
+    "${SUDO_CMD}" apt-get install build-essential libxcb-util-dev numlockx feh rofi unzip wget pipewire pipewire-pulse pulseaudio wireplumber pavucontrol libx11-dev libxft-dev libxinerama-dev libx11-xcb-dev libxcb-res0-dev alsa-utils xdg-utils libimlib2-dev pkexec lxpolkit gnome-keyring thunar file-roller dunst -y
 
     # Installing Other less important Programs
     "${SUDO_CMD}" apt-get install xbindkeys xdotool fzf jq libnotify-bin trash-cli flameshot psmisc neovim papirus-icon-theme lxappearance lightdm xclip bat multitail tree zoxide bash-completion ripgrep alacritty gimp fonts-liberation fonts-noto-color-emoji -y
 
-    # Removing unwanted packages
-    sudo apt remove zutty
 
     # Enable graphical login and change target from CLI to GUI
     systemctl enable lightdm
@@ -88,6 +86,50 @@ installGitHubCLI() {
 	&& "${SUDO_CMD}" apt install gh -y
 }
 
+installFont() {
+    local fontName="$1"
+
+    # INSTALL Meslo Fonts
+    FONT_ZIP="$FONT_DIR/$fontName.zip"
+    FONT_URL="$2"
+    FONT_INSTALLED=$(fc-list | grep -i "$fontName")
+
+    if [ -n "$FONT_INSTALLED" ]; then
+        echo "$fontName font is already installed."
+    else
+        echo "${YELLOW}Installing $fontName font${RC}"
+
+        # Check if the font zip file already exists
+        if [ ! -f "$FONT_ZIP" ]; then
+            # Download the font zip file
+            wget -P "$FONT_DIR" "$FONT_URL" || {
+                echo "Failed to download $fontName font from $FONT_URL"
+                return 1
+            }
+        else
+            echo "$fontName.zip already exists in $FONT_DIR, skipping download."
+        fi
+
+        # Unzip the font file if it hasn't been unzipped yet
+        if [ ! -d "$FONT_DIR/$fontName" ]; then
+            unzip "$FONT_ZIP" -d "$FONT_DIR" || {
+                echo "Failed to unzip $FONT_ZIP"
+                return 1
+            }
+        else
+            echo "$fontName font files already unzipped in $FONT_DIR, skipping unzip."
+        fi
+
+        # Remove the zip file
+        rm "$FONT_ZIP" || {
+            echo "Failed to remove $FONT_ZIP"
+            return 1
+        }
+
+        echo "${GREEN}$fontName font installed successfully${RC}"
+    fi
+}
+
 installFonts() {
     FONT_DIR="$USER_HOME/.local/share/fonts"
 
@@ -101,45 +143,14 @@ installFonts() {
         echo "$FONT_DIR exists, skipping creation."
     fi
 
-    # INSTALL Meslo Fonts
-    FONT_ZIP="$FONT_DIR/Meslo.zip"
-    FONT_URL="https://github.com/ryanoasis/nerd-fonts/releases/latest/download/Meslo.zip"
-    FONT_INSTALLED=$(fc-list | grep -i "Meslo")
+    #FIX PERMISSIONS
+    "${SUDO_CMD}" chown -R piedade:piedade "$USER_HOME/.local"
 
-    if [ -n "$FONT_INSTALLED" ]; then
-        echo "Meslo Nerd-fonts are already installed."
-    else
-        echo "${YELLOW}Installing Meslo Nerd-fonts${RC}"
 
-        # Check if the font zip file already exists
-        if [ ! -f "$FONT_ZIP" ]; then
-            # Download the font zip file
-            wget -P "$FONT_DIR" "$FONT_URL" || {
-                echo "Failed to download Meslo Nerd-fonts from $FONT_URL"
-                return 1
-            }
-        else
-            echo "Meslo.zip already exists in $FONT_DIR, skipping download."
-        fi
+    installFont "Meslo" https://github.com/ryanoasis/nerd-fonts/releases/latest/download/Meslo.zip
 
-        # Unzip the font file if it hasn't been unzipped yet
-        if [ ! -d "$FONT_DIR/Meslo" ]; then
-            unzip "$FONT_ZIP" -d "$FONT_DIR" || {
-                echo "Failed to unzip $FONT_ZIP"
-                return 1
-            }
-        else
-            echo "Meslo font files already unzipped in $FONT_DIR, skipping unzip."
-        fi
+    installFont "FiraCode" https://github.com/ryanoasis/nerd-fonts/releases/latest/download/FiraCode.zip
 
-        # Remove the zip file
-        rm "$FONT_ZIP" || {
-            echo "Failed to remove $FONT_ZIP"
-            return 1
-        }
-
-        echo "${GREEN}Meslo Nerd-fonts installed successfully${RC}"
-    fi
 
     # INSTALL Apple Fonts
     FONT_ZIP="$FONT_DIR/Apple-Fonts.zip"
@@ -196,9 +207,6 @@ installFonts() {
         echo "Failed to clean $FONT_ZIP"
         return 1
     }
-
-    #FIX PERMISSIONS
-    "${SUDO_CMD}" chown -R piedade:piedade "$USER_HOME/.local"
 }
 
 installStarship() {
@@ -327,17 +335,36 @@ installChrome() {
 	rm ./google-chrome-stable_current_amd64.deb
 }
 
+installAnyDesk() {
+    # Add the AnyDesk GPG key
+    "${SUDO_CMD}" curl -fsSL https://keys.anydesk.com/repos/DEB-GPG-KEY -o /etc/apt/keyrings/keys.anydesk.com.asc
+    "${SUDO_CMD}" chmod a+r /etc/apt/keyrings/keys.anydesk.com.asc
+
+    # Add the AnyDesk apt repository
+    echo "deb [signed-by=/etc/apt/keyrings/keys.anydesk.com.asc] https://deb.anydesk.com all main" | "${SUDO_CMD}" tee /etc/apt/sources.list.d/anydesk-stable.list > /dev/null
+
+    # Update apt caches and install the AnyDesk client
+    "${SUDO_CMD}" apt update
+    "${SUDO_CMD}" apt install anydesk -y
+}
+
 checkEnv
 
 installDependencies
 installGitHubCLI
+
 installFonts
 installStarship
 
 installVsCode
 installChrome
+installAnyDesk
 
 customizeLightdm
+
 linkConfig
+
+"${SUDO_CMD}" apt install inkscape gimp libreoffice -y
+"${SUDO_CMD}" apt modernize-sources
 
 "${SUDO_CMD}" systemctl reboot

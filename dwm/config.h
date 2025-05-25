@@ -34,7 +34,7 @@ static const char normbordercolor[] = "#444444";
 static const char normbgcolor[] = "#000000";
 static const char normfgcolor[] = "#eeeeee";
 static const char selbordercolor[] = "#888888";
-static const char selbgcolor[] = "#000000";
+static const char selbgcolor[] = "#333333";
 static const char selfgcolor[] = "#eeeeee";
 
 static const char *colors[][3] = {
@@ -53,7 +53,7 @@ static const char *const autostart[] = {
     "xset", "-dpms", NULL, // Disables DPMS (Display Power Management Signaling)
     */
     "dbus-update-activation-environment", "--systemd", "--all", NULL,
-    "/usr/lib/policykit-1-gnome/polkit-gnome-authentication-agent-1", NULL,
+    "lxpolkit", NULL,
     "dwmblocks", NULL,
     /* "picom", "-b", NULL, */
     "flameshot", NULL,
@@ -79,13 +79,14 @@ static const Rule rules[] = {
      */
     /* class instance title tags mask isfloating isterminal noswallow monitor */
     {"St", NULL, NULL, 4, 0, 1, 0, 0},
-    {"Polkit-gnome-authentication-agent-1", NULL, NULL, 0, 1, 0, 0, -1},
+    {"Lxpolkit", NULL, NULL, 0, 1, 0, 0, -1},
     {"Pavucontrol", NULL, NULL, 0, 1, 0, 0, -1},
     {"Lightdm-settings", NULL, NULL, 0, 1, 0, 0, -1},
     {"Alacritty", NULL, NULL, 4, 0, 1, 0, 0},
     /* {"Code", NULL, NULL, 1, 0, 0, 1, 0}, */
     /* {"Google-chrome", NULL, NULL, 3, 0, 0, 0, 0}, */
     {"Thunar", NULL, NULL, 0, 1, 0, 0, -1},
+    {"org.gnome.FileRoller", NULL, NULL, 0, 1, 0, 0, -1},
     {NULL, NULL, "Event Tester", 0, 0, 0, 1, -1}, /* xev */
 };
 

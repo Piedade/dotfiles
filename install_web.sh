@@ -70,9 +70,15 @@ installFirewall() {
 installApache() {
     echo "${YELLOW}Installing apache2...${RC}"
 
+    CONFIG_FILE="/etc/apache2/apache2.conf"
+
     "${SUDO_CMD}" apt install apache2
 
-    echo -e "\n\nServerName localhost" | "${SUDO_CMD}" tee -a "/etc/apache2/apache2.conf" > /dev/null
+    # Add ServerName to the last line
+    echo -e "\n\nServerName localhost" | "${SUDO_CMD}" tee -a "$CONFIG_FILE" > /dev/null
+
+    # Enable .htaccess inside /var/www
+    "${SUDO_CMD}" sed -i '/<Directory \/var\/www\/>/,/<\/Directory>/ s/AllowOverride None/AllowOverride All/' "$CONFIG_FILE"
 
     # Change apache user and group
     "${SUDO_CMD}" sed -i "s/^export APACHE_RUN_USER=.*/export APACHE_RUN_USER="${SUDO_USER:-$USER}"/" "/etc/apache2/envvars"
@@ -87,10 +93,13 @@ installApache() {
 
 
 installMySQL() {
+    wget -q https://ftp.debian.org/debian/pool/main/liba/libaio/libaio1_0.3.113-4_amd64.deb
+   "${SUDO_CMD}" dpkg -i libaio1_0.3.113-4_amd64.deb
+
     APT_CONFIG_FILE="mysql-apt-config_0.8.33-1_all.deb"
 
     echo "${YELLOW}Installing MySQL from APT Repository...${RC}"
-    wget "$APT_CONFIG_FILE"
+    wget "https://dev.mysql.com/get/$APT_CONFIG_FILE"
 
     # non interactive
     # "${SUDO_CMD}" debconf-set-selections <<< "mysql-apt-config mysql-apt-config/select-server select mysql-5.8"
@@ -119,6 +128,17 @@ installPHP() {
     # fcgid is a high performance alternative to mod_cgi that starts a sufficient number of instances of the CGI program to handle concurrent requests.
     "${SUDO_CMD}" apt-get install libapache2-mod-fcgid
 
+    echo "${YELLOW}Installing php 7.2...${RC}"
+
+    # Install missing libicu72
+    wget http://ftp.de.debian.org/debian/pool/main/i/icu/libicu72_72.1-3_amd64.deb
+    "${SUDO_CMD}" dpkg -i libicu72_72.1-3_amd64.deb
+
+    "${SUDO_CMD}" apt-get install php7.2 php7.2-fpm php7.2-mysql php7.2-common php7.2-curl php7.2-xml php7.2-mbstring php7.2-zip php7.2-opcache php7.2-gd php7.2-intl php7.2-apcu php7.2-xdebug libapache2-mod-php7.2 php7.2-json -y
+    # Change fpm user and group
+    "${SUDO_CMD}" sed -i "s/^user = .*/user = "${SUDO_USER:-$USER}"/" "/etc/php/7.2/fpm/pool.d/www.conf"
+    "${SUDO_CMD}" systemctl restart php7.2-fpm
+
     echo "${YELLOW}Installing php 7.4...${RC}"
     "${SUDO_CMD}" apt-get install php7.4 php7.4-fpm php7.4-mysql php7.4-common php7.4-curl php7.4-xml php7.4-mbstring php7.4-zip php7.4-opcache php7.4-gd php7.4-intl php7.4-apcu php7.4-xdebug libapache2-mod-php7.4 php7.4-json -y
     # Change fpm user and group
@@ -137,7 +157,18 @@ installPHP() {
     # Select default PHP-fpm version
     # update-alternatives --config php-fpm.sock
 
-    "${SUDO_CMD}" a2enmod actions fcgid alias proxy_fcgi rewrite
+    "${SUDO_CMD}" a2enmod actions fcgid alias proxy_fcgi rewrite ssl
+}
+
+phprc() {
+  mkdir -p ~/.local/bin
+
+  cat > ~/.local/bin/php <<'EOF'
+#!/usr/bin/env bash
+exec "$PHP_BIN" "$@"
+EOF
+
+  chmod +x ~/.local/bin/php
 }
 
 installDNSmasq() {
@@ -171,16 +202,20 @@ installDNSmasq() {
     sudo chattr +i /etc/resolv.conf
 }
 
-installDNSmasq() {
+installmkcert() {
     echo "${YELLOW}Installing mkcert...${RC}"
     "${SUDO_CMD}" apt-get install libnss3-tools mkcert
+    mkdir -p "/var/www/ssl"
     mkcert -install
 }
 
 installNVM() {
     echo "${YELLOW}Installing nvm...${RC}"
-    wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+    wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/refs/heads/master/install.sh | bash
     nvm install --lts
+
+    # Angular CLI
+    npm install -g @angular/cli@latest
 }
 
 installComposer() {
@@ -198,7 +233,9 @@ installFirewall
 installApache
 installMySQL
 installPHP
+phprc
 installDNSmasq
+installmkcert
 installNVM
 installComposer
 
