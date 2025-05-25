@@ -53,7 +53,7 @@ else
 fi
 
 if wpctl get-volume @DEFAULT_AUDIO_SINK@ | grep -q "[MUTED]"; then
-    volume=" Off"
+    volume="Off "
 else
   volume="$(pactl get-sink-volume @DEFAULT_SINK@ | awk '{print $5}' | xargs)"
   volume=$(printf "%-4s\n" "$volume")
