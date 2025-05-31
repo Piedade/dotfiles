@@ -188,18 +188,18 @@ installDNSmasq() {
 
     # upstream DNS server for non-local domain names, using Cloudflare and google public DNS
     # add .test to resolve to your local machine
-    echo -e "server=1.1.1.1\nserver=8.8.8.8\n\naddress=/.test/127.0.0.1" | sudo tee -a "$DNSMASQCONF" > /dev/null
+    echo -e "server=1.1.1.1\nserver=8.8.8.8\n\naddress=/.test/127.0.0.1" | "${SUDO_CMD}" tee -a "$DNSMASQCONF" > /dev/null
 
     if ! "${SUDO_CMD}" mv "$RESOLVCONF" "$RESOLVCONF".bak; then
         echo "${RED}Can't move the old resolv.conf file!${RC}"
         exit 1
     fi
 
-    echo -e "nameserver 127.0.0.1" | sudo tee -a "$RESOLVCONF" > /dev/null
+    echo -e "nameserver 127.0.0.1" | "${SUDO_CMD}" tee -a "$RESOLVCONF" > /dev/null
 
     # Change the file’s attributes using the chattr command to make our file immutable.
     # This prevents the local network manager from overwriting our changes:
-    sudo chattr +i /etc/resolv.conf
+    "${SUDO_CMD}" chattr +i /etc/resolv.conf
 }
 
 installmkcert() {
@@ -227,6 +227,36 @@ installComposer() {
     "${SUDO_CMD}" mv composer.phar /usr/local/bin/composer
 }
 
+installMailPit() {
+    # Install
+    "${SUDO_CMD}" sh < <(curl -sL https://raw.githubusercontent.com/axllent/mailpit/develop/install.sh)
+
+    # Database directory
+    DB_DIR="/var/lib/mailpit"
+    "${SUDO_CMD}" mkdir -p "$DB_DIR"
+    "${SUDO_CMD}" chown ${SUDO_USER:-$USER}:www-data "$DB_DIR"
+
+    # Start when your computer starts
+cat << 'EOF' | "${SUDO_CMD}" tee /etc/systemd/system/mailpit.service > /dev/null
+[Unit]
+Description=Mailpit Server
+
+[Service]
+ExecStart=/usr/local/bin/mailpit -d /var/lib/mailpit/mailpit.db
+Restart=always
+# Restart service after 10 seconds service crashes
+RestartSec=10
+SyslogIdentifier=mailpit
+User=piedade
+Group=www-data
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+    systemctl enable mailpit.service
+}
+
 checkEnv
 
 installFirewall
@@ -238,4 +268,4 @@ installDNSmasq
 installmkcert
 installNVM
 installComposer
-
+installMailPit
