@@ -15,10 +15,13 @@ lock=''
 suspend=''
 logout='󰍃'
 
+primary_monitor=$(xrandr --listmonitors | grep '*' | awk '{print $2}' | sed 's/^[+*]*//')
+
 # Rofi CMD
 rofi_cmd() {
     rofi -dmenu \
         -p "" \
+        -monitor $primary_monitor \
         -mesg "Uptime: $uptime" \
         -theme "$dir/$theme" \
         -selected-row 1
