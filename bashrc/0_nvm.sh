@@ -49,4 +49,4 @@ cdnvm() {
 }
 
 alias cd='cdnvm'
-cdnvm "$PWD" || exit
+cdnvm "$PWD"

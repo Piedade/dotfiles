@@ -7,6 +7,9 @@ SUDO_CMD="sudo"
 SUGROUP=""
 GITPATH=""
 
+# for some reason, curl is not installed by default
+"${SUDO_CMD}" apt-get install curl -y
+
 # Get the correct user home directory.
 USER_HOME=$(getent passwd "${SUDO_USER:-$USER}" | cut -d: -f6)
 
@@ -46,6 +49,3 @@ fi
 
 # Add user to adm group for log access
 "${SUDO_CMD}" usermod -aG adm $USER
-
-# for some reason, curl is not installed by default
-"${SUDO_CMD}" apt-get install curl

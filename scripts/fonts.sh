@@ -28,7 +28,7 @@ installFont() {
 
         # Unzip the font file if it hasn't been unzipped yet
         if [ ! -d "$FONT_DIR/$fontName" ]; then
-            unzip "$FONT_ZIP" -d "$FONT_DIR" || {
+            unzip -o "$FONT_ZIP" -d "$FONT_DIR" || {
                 echo_error "Failed to unzip $FONT_ZIP"
                 return 1
             }
