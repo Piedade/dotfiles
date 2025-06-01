@@ -1,3 +1,4 @@
+#!/bin/bash
 
 # NVM (Node Version Manager)
 export NVM_DIR="$HOME/.config/nvm"

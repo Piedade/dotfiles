@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Function to search for a .phprc file and set PHP_BIN
 autoload_php() {
   local dir="$PWD"

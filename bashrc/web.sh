@@ -1,3 +1,4 @@
+#!/bin/bash
 
 createdomain() {
     echo "Enter the domain name (e.g., example.com): "
