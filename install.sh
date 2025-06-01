@@ -25,10 +25,10 @@ source ./scripts/apache.sh
 source ./scripts/mysql.sh
 source ./scripts/php.sh
 source ./scripts/phprc.sh
-source ./scripts/dnsmasq.sh
 source ./scripts/mkcert.sh
 source ./scripts/nvm.sh
 source ./scripts/composer.sh
+source ./scripts/dnsmasq.sh
 
 # bash config
 source ./scripts/link_config.sh

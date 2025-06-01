@@ -28,3 +28,6 @@ echo -e "nameserver 127.0.0.1" | "${SUDO_CMD}" tee -a "$RESOLVCONF" > /dev/null
 # Change the file’s attributes using the chattr command to make our file immutable.
 # This prevents the local network manager from overwriting our changes:
 "${SUDO_CMD}" chattr +i /etc/resolv.conf
+
+# reset nameservers
+"${SUDO_CMD}" apt-get update
