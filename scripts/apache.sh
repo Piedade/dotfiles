@@ -4,7 +4,7 @@ echo_info "Installing apache2..."
 
 CONFIG_FILE="/etc/apache2/apache2.conf"
 
-"${SUDO_CMD}" apt install apache2 -y
+"${SUDO_CMD}" apt-get install apache2 -y
 
 # Add ServerName to the last line
 echo -e "\n\nServerName localhost" | "${SUDO_CMD}" tee -a "$CONFIG_FILE" > /dev/null

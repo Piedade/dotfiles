@@ -10,7 +10,7 @@ echo_info "Installing AnyDesk..."
 echo "deb [signed-by=/etc/apt/keyrings/keys.anydesk.com.asc] https://deb.anydesk.com all main" | "${SUDO_CMD}" tee /etc/apt/sources.list.d/anydesk-stable.list > /dev/null
 
 # Update apt caches and install the AnyDesk client
-"${SUDO_CMD}" apt update
-"${SUDO_CMD}" apt install anydesk -y
+"${SUDO_CMD}" apt-get update
+"${SUDO_CMD}" apt-get install anydesk -y
 
 echo_success "AnyDesk installed!"

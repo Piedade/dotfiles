@@ -11,9 +11,9 @@ APT_CONFIG_FILE="mysql-apt-config_0.8.34-1_all.deb"
 wget "https://dev.mysql.com/get/$APT_CONFIG_FILE"
 
 # default to mysql lts version
-echo "mysql-apt-config mysql-apt-config/select-server select mysql-8.4-lts" | "${SUDO_CMD}" debconf-set-selections
+# echo "mysql-apt-config mysql-apt-config/select-server select mysql-8.4-lts" | "${SUDO_CMD}" debconf-set-selections
 
-"${SUDO_CMD}" DEBIAN_FRONTEND=noninteractive dpkg -i "$APT_CONFIG_FILE"
+"${SUDO_CMD}" dpkg -i "$APT_CONFIG_FILE"
 
 # update package list and install
 "${SUDO_CMD}" apt-get update -y
