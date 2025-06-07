@@ -18,6 +18,12 @@ ln -svf "$GITPATH/.bashrc" "$USER_HOME/.bashrc" || {
     exit 1
 }
 
+echo_info "Linking mysql config file..."
+ln -svf "$GITPATH/.my.cnf" "$USER_HOME/.my.cnf" || {
+    echo_error "Failed to create symbolic link for .my.cnf"
+    exit 1
+}
+
 CONFIG_DIR="$USER_HOME/.config"
 # Create the config directory if it doesn't exist
 if [ ! -d "$CONFIG_DIR" ]; then

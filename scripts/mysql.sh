@@ -6,21 +6,22 @@ echo_info "Installing MySQL from APT Repository..."
 wget -q https://ftp.debian.org/debian/pool/main/liba/libaio/libaio1_0.3.113-4_amd64.deb
 "${SUDO_CMD}" dpkg -i libaio1_0.3.113-4_amd64.deb
 
-APT_CONFIG_FILE="mysql-apt-config_0.8.33-1_all.deb"
+APT_CONFIG_FILE="mysql-apt-config_0.8.34-1_all.deb"
 
 wget "https://dev.mysql.com/get/$APT_CONFIG_FILE"
 
-# non interactive
-echo "mysql-apt-config mysql-apt-config/select-server select mysql-lts" | "${SUDO_CMD}" debconf-set-selections
+# default to mysql lts version
+echo "mysql-apt-config mysql-apt-config/select-server select mysql-8.4-lts" | "${SUDO_CMD}" debconf-set-selections
+
 "${SUDO_CMD}" DEBIAN_FRONTEND=noninteractive dpkg -i "$APT_CONFIG_FILE"
 
 # update package list and install
 "${SUDO_CMD}" apt-get update -y
-"${SUDO_CMD}" apt-get install mysql-server -y
+"${SUDO_CMD}" DEBIAN_FRONTEND=noninteractive apt-get install mysql-server -y
 
 # root password
 "${SUDO_CMD}" mysql --user=root <<-EOF
-ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'admin';
+ALTER USER 'root'@'localhost' IDENTIFIED WITH caching_sha2_password BY 'admin';
 DELETE FROM mysql.user WHERE User='';
 DROP DATABASE IF EXISTS test;
 DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%';
