@@ -13,7 +13,9 @@ wget "https://dev.mysql.com/get/$APT_CONFIG_FILE"
 # default to mysql lts version
 # echo "mysql-apt-config mysql-apt-config/select-server select mysql-8.4-lts" | "${SUDO_CMD}" debconf-set-selections
 
+disable_log
 "${SUDO_CMD}" dpkg -i "$APT_CONFIG_FILE"
+enable_log
 
 # update package list and install
 "${SUDO_CMD}" apt-get update -y

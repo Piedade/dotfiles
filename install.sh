@@ -1,13 +1,11 @@
 #!/bin/bash
 
+LOG_FILE="../install.log"
+
 source ./scripts/utils.sh
 source ./scripts/check_env.sh
 
-# Define the log file path
-LOG_FILE="$USER_HOME/install.log"
-
-# Redirect both stdout and stderr to the log file and display in the terminal
-exec > >(tee -a "$LOG_FILE") 2>&1
+enable_log
 
 # system
 source ./scripts/dependencies.sh

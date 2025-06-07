@@ -11,3 +11,14 @@ ensure_dir() {
 command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
+
+# Redirect both stdout and stderr to the log file and display in the terminal
+enable_log(){
+    exec > >(tee -a "$LOG_FILE") 2>&1
+}
+
+# Redirect output directly to the terminal
+disable_log(){
+    exec > /dev/tty 2>/dev/tty  
+}
+
