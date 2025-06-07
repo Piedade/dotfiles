@@ -27,11 +27,6 @@ ALTER USER 'root'@'localhost' IDENTIFIED WITH caching_sha2_password BY 'admin';
 DELETE FROM mysql.user WHERE User='';
 DROP DATABASE IF EXISTS test;
 DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%';
-FLUSH PRIVILEGES;
-EOF
-
-# disable remote root login, only localhost access
-"${SUDO_CMD}" mysql --user=root <<-EOF
 UPDATE mysql.user SET Host='localhost' WHERE User='root' AND Host!='localhost';
 FLUSH PRIVILEGES;
 EOF
