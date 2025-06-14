@@ -85,7 +85,7 @@ link_folder(){
     echo_info "Linking $1 folder..."
     for file in "$2/$1"/*; do
         filename=$(basename "$file")
-        link_file "$file" "$2/$1" "$FOLDER_TO_LINK"
+        link_file "$filename" "$2/$1" "$FOLDER_TO_LINK"
     done
 
     # FIX PERMISSIONS
