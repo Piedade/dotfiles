@@ -12,8 +12,13 @@
     autosquash = true
 [push]
     default = current
+    autoSetupRemote = true
 [init]
     defaultBranch = main
+[rerere]
+    enabled = true
+[help]
+    autocorrect = 10
 [commit]
     template = ~/.gitmessage
     verbose = true
