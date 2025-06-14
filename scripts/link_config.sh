@@ -24,6 +24,12 @@ ln -svf "$GITPATH/.my.cnf" "$USER_HOME/.my.cnf" || {
     exit 1
 }
 
+echo_info "Linking git config file..."
+ln -svf "$GITPATH/.gitconfig" "$USER_HOME/.gitconfig" || {
+    echo_error "Failed to create symbolic link for .gitconfig"
+    exit 1
+}
+
 CONFIG_DIR="$USER_HOME/.config"
 # Create the config directory if it doesn't exist
 if [ ! -d "$CONFIG_DIR" ]; then

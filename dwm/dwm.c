@@ -125,6 +125,7 @@ enum
 	WMDelete,
 	WMState,
 	WMTakeFocus,
+	WMWindowRole,
 	WMLast
 }; /* default atoms */
 enum
@@ -220,6 +221,7 @@ struct Monitor
 typedef struct
 {
 	const char *class;
+	const char *role;
 	const char *instance;
 	const char *title;
 	unsigned int tags;
@@ -455,6 +457,7 @@ autostart_exec()
 void applyrules(Client *c)
 {
 	const char *class, *instance;
+	char role[64];
 	unsigned int i;
 	const Rule *r;
 	Monitor *m;
@@ -467,10 +470,12 @@ void applyrules(Client *c)
 	class = ch.res_class ? ch.res_class : broken;
 	instance = ch.res_name ? ch.res_name : broken;
 
+	gettextprop(c->win, wmatom[WMWindowRole], role, sizeof(role));
+
 	for (i = 0; i < LENGTH(rules); i++)
 	{
 		r = &rules[i];
-		if ((!r->title || strstr(c->name, r->title)) && (!r->class || strstr(class, r->class)) && (!r->instance || strstr(instance, r->instance)))
+		if ((!r->title || strstr(c->name, r->title)) && (!r->class || strstr(class, r->class)) && (!r->role || strstr(role, r->role)) && (!r->instance || strstr(instance, r->instance)))
 		{
 			c->isterminal = r->isterminal;
 			c->noswallow = r->noswallow;
@@ -2515,6 +2520,7 @@ void setup(void)
 	wmatom[WMDelete] = XInternAtom(dpy, "WM_DELETE_WINDOW", False);
 	wmatom[WMState] = XInternAtom(dpy, "WM_STATE", False);
 	wmatom[WMTakeFocus] = XInternAtom(dpy, "WM_TAKE_FOCUS", False);
+	wmatom[WMWindowRole] = XInternAtom(dpy, "WM_WINDOW_ROLE", False);
 	netatom[NetActiveWindow] = XInternAtom(dpy, "_NET_ACTIVE_WINDOW", False);
 	netatom[NetSupported] = XInternAtom(dpy, "_NET_SUPPORTED", False);
 	netatom[NetSystemTray] = XInternAtom(dpy, "_NET_SYSTEM_TRAY_S0", False);

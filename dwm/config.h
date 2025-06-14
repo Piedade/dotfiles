@@ -47,11 +47,10 @@ static const char editor[] = "code";
 static const char browser[] = "google-chrome";
 
 static const char *const autostart[] = {
-    /*
-    "xset", "s", "off", NULL, // Disables the screensaver
-    "xset", "s", "noblank", NULL, // Prevent the screen from blanking (turning off)
-    "xset", "-dpms", NULL, // Disables DPMS (Display Power Management Signaling)
-    */
+    // "xset", "s", "off", NULL,     // Disables the screensaver
+    // "xset", "s", "noblank", NULL, // Prevent the screen from blanking (turning off)
+    // "xset", "-dpms", NULL,        // Disables DPMS (Display Power Management Signaling)
+    "xautolock", "-time", "20", "-locker", "systemctl suspend", NULL, // Lock the screen after 30 minutes of inactivity
     "dbus-update-activation-environment", "--systemd", "--all", NULL,
     "lxpolkit", NULL,
     "sh", "-c", "~/.screenlayout/default.sh", NULL,
@@ -75,21 +74,23 @@ static const char *tags[] = {"1", "2", "3", "4", "5"};
 
 static const Rule rules[] = {
     /* xprop(1):
-     *	WM_CLASS(STRING) = instance, class
-     *	WM_NAME(STRING) = title
+     * WM_CLASS(STRING) = instance, class
+     * WM_NAME(STRING) = title
+     * WM_WINDOW_ROLE(STRING) = role
      */
-    /* class instance title tags mask isfloating isterminal noswallow monitor */
-    {"St", NULL, NULL, 4, 0, 1, 0, 0},
-    {"Lxpolkit", NULL, NULL, 0, 1, 0, 0, -1},
-    {"pavucontrol", NULL, NULL, 0, 1, 0, 0, -1},
-    {"Lxappearance", NULL, NULL, 0, 1, 0, 0, -1},
-    {"Lightdm-settings", NULL, NULL, 0, 1, 0, 0, -1},
-    {"Alacritty", NULL, NULL, 4, 0, 1, 0, 0},
-    /* {"Code", NULL, NULL, 1, 0, 0, 1, 0}, */
-    /* {"Google-chrome", NULL, NULL, 3, 0, 0, 0, 0}, */
-    {"Thunar", NULL, NULL, 0, 1, 0, 0, -1},
-    {"Xarchiver", NULL, NULL, 0, 1, 0, 0, -1},
-    {NULL, NULL, "Event Tester", 0, 0, 0, 1, -1}, /* xev */
+    /* class role instance title tags mask isfloating isterminal noswallow monitor */
+    {"St", NULL, NULL, NULL, 4, 0, 1, 0, 0},
+    {"Lxpolkit", NULL, NULL, NULL, 0, 1, 0, 0, -1},
+    {"pavucontrol", NULL, NULL, NULL, 0, 1, 0, 0, -1},
+    {"Lxappearance", NULL, NULL, NULL, 0, 1, 0, 0, -1},
+    {"Lightdm-settings", NULL, NULL, NULL, 0, 1, 0, 0, -1},
+    {"Alacritty", NULL, NULL, NULL, 4, 0, 1, 0, 0},
+    /* {"Code", NULL, NULL, NULL, 1, 0, 0, 1, 0}, */
+    /* {"Google-chrome", NULL, NULL, NULL, 3, 0, 0, 0, 0}, */
+    {"Google-chrome", "pop-up", NULL, NULL, 0, 1, 0, 0, -1},
+    {"Thunar", NULL, NULL, NULL, 0, 1, 0, 0, -1},
+    {"Xarchiver", NULL, NULL, NULL, 0, 1, 0, 0, -1},
+    {NULL, NULL, NULL, "Event Tester", 0, 0, 0, 1, -1}, /* xev */
 };
 
 /* layout(s) */

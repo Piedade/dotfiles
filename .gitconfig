@@ -1,0 +1,49 @@
+[user]
+    name = Piedade
+    email = pedro.piedade@red-agency.pt
+[pull]
+    ff = only
+    rebase = true
+[merge]
+    ff = only
+    tool = code
+    conflictstyle = zdiff3
+[rebase]
+    autosquash = true
+[push]
+    default = current
+[init]
+    defaultBranch = main
+[commit]
+    template = ~/.gitmessage
+    verbose = true
+[core]
+    excludesfile = ~/.gitignore
+    # autocrlf = input
+    pager = delta
+[diff]
+    colorMoved = default # zebra
+    algorithm = histogram
+[transfer]
+    fsckobjects = true
+[fetch]
+    # prune = true
+    fsckobjects = true
+[receive]
+    fsckObjects = true
+# [color]
+#     ui = auto
+# [alias]
+#   aa = add --all
+#   ap = add --patch
+#   branches = for-each-ref --sort=-committerdate --format=\"%(color:blue)%(authordate:relative)\t%(color:red)%(authorname)\t%(color:white)%(color:bold)%(refname:short)\" refs/remotes
+#   ci = commit -v
+#   co = checkout
+#   pf = push --force-with-lease
+#   st = status
+#     addignore = !curl -L -s https://www.gitignore.io/api/visualstudiocode,osx,$@ >> .gitignore
+# [filter "lfs"]
+#     clean = git-lfs clean -- %f
+#     smudge = git-lfs smudge -- %f
+#     process = git-lfs filter-process
+#     required = true
