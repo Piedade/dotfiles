@@ -19,6 +19,5 @@ enable_log(){
 
 # Redirect output directly to the terminal
 disable_log(){
-    exec > /dev/tty 2>/dev/tty  
+    exec > /dev/tty 2>/dev/tty
 }
-
