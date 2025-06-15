@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Composer
+export COMPOSER_MEMORY_LIMIT=-1
+
 # Function to search for a .phprc file and set PHP_BIN
 autoload_php() {
   local dir="$PWD"

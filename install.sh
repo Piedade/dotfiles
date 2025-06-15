@@ -14,6 +14,7 @@ source ./scripts/fonts.sh
 source ./scripts/starship.sh
 source ./scripts/vscode.sh
 source ./scripts/chrome.sh
+source ./scripts/tableplus.sh
 source ./scripts/anydesk.sh
 source ./scripts/lightdm.sh
 

@@ -229,7 +229,7 @@ alias docker-clean=' \
 # Define color variables
 RED='\033[31m'
 GREEN='\033[32m'
-YELLOW='\033[33m'
+YELLOW='\033[93m'
 BLUE='\033[34m'
 MAGENTA='\033[35m'
 CYAN='\033[36m'
@@ -451,6 +451,6 @@ eval "$(starship init bash)"
 eval "$(zoxide init bash)"
 
 # Load custom .dotfiles bash scripts
-for file in $HOME/.dotfiles/bashrc/*.sh; do
+for file in $HOME/.dotfiles/.bash/*.sh; do
   [ -f "$file" ] && source "$file"
 done
