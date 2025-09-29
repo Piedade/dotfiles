@@ -1,8 +1,9 @@
 #!/bin/bash
 
-updatedb(){
+get_database(){
     if [ -z "$1" ]; then
         echo -e "${RED}No database provided$RESET"
+        return 1
     else
         DATABASE_NAME="$1"
         echo "Database: ${DATABASE_NAME}"
@@ -32,7 +33,8 @@ updatedb(){
         # ssh -p45693 root@server.red-agency.pt "mysqldump --single-transaction --quick --ignore-table=${DATABASE_NAME}.${DATABASE_PREFIX}_layered_category $DATABASE_NAME | gzip -c" | pv > $DATABASE_PATH
 
         # Without compression
-        ssh -p45693 root@server.red-agency.pt mysqldump --single-transaction --quick --ignore-table=${DATABASE_NAME}.${DATABASE_PREFIX}_layered_category $DATABASE_NAME | pv > $DATABASE_PATH
+        # ssh -p45693 root@server.red-agency.pt mysqldump --single-transaction --quick --ignore-table=${DATABASE_NAME}.${DATABASE_PREFIX}_layered_category $DATABASE_NAME | pv > $DATABASE_PATH
+        ssh -p45693 root@server.red-agency.pt mysqldump --single-transaction --quick $DATABASE_NAME | pv > $DATABASE_PATH
     else
         DATABASE_PATH="$3"
         echo -e "${GREEN}Getting already downloaded file: $DATABASE_PATH"
@@ -74,6 +76,7 @@ UPDATE ${DATABASE_PREFIX}_configuration SET value = NULL WHERE name = 'PS_MEDIA_
 DELETE FROM ${DATABASE_PREFIX}_module WHERE name = 'klaviyops';
 DELETE FROM ${DATABASE_PREFIX}_module WHERE name = 'cdc_googletagmanager';
 DELETE FROM ${DATABASE_PREFIX}_module WHERE name = 'klarnapayment';
+DELETE FROM ${DATABASE_PREFIX}_module WHERE like '%recaptcha%';
 EOF
             file=`mysql -se "SELECT count(*) as count FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='${DATABASE_NAME}' AND TABLE_NAME='${DATABASE_PREFIX}_moloni'" | cut -d \t -f 2`
             if [ $file == "1" ];

@@ -27,17 +27,20 @@ runApp() {
     sleep 2
 }
 
+PRIMARY_MONITOR=1
+SECOND_MONITOR=2
+
 # VSCODE
 app=("code")
-runApp 1 1 "${app[@]}"
+runApp 1 $PRIMARY_MONITOR "${app[@]}"
 
 # CHROME
 app=("google-chrome" "--profile-directory=Default")
-runApp 2 1 "${app[@]}"
+runApp 2 $PRIMARY_MONITOR "${app[@]}"
 
 # CHROME
 app=("google-chrome" "--profile-directory=Profile 1")
-runApp 1 2 "${app[@]}"
+runApp 1 $SECOND_MONITOR "${app[@]}"
 
 # Got to principal monitor
-xdotool key Super+Control_L+Shift_L+1
+xdotool key Super+Control_L+Shift_L+$PRIMARY_MONITOR

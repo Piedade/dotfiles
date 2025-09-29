@@ -2,6 +2,8 @@
     "files.associations": {
         "*.h": "cpp",
         ".xbindkeysrc": "properties",
-        "cstdlib": "cpp"
-    }
+        "cstdlib": "cpp",
+        "*.svg": "default"
+    },
+    "python.languageServer": "None"
 }

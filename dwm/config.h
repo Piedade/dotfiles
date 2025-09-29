@@ -47,9 +47,10 @@ static const char editor[] = "code";
 static const char browser[] = "google-chrome";
 
 static const char *const autostart[] = {
-    // "xset", "s", "off", NULL,     // Disables the screensaver
-    // "xset", "s", "noblank", NULL, // Prevent the screen from blanking (turning off)
-    // "xset", "-dpms", NULL,        // Disables DPMS (Display Power Management Signaling)
+    "xset", "s", "off", NULL,                                         // Disables the screensaver
+    "xset", "s", "noblank", NULL,                                     // Prevent the screen from blanking (turning off)
+    "xset", "-dpms", NULL,                                            // Disables DPMS (Display Power Management Signaling)
+    "setxkbmap", "pt", NULL,                                          // set keyboard layout before any app launches
     "xautolock", "-time", "20", "-locker", "systemctl suspend", NULL, // Lock the screen after 30 minutes of inactivity
     "dbus-update-activation-environment", "--systemd", "--all", NULL,
     "lxpolkit", NULL,
@@ -101,9 +102,9 @@ static const int lockfullscreen = 1; /* 1 will force focus on the fullscreen win
 
 static const Layout layouts[] = {
     /* symbol     arrange function */
-    {"", tile}, /* first entry is default */
-    {"", NULL}, /* no layout function means floating behavior */
-    {"", monocle},
+    {"[]=", tile}, /* first entry is default */
+    {"><>", NULL}, /* no layout function means floating behavior */
+    {"[M]", monocle},
 };
 
 /* key definitions */

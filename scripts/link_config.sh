@@ -5,6 +5,7 @@ echo_info "Linking config files..."
 link_file ".bashrc" $GITPATH $USER_HOME
 link_file ".my.cnf" $GITPATH $USER_HOME
 link_file ".gitconfig" $GITPATH $USER_HOME
+link_file ".gitignore" $GITPATH $USER_HOME
 
 echo_info "Linking folders..."
 

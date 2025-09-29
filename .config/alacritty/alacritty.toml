@@ -3,9 +3,9 @@ live_config_reload = true
 working_directory = "~/Downloads"
 
 # Themes --
-import = [ 
+import = [
   "~/.config/alacritty/nordic.toml",
-  "~/.config/alacritty/keybinds.toml"
+  "~/.config/alacritty/keybinds.toml",
 ]
 
 [window]
@@ -21,8 +21,12 @@ columns = 160
 lines = 80
 
 [cursor.style]
-shape= "Beam"
+shape = "Beam"
 blinking = "Never"
+
+[scrolling]
+history = 100000
+# multiplier = 3
 
 [colors]
 #transparent_background_colors = true

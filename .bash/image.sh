@@ -51,3 +51,26 @@ resize(){
         done
     fi
 }
+
+create_favicon(){
+    local image_file="${1}"
+    local iconName="${2:-favicon}"
+    if [ -z "$1" ]; then
+        echo_error "No image detected!"
+    else
+        # Check if image exists
+        if [[ ! -f "$image_file" ]]; then
+            echo_error "❌ $image_file not found."
+            return 1
+        fi
+
+        convert $image_file -background transparent -trim -gravity center -extent 1:1# -define icon:auto-resize="256,128,64,48,32,24,16" $iconName.ico
+
+        if [ $? -eq 0 ]; then # Check if the last command was successful
+            echo_success "Favicon $iconName.ico created!"
+        else
+            echo_error "❌ Failed to create $iconName.ico."
+            return 1
+        fi
+    fi
+}

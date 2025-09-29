@@ -14,10 +14,11 @@ echo -e "\n\nServerName localhost" | "${SUDO_CMD}" tee -a "$CONFIG_FILE" > /dev/
 
 # Change apache user and group
 "${SUDO_CMD}" sed -i "s/^export APACHE_RUN_USER=.*/export APACHE_RUN_USER="${SUDO_USER:-$USER}"/" "/etc/apache2/envvars"
+"${SUDO_CMD}" sed -i "s/^export APACHE_RUN_GROUP=.*/export APACHE_RUN_GROUP="${SUDO_USER:-$USER}"/" "/etc/apache2/envvars"
 "${SUDO_CMD}" systemctl restart apache2
 
 # FIX permissions
-"${SUDO_CMD}" chown -R ${SUDO_USER:-$USER}:www-data /var/www
+"${SUDO_CMD}" chown -R ${SUDO_USER:-$USER}:${SUDO_USER:-$USER} /var/www
 "${SUDO_CMD}" find /var/www -type d -exec chmod 2755 {} \+
 "${SUDO_CMD}" find /var/www -type f -exec chmod 644 {} \+
 "${SUDO_CMD}" find /var/www -type d -exec chmod g+s {} +

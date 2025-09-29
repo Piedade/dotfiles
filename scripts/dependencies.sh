@@ -10,7 +10,7 @@ echo_info "Installing dependencies..."
 "${SUDO_CMD}" apt-get install build-essential libxcb-util-dev numlockx feh rofi unzip wget pipewire pipewire-audio-client-libraries wireplumber pipewire-pulse pipewire-alsa pavucontrol libx11-dev libxft-dev libxinerama-dev libx11-xcb-dev libxcb-res0-dev pulseaudio-utils alsa-utils xdg-utils libimlib2-dev pkexec lxpolkit gnome-keyring libsecret-1-0 gvfs gvfs-backends gvfs-fuse thunar tumbler-plugins-extra xarchiver thunar-archive-plugin dunst arandr upower xautolock -y
 
 # Installing Other less important Programs
-"${SUDO_CMD}" apt-get install xbindkeys xdotool fzf jq libnotify-bin trash-cli flameshot psmisc neovim papirus-icon-theme lxappearance lightdm xclip bat multitail tree zoxide bash-completion ripgrep alacritty gimp inkscape gimp libreoffice fonts-liberation fonts-noto-color-emoji pv -y
+"${SUDO_CMD}" apt-get install xbindkeys xdotool fzf jq libnotify-bin trash-cli flameshot psmisc neovim papirus-icon-theme lxappearance lightdm xclip bat multitail tree zoxide bash-completion ripgrep alacritty gimp inkscape gimp libreoffice fonts-liberation fonts-noto-color-emoji pv rsync imagemagick python3-pip libldap2-dev libpq-dev libsasl2-dev python3-venv -y
 
 # For flameshot screenshots
 mkdir -p "$USER_HOME/Pictures"

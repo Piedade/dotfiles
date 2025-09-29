@@ -8,7 +8,7 @@ echo_info "Installing mailpit..."
 # Database directory
 DB_DIR="/var/lib/mailpit"
 "${SUDO_CMD}" mkdir -p "$DB_DIR"
-"${SUDO_CMD}" chown ${SUDO_USER:-$USER}:www-data "$DB_DIR"
+"${SUDO_CMD}" chown ${SUDO_USER:-$USER}:${SUDO_USER:-$USER} "$DB_DIR"
 
 # Start when your computer starts
 cat << 'EOF' | "${SUDO_CMD}" tee /etc/systemd/system/mailpit.service > /dev/null
@@ -22,7 +22,7 @@ Restart=always
 RestartSec=10
 SyslogIdentifier=mailpit
 User=piedade
-Group=www-data
+Group=piedade
 
 [Install]
 WantedBy=multi-user.target

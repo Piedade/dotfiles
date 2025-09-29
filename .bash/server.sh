@@ -11,3 +11,15 @@ server(){
         ssh -p45693 $ACCOUNT@server.red-agency.pt
     fi
 }
+
+echo_production_warning() {
+    echo -ne "${BOLD}${RED}Are you sure you want to deploy to PRODUCTION? [y/N] ${RESET}"
+    read answer
+
+    case "$answer" in
+        [Yy]) ;; # echo "Deploying...";;
+        *) echo "Aborted."; exit 1;;
+    esac
+}
+
+export -f echo_production_warning

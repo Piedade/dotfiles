@@ -226,21 +226,6 @@ alias docker-clean=' \
 # SPECIAL FUNCTIONS
 #######################################################
 
-# Define color variables
-RED='\033[31m'
-GREEN='\033[32m'
-YELLOW='\033[93m'
-BLUE='\033[34m'
-MAGENTA='\033[35m'
-CYAN='\033[36m'
-WHITE='\033[37m'
-ORANGE_LARAVEL='\033[38;5;196m'
-BLUE_PRESTASHOP='\033[38;5;123m'
-# Text
-BOLD='\033[1m'
-ITALIC='\033[3m'
-RESET='\033[0m'
-
 # Extracts any archive(s) (if unp isn't installed)
 extract() {
     for archive in "$@"; do
@@ -358,15 +343,20 @@ function whatsmyip () {
     # Internal IP Lookup.
     if command -v ip &> /dev/null; then
         echo -n "Internal IP: "
-        ip addr show wlan0 | grep "inet " | awk '{print $2}' | cut -d/ -f1
+        ip addr show enp11s0 | grep "inet " | awk '{print $2}' | cut -d/ -f1
     else
         echo -n "Internal IP: "
-        ifconfig wlan0 | grep "inet " | awk '{print $2}'
+        ifconfig enp11s0 | grep "inet " | awk '{print $2}'
     fi
 
     # External IP Lookup
-    echo -n "External IP: "
+    echo -n "External IPv6: "
     curl -s ifconfig.me
+    echo ""
+
+    echo -n "External IPv4: "
+    curl -s -4 ifconfig.me
+    echo ""
 }
 
 # View Apache logs
@@ -442,7 +432,10 @@ if [[ $- == *i* ]]; then
     bind '"\C-f":"zi\n"'
 fi
 
-export PATH=$PATH:"$HOME/.local/bin"
+export PATH="$PATH:$HOME/.local/bin"
+
+# Android Studio (adb and fastboot)
+export PATH="$PATH:$HOME/Android/Sdk/platform-tools"
 
 # pretty terminal
 eval "$(starship init bash)"

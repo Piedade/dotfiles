@@ -1,20 +1,36 @@
 #!/bin/bash
 
-createdomain() {
-    echo "Enter the domain name (e.g., example.com): "
-    read DOMAIN
+create_domain() {
+    if [ -z "$1" ]; then
+        echo "Enter the domain name (e.g., example.com): "
+        read DOMAIN
+    else
+        DOMAIN="$1"
+    fi
 
     # Define paths
     VHOST_CONF="/etc/apache2/sites-available/$DOMAIN.conf"
     WEB_ROOT="/var/www/$DOMAIN"
 
     # Create web directory
-    sudo mkdir -p "$WEB_ROOT"
-    sudo chown -R $USER:$USER "$WEB_ROOT"
-    sudo chmod -R 755 /var/www
+    if [ ! -d "$WEB_ROOT" ]; then
+        echo_info "Directory '$WEB_ROOT' does not exist. Creating it now..."
+
+        sudo mkdir -p "$WEB_ROOT"
+        sudo chown -R $USER:$USER "$WEB_ROOT"
+
+        if [ $? -eq 0 ]; then
+            echo_success "Directory '$WEB_ROOT' created successfully."
+        else
+            echo_error "Error: Failed to create directory '$WEB_ROOT'." >&2
+            exit 1 # Exit with an error code
+        fi
+    else
+        echo_error "Directory '$WEB_ROOT' already exists."
+    fi
 
     # Create Virtual Host Config
-    sudo tee $VHOST_CONF <<EOF
+    sudo tee $VHOST_CONF > /dev/null <<EOF
 <VirtualHost *:80>
     ServerName $DOMAIN
     Redirect permanent / https://$DOMAIN
@@ -42,39 +58,51 @@ EOF
     sudo a2ensite "$DOMAIN.conf" > /dev/null
     sudo systemctl reload apache2 > /dev/null
 
-    echo "Virtual host for $DOMAIN has been created."
+    echo_success "Virtual host for $DOMAIN has been created."
 }
 
-fixpermissions() {
+fix_permissions() {
+    COMPOSER_FILE="composer.lock"
+
     current_dir=$(pwd)
 
     # Check if the current directory is inside /var/www
     if [[ ! "$current_dir" =~ ^/var/www ]]; then
-        echo "❌ Current directory is not inside /var/www. Please navigate to the correct directory."
+        echo_error "Current directory is not inside /var/www. Please navigate to the correct directory."
         return 1
     fi
+
+    # Initialize variables
+    folders=""
+    appName=""
+    framework_matched=false
 
     # Check if composer.json exists
-    if [[ ! -f "composer.json" ]]; then
-        echo "This does not appear to be a valid Laravel or PrestaShop project."
-        echo "❌ composer.json not found."
-        return 1
-    fi
-
-    # Check the 'name' property in composer.json to determine the framework
-    framework=$(jq -r '.name' composer.json)
-
-    if [[ "$framework" == "laravel/laravel" ]]; then
-        folders="storage bootstrap/cache"
-        appName="$ORANGE_LARAVEL Laravel"
-
-    elif [[ "$framework" == "prestashop/prestashop" ]]; then
-        folders="admin-dev/autoupgrade app/config config download img log mails modules override themes translations upload var"
-        appName="$BLUE_PRESTASHOP󱇕 PrestaShop"
-
+    if [[ ! -f "$COMPOSER_FILE" ]]; then
+        echo_info "This does not appear to be a valid Laravel or PrestaShop project."
+        echo_info "$COMPOSER_FILE not found."
     else
-        echo "❌ composer.json found, but the 'name' property does not match a recognized framework."
-        return 1
+        composer_content=$(tr '[:upper:]' '[:lower:]' < "$COMPOSER_FILE")
+
+        framework_matched=false
+
+        if grep -qi "laravel" <<< "$composer_content"; then
+            folders="storage bootstrap/cache"
+            appName="${ORANGE_LARAVEL} Laravel${NO_COLOR}"
+            framework_matched=true
+        fi
+
+        if grep -qi "prestashop" <<< "$composer_content"; then
+            # If both exist, PrestaShop will override Laravel — adjust logic if you prefer otherwise
+            folders="app/config config download img log mails modules override themes translations upload var"
+            appName="${BLUE_PRESTASHOP}󱇕 PrestaShop${NO_COLOR}"
+            framework_matched=true
+        fi
+
+        if [ "$framework_matched" = false ]; then
+            echo "❌ composer.json found, but no recognized framework ('laravel', 'prestashop') was found."
+            return 1
+        fi
     fi
 
     # Ask for sudo to run the command
@@ -85,7 +113,7 @@ fixpermissions() {
     echo -e "for $BOLD$appName$RESET $ITALIC($current_folder)$RESET on the folders:"
 
     # FIX permissions
-    sudo chown -R $USER:www-data "$current_dir"
+    sudo chown -R $USER:$USER "$current_dir"
     find "$current_dir" -type d -exec chmod 2755 {} \+
     find "$current_dir" -type f -exec chmod 644 {} \+
 

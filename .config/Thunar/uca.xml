@@ -1,19 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <actions>
 <action>
+	<icon>vscode</icon>
+	<name>Open folder with Visual Studio Code</name>
+	<submenu></submenu>
+	<unique-id>1753957448705225-1</unique-id>
+	<command>code %D</command>
+	<description></description>
+	<range>*</range>
+	<patterns>*</patterns>
+	<directories/>
+	<other-files/>
+	<text-files/>
+</action>
+<action>
 	<icon>utilities-terminal</icon>
-	<name>Open Terminal Here</name>
+	<name>Open with terminal</name>
 	<submenu></submenu>
 	<unique-id>1737908147118955-1</unique-id>
 	<command>exo-open --working-directory %f --launch TerminalEmulator</command>
-	<description>Example for a custom action</description>
+	<description></description>
 	<range></range>
 	<patterns>*</patterns>
 	<startup-notify/>
 	<directories/>
 </action>
 <action>
-	<icon>xfce-system-lock</icon>
+	<icon>emblem-remove</icon>
 	<name>Delete with sudo</name>
 	<submenu></submenu>
 	<unique-id>1738323579231363-1</unique-id>
