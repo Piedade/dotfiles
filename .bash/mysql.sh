@@ -76,7 +76,7 @@ UPDATE ${DATABASE_PREFIX}_configuration SET value = NULL WHERE name = 'PS_MEDIA_
 DELETE FROM ${DATABASE_PREFIX}_module WHERE name = 'klaviyops';
 DELETE FROM ${DATABASE_PREFIX}_module WHERE name = 'cdc_googletagmanager';
 DELETE FROM ${DATABASE_PREFIX}_module WHERE name = 'klarnapayment';
-DELETE FROM ${DATABASE_PREFIX}_module WHERE like '%recaptcha%';
+DELETE FROM ${DATABASE_PREFIX}_module WHERE name like '%recaptcha%';
 EOF
             file=`mysql -se "SELECT count(*) as count FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='${DATABASE_NAME}' AND TABLE_NAME='${DATABASE_PREFIX}_moloni'" | cut -d \t -f 2`
             if [ $file == "1" ];
