@@ -57,6 +57,7 @@ create_favicon(){
     local iconName="${2:-favicon}"
     if [ -z "$1" ]; then
         echo_error "No image detected!"
+        return 1
     else
         # Check if image exists
         if [[ ! -f "$image_file" ]]; then

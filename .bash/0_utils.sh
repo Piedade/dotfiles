@@ -5,12 +5,8 @@ bind '"\C-k": "\C-e\C-u clear\n"'
 
 # SHOW
 echo_error() {
-    local exit_code=$?
-    local message="${1:-Command failed}"
-    if [ $exit_code -ne 0 ]; then
-        echo -e "${BOLD}${RED} ${message}${RESET}"
-        exit $exit_code
-    fi
+    local message="${1:-Error}"
+    echo -e "${BOLD}${RED} ${message}${RESET}"
 }
 export -f echo_error
 
@@ -21,7 +17,7 @@ echo_success() {
 export -f echo_success
 
 echo_info() {
-    local message="${1:-Success}"
+    local message="${1:-Info}"
     echo -e "${BOLD}${YELLOW}${message}${RESET}"
 }
 export -f echo_info

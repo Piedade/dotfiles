@@ -30,11 +30,11 @@ get_database(){
         echo -e "$BOLD${YELLOW}Downloading...$RESET"
 
         # # Remote compress
-        # ssh -p45693 root@server.red-agency.pt "mysqldump --single-transaction --quick --ignore-table=${DATABASE_NAME}.${DATABASE_PREFIX}_layered_category $DATABASE_NAME | gzip -c" | pv > $DATABASE_PATH
+        # ssh root@server "mysqldump --single-transaction --quick --ignore-table=${DATABASE_NAME}.${DATABASE_PREFIX}_layered_category $DATABASE_NAME | gzip -c" | pv > $DATABASE_PATH
 
         # Without compression
-        # ssh -p45693 root@server.red-agency.pt mysqldump --single-transaction --quick --ignore-table=${DATABASE_NAME}.${DATABASE_PREFIX}_layered_category $DATABASE_NAME | pv > $DATABASE_PATH
-        ssh -p45693 root@server.red-agency.pt mysqldump --single-transaction --quick $DATABASE_NAME | pv > $DATABASE_PATH
+        # ssh root@server mysqldump --single-transaction --quick --ignore-table=${DATABASE_NAME}.${DATABASE_PREFIX}_layered_category $DATABASE_NAME | pv > $DATABASE_PATH
+        ssh root@server mysqldump --single-transaction --quick $DATABASE_NAME | pv > $DATABASE_PATH
     else
         DATABASE_PATH="$3"
         echo -e "${GREEN}Getting already downloaded file: $DATABASE_PATH"

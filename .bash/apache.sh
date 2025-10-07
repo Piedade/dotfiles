@@ -27,6 +27,7 @@ create_domain() {
         fi
     else
         echo_error "Directory '$WEB_ROOT' already exists."
+        return 1
     fi
 
     # Create Virtual Host Config
