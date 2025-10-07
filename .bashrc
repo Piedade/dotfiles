@@ -437,6 +437,9 @@ export PATH="$PATH:$HOME/.local/bin"
 # Android Studio (adb and fastboot)
 export PATH="$PATH:$HOME/Android/Sdk/platform-tools"
 
+# Composer
+export PATH="$HOME/.config/composer/vendor/bin:$PATH"
+
 # pretty terminal
 eval "$(starship init bash)"
 

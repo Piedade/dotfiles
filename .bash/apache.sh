@@ -27,7 +27,16 @@ create_domain() {
         fi
     else
         echo_error "Directory '$WEB_ROOT' already exists."
-        return 1
+        read -p "Do you want to continue anyway? [y/N] " answer
+        case "$answer" in
+            [Yy]* )
+                echo_success "Continuing..."
+                ;;
+            * )
+                echo_info "Operation cancelled."
+                return 1
+                ;;
+        esac
     fi
 
     # Create Virtual Host Config
