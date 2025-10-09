@@ -68,7 +68,7 @@ EOF
     sudo a2ensite "$DOMAIN.conf" > /dev/null
     sudo systemctl reload apache2 > /dev/null
 
-    echo_success "Virtual host for $DOMAIN has been created."
+    echo_success "Virtual host for https://$DOMAIN has been created."
 }
 
 fix_permissions() {

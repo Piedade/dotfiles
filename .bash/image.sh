@@ -75,3 +75,4 @@ create_favicon(){
         fi
     fi
 }
+alias_function create_favicon favicon_create

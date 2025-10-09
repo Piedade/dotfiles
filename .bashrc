@@ -438,7 +438,10 @@ export PATH="$PATH:$HOME/.local/bin"
 export PATH="$PATH:$HOME/Android/Sdk/platform-tools"
 
 # Composer
-export PATH="$HOME/.config/composer/vendor/bin:$PATH"
+export PATH="$PATH:$HOME/.config/composer/vendor/bin"
+
+# Apache a2enmod, a2dismod, a2ensite, a2dissite
+export PATH="$PATH:/usr/sbin"
 
 # pretty terminal
 eval "$(starship init bash)"
