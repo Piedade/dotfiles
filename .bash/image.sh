@@ -75,4 +75,24 @@ create_favicon(){
         fi
     fi
 }
-alias_function create_favicon favicon_create
+
+
+crop_svg(){
+    if [ -z "$1" ]; then
+        echo_error "No SVG file defined!"
+    else
+        local svg_file="$1"
+        local output_file="${2:-cropped_$svg_file}"
+
+        echo_info "Cropping SVG file..."
+
+        # Use Inkscape to crop the SVG
+        inkscape "$svg_file" --export-area-drawing --export-filename="$output_file"
+
+        if [ $? -eq 0 ]; then
+            echo_success "SVG cropped successfully: $output_file"
+        else
+            echo_error "Failed to crop SVG file."
+        fi
+    fi
+}
