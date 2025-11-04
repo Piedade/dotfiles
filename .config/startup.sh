@@ -24,7 +24,7 @@ runApp() {
 
     # Run the command with all its arguments in the background
     "${runApp[@]}" > /dev/null &  # Run command properly as an array
-    sleep 2
+    sleep 1
 }
 
 PRIMARY_MONITOR=1
@@ -38,9 +38,25 @@ runApp 1 $PRIMARY_MONITOR "${app[@]}"
 app=("google-chrome" "--profile-directory=Default")
 runApp 2 $PRIMARY_MONITOR "${app[@]}"
 
+# TERMINAL
+app=("alacritty" "--working-directory" "$HOME")
+runApp 3 $PRIMARY_MONITOR "${app[@]}"
+
+app=("alacritty" "--working-directory" "$HOME")
+runApp 3 $PRIMARY_MONITOR "${app[@]}"
+
+# Google Calendar PWA
+app=("google-chrome" "--profile-directory=Default" "--app-id=kjbdgfilnfhdoflbpgamdcdgpehopbep")
+runApp 4 $PRIMARY_MONITOR "${app[@]}"
+
+# WhatsApp Web PWA
+app=("google-chrome" "--profile-directory=Default" "--app-id=hnpfjngllnobngcgfapefoaidbinmjnm")
+runApp 4 $PRIMARY_MONITOR "${app[@]}"
+
 # CHROME
 app=("google-chrome" "--profile-directory=Profile 1")
-runApp 1 $SECOND_MONITOR "${app[@]}"
+# runApp 1 $SECOND_MONITOR "${app[@]}"
+runApp 5 $PRIMARY_MONITOR "${app[@]}"
 
-# Got to principal monitor
-xdotool key Super+Control_L+Shift_L+$PRIMARY_MONITOR
+# # Go to principal monitor
+# xdotool key Super+Control_L+Shift_L+$PRIMARY_MONITOR

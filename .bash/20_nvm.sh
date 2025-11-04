@@ -50,3 +50,17 @@ cdnvm() {
 
 alias cd='cdnvm'
 cdnvm "$PWD"
+
+# ---------------------------------------
+# Wrap zi to also trigger cdnvm after jump
+# ---------------------------------------
+# Save original zi function
+if type zi &>/dev/null; then
+    eval "zi_original() { $(declare -f zi | tail -n +2); }"
+fi
+
+# Wrap zi
+zi() {
+    zi_original "$@"
+    cdnvm "$PWD"
+}
