@@ -124,8 +124,9 @@ fix_permissions() {
 
     # FIX permissions
     sudo chown -R $USER:$USER "$current_dir"
-    find "$current_dir" -type d -exec chmod 2755 {} \+
-    find "$current_dir" -type f -exec chmod 644 {} \+
+    find "$current_dir" -type d -exec chmod 0755 {} \+
+    find "$current_dir" -type f -exec chmod 0644 {} \+
+    find "$current_dir" -type f -name '*.php' -exec chmod 0600 {} \;
 
     for folder in ${folders}; do
         if [ ! -d "$folder" ]; then
@@ -134,7 +135,7 @@ fix_permissions() {
         else
             echo "- $folder"
         fi
-        chmod -R 775 "$folder"
+        chmod -R 0755 "$folder"
     done
     echo -e "$BOLD$GREEN Permissions have been set.$RESET"
 }

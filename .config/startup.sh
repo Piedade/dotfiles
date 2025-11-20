@@ -55,8 +55,8 @@ runApp 4 $PRIMARY_MONITOR "${app[@]}"
 
 # CHROME
 app=("google-chrome" "--profile-directory=Profile 1")
-# runApp 1 $SECOND_MONITOR "${app[@]}"
-runApp 5 $PRIMARY_MONITOR "${app[@]}"
+runApp 1 $SECOND_MONITOR "${app[@]}"
+# runApp 5 $PRIMARY_MONITOR "${app[@]}"
 
 # # Go to principal monitor
-# xdotool key Super+Control_L+Shift_L+$PRIMARY_MONITOR
+xdotool key Super+Control_L+Shift_L+$PRIMARY_MONITOR
