@@ -453,3 +453,5 @@ eval "$(zoxide init bash)"
 for file in $HOME/.dotfiles/.bash/*.sh; do
   [ -f "$file" ] && source "$file"
 done
+
+export ELECTRON_DISABLE_GPU=1

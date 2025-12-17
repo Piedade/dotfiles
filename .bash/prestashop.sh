@@ -210,3 +210,68 @@ EOF
 
     echo -e "$BOLD$GREEN Permissions have been set.$RESET"
 }
+
+is_a_prestashop_project() {
+    COMPOSER_FILE="composer.lock"
+
+    if [[ ! -f "$COMPOSER_FILE" ]]; then
+        echo "❌ This does not appear to be a valid Laravel or PrestaShop project."
+        echo "File $COMPOSER_FILE not found."
+        return 1
+    fi
+
+    if grep -qi "prestashop" "$COMPOSER_FILE"; then
+        echo -e "$BOLD$BLUE_PRESTASHOP󱇕 PrestaShop$NO_COLOR$RESET"
+        return 0
+    else
+        echo "❌ $COMPOSER_FILE found, but no recognized framework ('laravel', 'prestashop') was found."
+        return 1
+    fi
+}
+
+create_ps_module() {
+    TEMPLATE_DIR="/var/www/templates/prestashop_module"
+
+    # Check PrestaShop project
+    if ! is_a_prestashop_project; then
+        echo "Cannot create module: not inside a PrestaShop project."
+        return 1
+    fi
+
+    # Check module name
+    if [ -z "$1" ]; then
+        echo "Usage: create_ps_module ModuleName"
+        return 1
+    fi
+
+    MODULE_NAME=$(echo "$1" | tr '[:upper:]' '[:lower:]')
+    MODULE_NAME_CAPITALIZED=$(echo "$1" | awk '{print toupper(substr($0,1,1)) tolower(substr($0,2))}')
+    MODULE_DIR="./modules/red_$MODULE_NAME"
+
+    if [[ -d "$MODULE_DIR" ]]; then
+        echo "❌ Module $MODULE_NAME already exists!"
+        return 1
+    fi
+
+    # Copy template folder
+    cp -r "$TEMPLATE_DIR" "$MODULE_DIR"
+
+    # Recursively rename files/folders containing MODULE_NAME
+    find "$MODULE_DIR" -depth -name "*MODULE_NAME_CAPITALIZED*" | while read file; do
+        newfile=$(echo "$file" | sed "s/MODULE_NAME_CAPITALIZED/$MODULE_NAME_CAPITALIZED/g")
+        mv "$file" "$newfile"
+    done
+
+    # Recursively rename files/folders containing MODULE_NAME
+    find "$MODULE_DIR" -depth -name "*MODULE_NAME*" | while read file; do
+        newfile=$(echo "$file" | sed "s/MODULE_NAME/$MODULE_NAME/g")
+        mv "$file" "$newfile"
+    done
+
+    # Replace placeholders inside all files
+    find "$MODULE_DIR" -type f -exec sed -i \
+        -e "s/MODULE_NAME_CAPITALIZED/$MODULE_NAME_CAPITALIZED/g" \
+        -e "s/MODULE_NAME/$MODULE_NAME/g" {} +
+
+    echo "✅ Module $MODULE_NAME_CAPITALIZED created successfully in $MODULE_DIR"
+}

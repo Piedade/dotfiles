@@ -8,6 +8,9 @@ create_domain() {
         DOMAIN="$1"
     fi
 
+    # Ask for sudo to run the command
+    sudo -v &>/dev/null
+
     # Define paths
     VHOST_CONF="/etc/apache2/sites-available/$DOMAIN.conf"
     WEB_ROOT="/var/www/$DOMAIN"
@@ -123,7 +126,7 @@ fix_permissions() {
     echo -e "for $BOLD$appName$RESET $ITALIC($current_folder)$RESET on the folders:"
 
     # FIX permissions
-    sudo chown -R $USER:$USER "$current_dir"
+    # sudo chown -R $USER:$USER "$current_dir"
     find "$current_dir" -type d -exec chmod 0755 {} \+
     find "$current_dir" -type f -exec chmod 0644 {} \+
     find "$current_dir" -type f -name '*.php' -exec chmod 0600 {} \;
