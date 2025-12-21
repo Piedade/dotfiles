@@ -3,13 +3,13 @@
 # Please note that Hyprland uses the C++26 standard (gcc>=15 or clang>=19)
 
 # Add the experimental repository as a temporary source, will allow to use -t experimental.
-echo "deb http://deb.debian.org/debian experimental main" | sudo tee /etc/apt/sources.list.d/experimental.list
+#echo "deb http://deb.debian.org/debian experimental main" | sudo tee /etc/apt/sources.list.d/experimental.list
 
-sudo apt update
-sudo apt -t experimental install clang-19
+#sudo apt update
+#sudo apt -t experimental install clang-19
 
-sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-19 100
-sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-19 100
+#sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-19 100
+#sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-19 100
 
 
 
@@ -39,7 +39,7 @@ sudo update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-15/bin/gcc 60
 
 
 # Hyprland dependencies
-sudo apt install -y \
+sudo apt install --reinstall  -y \
     git meson ninja-build pkg-config cmake jq \
     wayland-protocols libwayland-dev libxkbcommon-dev \
     libpixman-1-dev libseat-dev seatd libinput-dev \
@@ -212,7 +212,7 @@ cd $DOTFILES
 git clone https://github.com/hyprwm/hyprwire.git
 cd hyprwire
 mkdir -p build && cd build
-cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local -DCMAKE_CXX_STANDARD=26 ..
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local ..
 make -j$(nproc)
 sudo make install
 sudo ldconfig
@@ -245,3 +245,30 @@ sudo make install
 
 # Atualizar cache de bibliotecas
 sudo ldconfig
+
+
+
+
+
+
+
+
+
+
+######## HYPRLAUNCHER
+
+sudo apt install libiniparser-dev libqalculate-dev
+
+git clone https://github.com/hyprwm/hyprtoolkit.git
+cd hyprtoolkit
+mkdir build && cd build
+cmake -DCMAKE_BUILD_TYPE=Release ..
+make -j$(nproc)
+sudo make install
+
+git clone https://github.com/hyprwm/hyprlauncher.git
+cd hyprlauncher
+mkdir build && cd build
+cmake -DCMAKE_BUILD_TYPE=Release ..
+make -j$(nproc)
+sudo ninja install
