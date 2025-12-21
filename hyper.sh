@@ -36,6 +36,25 @@ sudo make install
 sudo update-alternatives --install /usr/bin/gcc gcc /usr/local/gcc-15/bin/gcc 60 --slave /usr/bin/g++ g++ /usr/local/gcc-15/bin/g++
 
 
+# ---- GCC 15 toolchain ----
+export GCC15_PREFIX=/usr/local/gcc-15
+
+export CC=$GCC15_PREFIX/bin/gcc
+export CXX=$GCC15_PREFIX/bin/g++
+export AR=$GCC15_PREFIX/bin/gcc-ar
+export NM=$GCC15_PREFIX/bin/gcc-nm
+export RANLIB=$GCC15_PREFIX/bin/gcc-ranlib
+
+# ---- Paths ----
+export PATH=$GCC15_PREFIX/bin:$PATH
+export LD_LIBRARY_PATH=$GCC15_PREFIX/lib64:$LD_LIBRARY_PATH
+export LIBRARY_PATH=$GCC15_PREFIX/lib64:$LIBRARY_PATH
+export CPLUS_INCLUDE_PATH=$GCC15_PREFIX/include/c++/15.1.0:$CPLUS_INCLUDE_PATH
+export C_INCLUDE_PATH=$GCC15_PREFIX/include:$C_INCLUDE_PATH
+
+# ---- CMake sanity ----
+export CMAKE_C_COMPILER=$CC
+export CMAKE_CXX_COMPILER=$CXX
 
 
 # Hyprland dependencies
