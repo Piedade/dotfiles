@@ -227,7 +227,7 @@ sudo ldconfig
 
 
 # HYPRWIRE
-cd $DOTFILES
+cd ~/.dotfiles
 git clone https://github.com/hyprwm/hyprwire.git
 cd hyprwire
 mkdir -p build && cd build
@@ -278,6 +278,7 @@ sudo ldconfig
 
 sudo apt install libiniparser-dev libqalculate-dev
 
+cd ~/.dotfiles
 git clone https://github.com/hyprwm/hyprtoolkit.git
 cd hyprtoolkit
 mkdir build && cd build
@@ -285,6 +286,7 @@ cmake -DCMAKE_BUILD_TYPE=Release ..
 make -j$(nproc)
 sudo make install
 
+cd ~/.dotfiles
 git clone https://github.com/hyprwm/hyprlauncher.git
 cd hyprlauncher
 mkdir build && cd build
