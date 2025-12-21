@@ -50,7 +50,7 @@ sudo apt install --reinstall  -y \
     libxcb-errors-dev libcairo2-dev libpango1.0-dev libxml2-dev \
     libjpeg-dev libpng-dev libturbojpeg0-dev libfmt-dev \
     libspdlog-dev libglm-dev libpugixml-dev hwdata libzip-dev libmagic-dev \
-    bison libabsl-dev libffi-dev libinotifytools0-dev
+    bison libabsl-dev libffi-dev libinotifytools0-dev libdisplay-info-dev
 
 # # Clone wlroots repository
 # cd ~/.hyprland
