@@ -253,8 +253,7 @@ cd build
 # Configurar CMake apontando para aquamarine e hyprwayland-scanner instalados
 cmake -DCMAKE_BUILD_TYPE=Release \
       -DCMAKE_INSTALL_PREFIX=/usr/local \
-      -Dhyprwayland-scanner_DIR=/usr/local/lib/cmake/hyprwayland-scanner \
-      -Daquamarine_DIR=/usr/local/lib/cmake/aquamarine ..
+      -Dhyprwayland-scanner_DIR=/usr/local/lib/cmake/hyprwayland-scanner ..
 
 # Compilar usando todos os cores da CPU
 make -j$(nproc)
@@ -292,4 +291,4 @@ cd hyprlauncher
 mkdir build && cd build
 cmake -DCMAKE_BUILD_TYPE=Release ..
 make -j$(nproc)
-sudo ninja install
+sudo make install
