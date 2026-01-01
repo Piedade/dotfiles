@@ -48,10 +48,10 @@ export RANLIB=$GCC15_PREFIX/bin/gcc-ranlib
 
 # ---- Paths ----
 export PATH=$GCC15_PREFIX/bin:$PATH
-export LD_LIBRARY_PATH=$GCC15_PREFIX/lib64:$LD_LIBRARY_PATH
-export LIBRARY_PATH=$GCC15_PREFIX/lib64:$LIBRARY_PATH
-export CPLUS_INCLUDE_PATH=$GCC15_PREFIX/include/c++/15.1.0:$CPLUS_INCLUDE_PATH
-export C_INCLUDE_PATH=$GCC15_PREFIX/include:$C_INCLUDE_PATH
+export LD_LIBRARY_PATH="$GCC15_PREFIX/lib64:${LD_LIBRARY_PATH:-}"
+export LIBRARY_PATH="$GCC15_PREFIX/lib64:${LIBRARY_PATH:-}"
+export CPLUS_INCLUDE_PATH="$GCC15_PREFIX/include/c++/15.1.0:${CPLUS_INCLUDE_PATH:-}"
+export C_INCLUDE_PATH="$GCC15_PREFIX/include:${C_INCLUDE_PATH:-}"
 
 # ---- CMake sanity ----
 export CMAKE_C_COMPILER=$CC
@@ -160,7 +160,7 @@ Cflags: -I${includedir}/toml++
 Libs:
 EOF
 
-export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH
+export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig:${PKG_CONFIG_PATH:-}"
 pkg-config --modversion tomlplusplus
 
 # HYPRCURSOR
