@@ -1,4 +1,4 @@
-# !/bin/bash
+#!/bin/bash
 set -euo pipefail
 
 # Please note that Hyprland uses the C++26 standard (gcc>=15 or clang>=19)
