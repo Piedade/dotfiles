@@ -294,4 +294,7 @@ cmake -DCMAKE_BUILD_TYPE=Release ..
 make -j$(nproc)
 sudo make install
 
+sudo cp /usr/local/gcc-15/lib64/libstdc++.so.6 /usr/local/lib/
+sudo ldconfig
+
 sudo reboot
