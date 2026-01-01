@@ -16,7 +16,7 @@
 # GCC 15 and C++26 installation
 
 sudo apt update
-sudo apt install -y build-essential libgmp-dev libmpfr-dev libmpc-dev libisl-dev flex bison texinfo
+sudo apt install -y build-essential libgmp-dev libmpfr-dev libmpc-dev libisl-dev flex bison texinfo wget
 
 
 
