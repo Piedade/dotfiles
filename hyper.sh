@@ -1,4 +1,5 @@
 # !/bin/bash
+set -euo pipefail
 
 # Please note that Hyprland uses the C++26 standard (gcc>=15 or clang>=19)
 
@@ -16,7 +17,7 @@
 # GCC 15 and C++26 installation
 
 sudo apt update
-sudo apt install -y build-essential libgmp-dev libmpfr-dev libmpc-dev libisl-dev flex bison texinfo wget
+sudo apt install -y build-essential libgmp-dev libmpfr-dev libmpc-dev libisl-dev flex bison texinfo wget libbenchmark-dev
 
 
 
