@@ -98,7 +98,7 @@ sudo make install
 sudo ldconfig
 
 # hyprutils
-cd ~/dotfiles
+cd ~/.dotfiles
 git clone https://github.com/hyprwm/hyprutils.git
 cd hyprutils
 mkdir build && cd build
