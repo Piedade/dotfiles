@@ -12,12 +12,14 @@ deps=(
   qml6-module-qtquick-effects
 )
 
-echo_info "Installing sddm..."
-
 # Installation of sddm deps
+echo_info "Installing dependencies..."
 for dep in "${deps[@]}"; do
-    echo_info "Installing dep $dep"
-    "${SUDO_CMD}" apt-get install "$dep"
+    install_package "$dep"
+    if [ $? -ne 0 ]; then
+        echo_error "$dep installation failed!"
+        exit 1
+    fi
 done
 
 echo_info "Installing sddm..."
