@@ -7,8 +7,14 @@ source ./scripts/check_env.sh
 
 enable_log
 
+source "./scripts/hyprland/install.sh"
+sleep 1
+
 source ./scripts/sddm.sh
+sleep 1
+
 source ./scripts/thunar.sh
+sleep 1
 
 # system
 # source ./scripts/dependencies.sh
@@ -40,5 +46,4 @@ source ./scripts/chrome.sh
 # bash config
 # source ./scripts/link_config.sh
 
-# "${SUDO_CMD}" apt modernize-sources -y
 "${SUDO_CMD}" systemctl reboot
