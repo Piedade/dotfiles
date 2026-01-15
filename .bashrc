@@ -449,8 +449,15 @@ eval "$(starship init bash)"
 # the z command magic
 eval "$(zoxide init bash)"
 
+# load variables per folder
+eval "$(direnv hook bash)"
+
 # Load custom .dotfiles bash scripts
 for file in $HOME/.dotfiles/.bash/*.sh; do
   [ -f "$file" ] && source "$file"
 done
 
+
+
+# Load Angular CLI autocompletion.
+source <(ng completion script)

@@ -71,21 +71,25 @@ link_file(){
 
 # Link a folder and its contents
 link_folder(){
-    FOLDER_TO_LINK="$3/$1"
-    # Create the directory if it doesn't exist
-    if [ ! -d "$FOLDER_TO_LINK" ]; then
-        mkdir -p "$FOLDER_TO_LINK" || {
-            echo_error "Failed to create directory: $FOLDER_TO_LINK"
-            return 1
-        }
-    else
-        echo_info "$FOLDER_TO_LINK exists, skipping creation."
-    fi
+    SRC="$2/../$1"
+    DEST="$3/$1"
 
-    echo_info "Linking $1 folder..."
-    for file in "$2/$1"/*; do
-        filename=$(basename "$file")
-        link_file "$filename" "$2/$1" "$FOLDER_TO_LINK"
+
+#     mkdir -p "$DEST"
+#     echo_info "Linking $1 (top-level only)..."
+#     for item in "$SRC"/*; do
+#         name=$(basename "$item")
+#         ln -sfn "$item" "$DEST/$name"
+#     done
+
+    echo_info "Linking $1 (files only, recursive)..."
+
+    find "$SRC" -type f | while read -r file; do
+        rel="${file#$SRC/}"
+        target="$DEST/$rel"
+
+        mkdir -p "$(dirname "$target")"
+        ln -sfn "$file" "$target"
     done
 
     # FIX PERMISSIONS
