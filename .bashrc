@@ -457,7 +457,5 @@ for file in $HOME/.dotfiles/.bash/*.sh; do
   [ -f "$file" ] && source "$file"
 done
 
-
-
 # Load Angular CLI autocompletion.
 source <(ng completion script)
