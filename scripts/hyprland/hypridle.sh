@@ -15,7 +15,7 @@ for dep in "${deps[@]}"; do
     fi
 done
 
-tag="v0.1.6"
+tag="v0.1.7"
 name="hypridle"
 
 echo_info "Installing $name $tag..."
