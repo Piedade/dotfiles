@@ -7,10 +7,19 @@ source ./scripts/check_env.sh
 
 enable_log
 
+source ./scripts/vim.sh
+sleep 1
+
 source "./scripts/hyprland/install.sh"
 sleep 1
 
 source ./scripts/sddm.sh
+sleep 1
+
+source ./scripts/alacritty.sh
+sleep 1
+
+source ./scripts/audio.sh
 sleep 1
 
 source ./scripts/thunar.sh
