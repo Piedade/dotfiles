@@ -3,7 +3,7 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source $SCRIPT_DIR/../utils.sh
 
 name="hyprutils"
-tag="v0.10.4"
+tag="v0.11.0"
 
 echo_info "Installing $name $tag..."
 
