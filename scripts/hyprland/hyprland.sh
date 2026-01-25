@@ -22,16 +22,7 @@ for dep in "${deps[@]}"; do
 done
 
 name="Hyprland"
-tag="v0.52.2"
-
-# Glaze, is neeeded ??
-echo_info "Installing Hyprland additional dependencies (glaze)..."
-if [ ! -d /usr/include/glaze ]; then
-    echo_info "Glaze is not installed. Installing glaze from assets..."
-    sudo dpkg -i $SCRIPT_DIR/assets/libglaze-dev_4.4.3-1_all.deb
-    sudo apt-get install -f -y
-    echo_success "libglaze-dev from assets installed."
-fi
+tag="v0.53.3"
 
 echo_info "Installing $name $tag..."
 if git clone --recursive -b $tag "https://github.com/hyprwm/Hyprland"; then
