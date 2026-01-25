@@ -31,6 +31,8 @@ execute_script "wayland-protocols-src.sh"
 sleep 1
 execute_script "xkbcommon.sh"
 sleep 1
+execute_script "hyprwire.sh"
+sleep 1
 execute_script "hyprland.sh"
 sleep 1
 execute_script "hyprpolkitagent.sh"
