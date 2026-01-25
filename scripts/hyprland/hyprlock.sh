@@ -28,7 +28,7 @@ for dep in "${build_dep[@]}"; do
   build_dep "$dep" "$LOG"
 done
 
-tag="v0.9.1"
+tag="v0.9.2"
 name="hyprlock"
 
 echo_info "Installing $name $tag..."
