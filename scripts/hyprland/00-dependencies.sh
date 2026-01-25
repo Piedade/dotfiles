@@ -125,6 +125,7 @@ hyprland_dep=(
     libzip-dev
     libpam0g-dev
     libxcursor-dev
+    libmuparser-dev
     qt6-declarative-dev
     qt6-base-private-dev
     qt6-wayland-dev
