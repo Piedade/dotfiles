@@ -5,7 +5,7 @@ source $SCRIPT_DIR/../utils.sh
 echo_info "Installing Hyprland additional dependencies (glaze)..."
 if [ ! -d /usr/include/glaze ]; then
     echo_info "Glaze is not installed. Installing glaze from assets..."
-    sudo dpkg -i $SCRIPT_DIR/assets/libglaze-dev_6.5.1-1_all.deb
+    sudo dpkg -i $SCRIPT_DIR/assets/libglaze-dev_4.4.3-1_all.deb
     sudo apt-get install -f -y
     echo_success "libglaze-dev from assets installed."
 fi
