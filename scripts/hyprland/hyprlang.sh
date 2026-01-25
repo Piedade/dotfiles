@@ -3,7 +3,7 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source $SCRIPT_DIR/../utils.sh
 
 name="hyprlang"
-tag="v0.6.7"
+tag="v0.6.8"
 
 echo_info "Installing $name $tag..."
 if git clone --recursive -b $tag https://github.com/hyprwm/hyprlang.git; then
