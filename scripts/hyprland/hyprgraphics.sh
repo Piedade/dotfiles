@@ -15,7 +15,7 @@ for dep in "${deps[@]}"; do
     fi
 done
 
-tag="v0.4.0"
+tag="v0.5.0"
 name="hyprgraphics"
 
 echo_info "Installing $name $tag..."
