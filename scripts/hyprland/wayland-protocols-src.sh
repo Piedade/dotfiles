@@ -2,7 +2,7 @@
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source $SCRIPT_DIR/../utils.sh
 
-tag="1.45"
+tag="1.47"
 name="wayland-protocols"
 
 echo_info "Installing $name $tag..."
