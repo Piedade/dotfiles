@@ -24,7 +24,7 @@ for dep in "${deps[@]}"; do
     fi
 done
 
-tag="v0.2.0"
+tag="v0.2.1"
 name="hyprland-guiutils"
 
 echo_info "Installing $name $tag..."
