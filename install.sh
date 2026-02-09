@@ -14,6 +14,9 @@ sleep 1
 source ./scripts/audio.sh
 sleep 1
 
+# for hyprpolkitagent
+sudo apt-get install -y polkitd pkexec
+
 source "./scripts/hyprland/install.sh"
 sleep 1
 
@@ -26,6 +29,12 @@ sleep 1
 source ./scripts/thunar.sh
 sleep 1
 
+source ./scripts/wl-copy.sh
+sleep 1
+
+source ./scripts/swaybg.sh
+sleep 1
+
 # system
 # source ./scripts/dependencies.sh
 # source ./scripts/github.sh
@@ -33,7 +42,11 @@ sleep 1
 # source ./scripts/fonts.sh
 # source ./scripts/starship.sh
 source ./scripts/vscode.sh
+sleep 1
+
 source ./scripts/chrome.sh
+sleep 1
+
 # source ./scripts/tableplus.sh
 # source ./scripts/beekeeperstudio.sh
 # source ./scripts/anydesk.sh

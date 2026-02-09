@@ -29,14 +29,28 @@ echo_info "Installing $name $tag..."
 if git clone --recursive -b $tag https://github.com/hyprwm/hyprland-qt-support.git; then
     cd $name || exit 1
 
-	cmake --no-warn-unused-cli -DCMAKE_BUILD_TYPE:STRING=Release -DCMAKE_INSTALL_PREFIX:PATH=/usr -S . -B ./build
-	cmake --build ./build --config Release --target all -j`nproc 2>/dev/null || getconf NPROCESSORS_CONF`
+    mkdir -p build
+    cd build || exit 1
 
-    if sudo cmake --install ./build; then
+    # Configure CMake and explicitly tell it where to install QML
+    cmake .. \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DINSTALL_QMLDIR=/usr/lib/qt6/qml
+
+    # Build
+    cmake --build . --config Release --target all -j$(nproc 2>/dev/null || getconf NPROCESSORS_CONF)
+
+    # Install
+    sudo cmake --install .
+
+    if [ $? -eq 0 ]; then
         echo_success "$name installed successfully."
     else
         echo_error "Installation failed for $name"
     fi
+
+    export QML2_IMPORT_PATH=/usr/lib/qt6/qml
 
     cd ..
 else

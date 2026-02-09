@@ -119,7 +119,7 @@ alias da='date "+%Y-%m-%d %A %T %Z"'
 # Alias's to modified commands
 alias cp='cp -i'
 alias mv='mv -i'
-alias rm='trash -v'
+#alias rm='trash -v'
 alias mkdir='mkdir -p'
 alias ps='ps auxf'
 alias ping='ping -c 10'
@@ -335,7 +335,7 @@ pwdtail() {
     pwd | awk -F/ '{nlast = NF -1;print $nlast"/"$NF}'
 }
 
-alias cat='batcat'
+# alias cat='batcat'
 
 # IP address lookup
 alias whatismyip="whatsmyip"
@@ -459,3 +459,7 @@ done
 
 # Load Angular CLI autocompletion.
 source <(ng completion script)
+
+# export XKB_DEFAULT_COMPILE_DIRECTORY=/usr/share/X11/locale
+# export XKB_CONFIG_ROOT=/usr/share/X11/xkb
+export LC_ALL=en_US.UTF-8

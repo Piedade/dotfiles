@@ -2,6 +2,8 @@
 
 echo_info "Installing fonts..."
 
+"${SUDO_CMD}" apt-get install -y fonts-noto-color-emoji
+
 installFont() {
     local fontName="$1"
 

@@ -41,3 +41,5 @@ execute_script "hyprlock.sh"
 sleep 1
 execute_script "hypridle.sh"
 sleep 1
+execute_script "xdg-desktop-portal-hyprland.sh"
+sleep 1

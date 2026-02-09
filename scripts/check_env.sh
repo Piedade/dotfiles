@@ -50,6 +50,9 @@ fi
 # Add user to adm group for log access
 "${SUDO_CMD}" usermod -aG adm $USER
 
+# Ensure your user has access to DRM devices
+"${SUDO_CMD}" usermod -aG video $USER
+
 # Link a single file
 link_file(){
     # Check if file is already there.
