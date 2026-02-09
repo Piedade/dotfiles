@@ -38,9 +38,15 @@ sleep 1
 # system
 # source ./scripts/dependencies.sh
 # source ./scripts/github.sh
-# source ./scripts/git_delta.sh
-# source ./scripts/fonts.sh
-# source ./scripts/starship.sh
+source ./scripts/git_delta.sh
+sleep 1
+
+source ./scripts/fonts.sh
+sleep 1
+
+source ./scripts/starship.sh
+sleep 1
+
 source ./scripts/vscode.sh
 sleep 1
 
@@ -48,25 +54,49 @@ source ./scripts/chrome.sh
 sleep 1
 
 # source ./scripts/tableplus.sh
-# source ./scripts/beekeeperstudio.sh
-# source ./scripts/anydesk.sh
+source ./scripts/beekeeperstudio.sh
+sleep 1
+
+source ./scripts/anydesk.sh
+sleep 1
+
 # source ./scripts/lightdm.sh
 
 # web
-# source ./scripts/firewall.sh
-# source ./scripts/apache.sh
-# source ./scripts/mysql.sh
-# source ./scripts/psql.sh
-# source ./scripts/php.sh
-# source ./scripts/phprc.sh
-# source ./scripts/mkcert.sh
-# source ./scripts/nvm.sh
-# source ./scripts/composer.sh
-# source ./scripts/mailpit.sh
-# source ./scripts/obsidian.sh
-# source ./scripts/dnsmasq.sh
+source ./scripts/firewall.sh
+sleep 1
 
-# bash config
-# source ./scripts/link_config.sh
+source ./scripts/apache.sh
+sleep 1
+
+source ./scripts/mysql.sh
+sleep 1
+
+source ./scripts/psql.sh
+sleep 1
+
+source ./scripts/php.sh
+sleep 1
+
+source ./scripts/mkcert.sh
+sleep 1
+
+source ./scripts/nvm.sh
+sleep 1
+
+source ./scripts/composer.sh
+sleep 1
+
+source ./scripts/mailpit.sh
+sleep 1
+
+source ./scripts/obsidian.sh
+sleep 1
+
+source ./scripts/dnsmasq.sh
+sleep 1
+
+source ./scripts/link_config.sh
+sleep 1
 
 "${SUDO_CMD}" systemctl reboot
