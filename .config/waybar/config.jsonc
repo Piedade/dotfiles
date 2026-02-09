@@ -3,9 +3,9 @@
   // "position": "top",
   
   "modules-left": ["hyprland/workspaces"],
-  "output": "HDMI-A-1",
+  //"output": "HDMI-A-1",
   "modules-center": [
-    "clock"
+    "hyprland/window"
     // "custom/weather"
   ],
 
@@ -18,9 +18,10 @@
     "cpu",
     "memory",
     // "custom/docker",
+    "clock",
     "tray",
-    "custom/lock",
-    "custom/power"
+    "custom/lock"
+    //"custom/power"
   ],
 
   "hyprland/workspaces": {
@@ -29,6 +30,12 @@
       "active": "",
       "default": ""
     }
+  },
+
+  "hyprland/window": {
+      "separate-outputs": true,
+      "tooltip": false,
+      "output": "DP-1"
   },
 
   // "tray": {
@@ -49,22 +56,27 @@
   "clock": {
     "timezone": "Europe/Lisbon",
     "tooltip-format": "{calendar}",
-    "format": "{:%H:%M, %d %a}"
+    "format": "{:%d %a, %H:%M}",
     // "interval": 60
+    "output": "HDMI-A-1"
   },
 
   "network": {
-    "format-wifi": "󰤢 {bandwidthDownBits}",
-    "format-ethernet": "󰈀 {bandwidthDownBits}",
-    "format-disconnected": "󰤠 No Network",
+    // "format-wifi": "󰤢 {bandwidthDownBits}",
+    // "format-ethernet": "󰈀 {bandwidthDownBits}",
+    // "format-disconnected": "󰤠 No Network",
+    "format-wifi": "󰤢",
+    "format-ethernet": "󰈀",
+    "format-disconnected": "󰤠",
     "interval": 5,
     "tooltip": false
   },
 
   "cpu": {
     "interval": 1,
-    "format": "  {icon0}{icon1}{icon2}{icon3} {usage:>2}%",
-    "format-icons": ["▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"]
+    "format": " {usage:>2}%",
+    // "format": "  {icon0}{icon1}{icon2}{icon3} {usage:>2}%",
+    // "format-icons": ["▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"]
   },
 
   "memory": {
