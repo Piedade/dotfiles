@@ -6,10 +6,8 @@ echo_info "Installing Archer T2U Nano AC600 (RTL8821AU) Wireless USB Adapter..."
 # "${SUDO_CMD}" apt-get install -y dkms rfkill git build-essential linux-headers-$(uname -r)
 "${SUDO_CMD}" apt-get install -y dkms rfkill network-manager
 
-git clone https://github.com/morrownr/8821au-20210708.git
-cd 8821au-20210708
-
-"${SUDO_CMD}" ./install-driver.sh
+# git clone https://github.com/morrownr/8821au-20210708.git
+"${SUDO_CMD}" ./8821au-20210708/install-driver.sh
 
 
 sudo tee /etc/modprobe.d/8821au.conf <<EOF
