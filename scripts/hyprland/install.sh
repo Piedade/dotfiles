@@ -51,8 +51,8 @@ sleep 1
 execute_script "hyprland.sh"
 sleep 1
 
-# execute_script "hyprpolkitagent.sh"
-# sleep 1
+execute_script "hyprpolkitagent.sh"
+sleep 1
 
 execute_script "hyprlock.sh"
 sleep 1

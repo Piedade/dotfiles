@@ -52,7 +52,7 @@ if git clone --recursive -b $tag https://github.com/hyprwm/hyprland-qt-support.g
 
     export QML2_IMPORT_PATH=/usr/lib/qt6/qml
 
-    cd ..
+    cd ../.. || exit 1
 else
     echo_error "Download failed for $name!"
 fi
