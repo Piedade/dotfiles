@@ -25,7 +25,7 @@ done
 echo_info "Using $SUDO_CMD as privilege escalation software"
 
 # Check if the current directory is writable.
-GITPATH=$(dirname "$(realpath "$0")")
+GITPATH="$USER_HOME/.dotfiles"
 if [ ! -w "$GITPATH" ]; then
     echo_error "Can't write to $GITPATH"
     exit 1

@@ -2,6 +2,8 @@
 
 echo_info "Installing Starship..."
 
+"${SUDO_CMD}" apt-get install -y multitail tree zoxide bash-completion ripgrep
+
 if command_exists starship; then
     echo_success "Starship already installed!"
     return

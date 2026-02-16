@@ -38,7 +38,7 @@ sleep 1
 # system
 # source ./scripts/dependencies.sh
 # source ./scripts/github.sh
-source ./scripts/git_delta.sh
+source ./scripts/git-delta.sh
 sleep 1
 
 source ./scripts/fonts.sh
@@ -94,6 +94,9 @@ source ./scripts/obsidian.sh
 sleep 1
 
 source ./scripts/dnsmasq.sh
+sleep 1
+
+source ./scripts/direnv.sh
 sleep 1
 
 source ./scripts/link_config.sh
