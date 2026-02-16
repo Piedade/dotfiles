@@ -6,7 +6,7 @@ echo_info "Installing MySQL from APT Repository..."
 wget -q https://ftp.debian.org/debian/pool/main/liba/libaio/libaio1_0.3.113-4_amd64.deb
 "${SUDO_CMD}" dpkg -i libaio1_0.3.113-4_amd64.deb
 
-APT_CONFIG_FILE="mysql-apt-config_0.8.34-1_all.deb"
+APT_CONFIG_FILE="mysql-apt-config_0.8.36-1_all.deb"
 
 wget "https://dev.mysql.com/get/$APT_CONFIG_FILE"
 
