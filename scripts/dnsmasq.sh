@@ -52,4 +52,6 @@ echo -e "nameserver 127.0.0.1" | "${SUDO_CMD}" tee -a "$RESOLVCONF" > /dev/null
 "${SUDO_CMD}" chattr +i /etc/resolv.conf
 
 # reset nameservers
+"${SUDO_CMD}" systemctl restart dnsmasq
+
 "${SUDO_CMD}" apt-get update
