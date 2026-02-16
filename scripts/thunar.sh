@@ -3,7 +3,7 @@
 echo_info "Installing thunar..."
 
 # Install
-"${SUDO_CMD}" apt-get install -y thunar gvfs gvfs-backends gvfs-fuse
+"${SUDO_CMD}" apt-get install -y thunar gvfs gvfs-backends gvfs-fuse thunar tumbler-plugins-extra thunar-archive-plugin
 
 # default
 echo_info "Setting Thunar as default file manager."
