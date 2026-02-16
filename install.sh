@@ -29,6 +29,9 @@ sleep 1
 source ./scripts/thunar.sh
 sleep 1
 
+source ./scripts/rofi.sh
+sleep 1
+
 source ./scripts/wl-copy.sh
 sleep 1
 
@@ -91,6 +94,15 @@ source ./scripts/mailpit.sh
 sleep 1
 
 source ./scripts/obsidian.sh
+sleep 1
+
+source ./scripts/gimp.sh
+sleep 1
+
+source ./scripts/inkscape.sh
+sleep 1
+
+source ./scripts/libreoffice.sh
 sleep 1
 
 source ./scripts/dnsmasq.sh

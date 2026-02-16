@@ -3,12 +3,12 @@
 installPHP(){
     local VERSION="$1"
 
-    if [ "$VERSION" == "7.2" ]; then
-        # Install missing libicu72
-        wget http://ftp.de.debian.org/debian/pool/main/i/icu/libicu72_72.1-3+deb12u1_amd64.deb
-        "${SUDO_CMD}" dpkg -i libicu72_72.1-3_amd64.deb
-        rm -f libicu72_72.1-3_amd64.deb
-    fi
+    # if [ "$VERSION" == "7.2" ]; then
+    #     # Install missing libicu72
+    #     wget http://ftp.de.debian.org/debian/pool/main/i/icu/libicu72_72.1-3+deb12u1_amd64.deb
+    #     "${SUDO_CMD}" dpkg -i libicu72_72.1-3_amd64.deb
+    #     rm -f libicu72_72.1-3_amd64.deb
+    # fi
 
     echo_info "Installing php${VERSION}..."
 
@@ -53,7 +53,13 @@ installPHP(){
 
     # Change fpm user and group
     "${SUDO_CMD}" sed -i "s/^user = .*/user = "${SUDO_USER:-$USER}"/" "/etc/php/${VERSION}/fpm/pool.d/www.conf"
-    "${SUDO_CMD}" systemctl restart php${VERSION}-fpm
+    # "${SUDO_CMD}" systemctl start php${VERSION}-fpm
+
+    # ${SUDO_CMD} sed -i "s/^user = .*/user = ${FPM_USER}/" "$CONF"
+    # ${SUDO_CMD} sed -i "s/^group = .*/group = ${FPM_USER}/" "$CONF"
+    # ${SUDO_CMD} sed -i "s/^listen.owner = .*/listen.owner = ${FPM_USER}/" "$CONF"
+    # ${SUDO_CMD} sed -i "s/^listen.group = .*/listen.group = ${FPM_USER}/" "$CONF"
+    # ${SUDO_CMD} sed -i "s/^listen.mode = .*/listen.mode = 0660/" "$CONF"
 }
 
 echo_info "Installing SURY repo..."
@@ -83,9 +89,16 @@ echo_info "Installing FastCGI mod..."
 
 # installPHP "5.6"
 installPHP "7.2"
+sleep 1
+
 installPHP "7.4"
+sleep 1
+
 installPHP "8.1"
+sleep 1
+
 installPHP "8.4"
+sleep 1
 
 # Select default PHP version
 # update-alternatives --config php
