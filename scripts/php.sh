@@ -5,7 +5,7 @@ installPHP(){
 
     if [ "$VERSION" == "7.2" ]; then
         # Install missing libicu72
-        wget http://ftp.de.debian.org/debian/pool/main/i/icu/libicu72_72.1-3_amd64.deb
+        wget http://ftp.de.debian.org/debian/pool/main/i/icu/libicu72_72.1-3+deb12u1_amd64.deb
         "${SUDO_CMD}" dpkg -i libicu72_72.1-3_amd64.deb
         rm -f libicu72_72.1-3_amd64.deb
     fi
