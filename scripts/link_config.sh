@@ -20,7 +20,7 @@ link_file ".config/hypr" $GITPATH $USER_HOME
 echo_info "Linking folders..."
 
 # link_folder ".config" $GITPATH $USER_HOME
-link_folder ".vscode" $GITPATH $USER_HOME
+link_file ".vscode" $GITPATH $USER_HOME
 
 # # DWM config
 # DWMPATH="$GITPATH/dwm"
