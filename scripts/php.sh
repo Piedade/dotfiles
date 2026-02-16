@@ -1,5 +1,9 @@
 #!/bin/bash
 
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source $SCRIPT_DIR/utils.sh
+source $SCRIPT_DIR/check_env.sh
+
 installPHP(){
     local VERSION="$1"
 
@@ -12,9 +16,6 @@ installPHP(){
 
     echo_info "Installing php${VERSION}..."
 
-    # PHP FPM and CLI
-    "${SUDO_CMD}" apt-get install -y php${VERSION} php${VERSION}-common php${VERSION}-cli php${VERSION}-fpm
-
     EXTENSIONS=(
         mysql
         curl
@@ -26,30 +27,23 @@ installPHP(){
         intl
         apcu
         xdebug
-        json
         bcmath
         imagick
     )
 
-    # Check already installed extensions
-    INSTALLED=$(php${VERSION} -m | grep -v "^$" | grep -v "^[[]")
+    PACKAGES=(
+        php${VERSION}
+        php${VERSION}-common
+        php${VERSION}-cli
+        php${VERSION}-fpm
+    )
 
-    # Install missing extensions
-    for EXT in "${EXTENSIONS[@]}"
-    do
-        if echo "$INSTALLED" | grep -qi "^${EXT}$" ; then
-            echo_info "Extension $EXT already included!"
-        else
-            PKG_NAME="php${VERSION}-${EXT}"
-
-            if "${SUDO_CMD}" apt-cache show "$PKG_NAME" &> /dev/null; then
-                echo_info "Installing $PKG_NAME ..."
-                "${SUDO_CMD}" apt-get install -y "$PKG_NAME"
-            else
-                echo_error "Package $PKG_NAME does not exists."
-            fi
-        fi
+    for EXT in "${EXTENSIONS[@]}"; do
+        PACKAGES+=("php${VERSION}-${EXT}")
     done
+
+    # ONE SINGLE APT CALL
+    "${SUDO_CMD}" apt-get install -y "${PACKAGES[@]}"
 
     # Change fpm user and group
     "${SUDO_CMD}" sed -i "s/^user = .*/user = "${SUDO_USER:-$USER}"/" "/etc/php/${VERSION}/fpm/pool.d/www.conf"
@@ -60,6 +54,8 @@ installPHP(){
     # ${SUDO_CMD} sed -i "s/^listen.owner = .*/listen.owner = ${FPM_USER}/" "$CONF"
     # ${SUDO_CMD} sed -i "s/^listen.group = .*/listen.group = ${FPM_USER}/" "$CONF"
     # ${SUDO_CMD} sed -i "s/^listen.mode = .*/listen.mode = 0660/" "$CONF"
+
+    echo_success "php${VERSION} installed!"
 }
 
 echo_info "Installing SURY repo..."
