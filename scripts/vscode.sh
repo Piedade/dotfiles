@@ -14,35 +14,35 @@ rm -f packages.microsoft.gpg
 "${SUDO_CMD}" apt-get install -y apt-transport-https code
 
 
-# # Fix weak password store
-# VSCODE_ARGV="${HOME}/.vscode/argv.json"
-# mkdir -p "${HOME}/.vscode"
+# Fix weak password store
+VSCODE_ARGV="${HOME}/.vscode/argv.json"
+mkdir -p "${HOME}/.vscode"
 
-# # If file doesn't exist → create minimal JSON
-# if [ ! -f "$VSCODE_ARGV" ]; then
-#     cat > "$VSCODE_ARGV" <<'EOF'
-# {
-#   "password-store": "gnome-libsecret"
-# }
-# EOF
-#     echo "[INFO] Created argv.json with password-store"
-# else
-#     # Check if password-store already exists
-#     if grep -q '"password-store"' "$VSCODE_ARGV"; then
-#         echo "[INFO] password-store already set in argv.json"
-#     else
-#         # Insert before the last closing brace
-#         # Detect if any existing properties exist (ignoring comments)
-#         PROPS_EXIST=$(grep -E -v '^\s*//|^\s*$' "$VSCODE_ARGV" | grep -c ':')
-#         if [ "$PROPS_EXIST" -gt 0 ]; then
-#             # Add with a leading comma
-#             sed -i '/^[[:space:]]*}/ i\  , "password-store": "gnome-libsecret"' "$VSCODE_ARGV"
-#         else
-#             # No other properties → insert without comma
-#             sed -i '/^[[:space:]]*}/ i\  "password-store": "gnome-libsecret"' "$VSCODE_ARGV"
-#         fi
-#         echo "[INFO] Added password-store to argv.json"
-#     fi
-# fi
+# If file doesn't exist → create minimal JSON
+if [ ! -f "$VSCODE_ARGV" ]; then
+    cat > "$VSCODE_ARGV" <<'EOF'
+{
+  "password-store": "gnome-libsecret"
+}
+EOF
+    echo "[INFO] Created argv.json with password-store"
+else
+    # Check if password-store already exists
+    if grep -q '"password-store"' "$VSCODE_ARGV"; then
+        echo "[INFO] password-store already set in argv.json"
+    else
+        # Insert before the last closing brace
+        # Detect if any existing properties exist (ignoring comments)
+        PROPS_EXIST=$(grep -E -v '^\s*//|^\s*$' "$VSCODE_ARGV" | grep -c ':')
+        if [ "$PROPS_EXIST" -gt 0 ]; then
+            # Add with a leading comma
+            sed -i '/^[[:space:]]*}/ i\  , "password-store": "gnome-libsecret"' "$VSCODE_ARGV"
+        else
+            # No other properties → insert without comma
+            sed -i '/^[[:space:]]*}/ i\  "password-store": "gnome-libsecret"' "$VSCODE_ARGV"
+        fi
+        echo "[INFO] Added password-store to argv.json"
+    fi
+fi
 
 echo_success "VS Code installed!"

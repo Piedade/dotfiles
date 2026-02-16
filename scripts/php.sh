@@ -83,7 +83,9 @@ echo_info "Installing FastCGI mod..."
 # fcgid is a high performance alternative to mod_cgi that starts a sufficient number of instances of the CGI program to handle concurrent requests.
 "${SUDO_CMD}" apt-get install libapache2-mod-fcgid -y
 
-# installPHP "5.6"
+installPHP "5.6"
+sleep 1
+
 installPHP "7.2"
 sleep 1
 

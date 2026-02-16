@@ -15,7 +15,9 @@ source ./scripts/audio.sh
 sleep 1
 
 # for hyprpolkitagent
-sudo apt-get install -y polkitd pkexec
+# sudo apt-get install -y polkitd pkexec
+source "./scripts/lxpolkit.sh"
+sleep 1
 
 source "./scripts/hyprland/install.sh"
 sleep 1
@@ -113,5 +115,8 @@ sleep 1
 
 source ./scripts/link_config.sh
 sleep 1
+
+sudo apt-get install pv
+mkdir -p "${HOME}/Downloads"
 
 "${SUDO_CMD}" systemctl reboot
