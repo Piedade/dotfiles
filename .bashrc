@@ -128,8 +128,8 @@ alias cls='clear'
 alias apt-get='sudo apt-get'
 alias multitail='multitail --no-repeat -c'
 alias freshclam='sudo freshclam'
-alias vi='nvim'
-alias svi='sudo vi'
+#alias vi='nvim'
+#alias svi='sudo vi'
 alias vis='nvim "+set si"'
 
 # Change directory aliases

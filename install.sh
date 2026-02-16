@@ -105,10 +105,11 @@ sleep 1
 source ./scripts/libreoffice.sh
 sleep 1
 
-source ./scripts/dnsmasq.sh
+source ./scripts/direnv.sh
 sleep 1
 
-source ./scripts/direnv.sh
+# FIXME: for now, should be at last because dns resolve
+source ./scripts/dnsmasq.sh
 sleep 1
 
 source ./scripts/link_config.sh
