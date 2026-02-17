@@ -15,14 +15,26 @@ source ./scripts/audio.sh
 sleep 1
 
 # for hyprpolkitagent
-sudo apt-get install -y polkitd pkexec
-# gnome-keyring libsecret-1-0
-# libsecret-tools libpam-gnome-keyring
-
+sudo apt-get install -y polkitd pkexec gnome-keyring libsecret-1-0 libsecret-tools libpam-gnome-keyring
 # source "./scripts/lxpolkit.sh"
 sleep 1
 
 source "./scripts/hyprland/install.sh"
+sleep 1
+
+source ./scripts/nwg-displays.sh
+sleep 1
+
+source ./scripts/nwg-look.sh
+sleep 1
+
+source ./scripts/swaync.sh
+sleep 1
+
+source ./scripts/swappy.sh
+sleep 1
+
+source ./scripts/qalculate-gtk.sh
 sleep 1
 
 source ./scripts/sddm.sh
