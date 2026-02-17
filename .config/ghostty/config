@@ -1,0 +1,26 @@
+# Terminal font
+font-family = "MesloLGS Nerd Font Mono"
+font-size = 16
+
+# Cursor
+cursor-style = "bar"
+
+# Transparency
+background-opacity = 0.95
+
+# Window decorations
+window-decoration = false
+
+# Padding
+window-padding-x = 10
+window-padding-y = 10
+
+# Working directory
+# command = "cd ~/Downloads && exec $SHELL"
+
+# TERM override
+env = "TERM=xterm-256color"
+
+# Theme
+# ghostty +list-themes
+theme = "Atom"
