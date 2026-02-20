@@ -1,7 +1,8 @@
 #!/bin/bash
 
-# Bind Ctrl+k to clear terminal
-bind '"\C-k": "\C-e\C-u clear\n"'
+# Ctrl + L is enough (write something then run it)
+# # Bind Ctrl+k to clear terminal
+# bind '"\C-k": "\C-e\C-u clear\n"'
 
 # SHOW
 echo_error() {

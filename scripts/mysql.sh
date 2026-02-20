@@ -21,9 +21,12 @@ enable_log
 "${SUDO_CMD}" apt-get update -y
 "${SUDO_CMD}" DEBIAN_FRONTEND=noninteractive apt-get install mysql-server -y
 
+# enable mysql_native_password plugin
+echo "mysql_native_password=ON" | "${SUDO_CMD}" tee -a /etc/mysql/mysql.conf.d/mysqld.cnf
+
 # root password
 "${SUDO_CMD}" mysql --user=root <<-EOF
-ALTER USER 'root'@'localhost' IDENTIFIED WITH caching_sha2_password BY 'admin';
+ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'admin';
 DELETE FROM mysql.user WHERE User='';
 DROP DATABASE IF EXISTS test;
 DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%';

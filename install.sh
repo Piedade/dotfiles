@@ -34,9 +34,6 @@ sleep 1
 source ./scripts/swappy.sh
 sleep 1
 
-source ./scripts/qalculate-gtk.sh
-sleep 1
-
 source ./scripts/sddm.sh
 sleep 1
 

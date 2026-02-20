@@ -15,4 +15,5 @@ rerun.txt
 tmp/**/*
 .vscode/
 .idea/
-
+.direnv/
+.htaccess

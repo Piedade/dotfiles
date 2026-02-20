@@ -1,15 +1,17 @@
 * {
-  font-family: "Fira Code", JetbrainsMono Nerd Font;
-  font-size: 1rem;
-  min-height: 0;
-  /* padding: 0;
+    font-family:
+        'MesloLGS Nerd Font Mono',
+        'Fira Code',
+        JetbrainsMono Nerd Font;
+    font-size: 1rem;
+    min-height: 0;
+    /* padding: 0;
   margin: 0; */
 }
 
-#waybar{
-  background: #111111;
+#waybar {
+    background: #111111;
 }
-
 
 /* BUTTON */
 
@@ -18,46 +20,40 @@
 #custom-lock,
 #clock,
 #pulseaudio {
-  margin: 0.5rem 0;
-  padding: 0.25rem 0.5rem;
+    margin: 0.5rem 0;
+    padding: 0.25rem 0.5rem;
 
-  background: transparent;
-  border-radius: 0.4rem;
-  border: none;
+    background: transparent;
+    border-radius: 0.4rem;
+    border: none;
 }
 
 #workspaces button:hover,
 #custom-power:hover,
 #custom-lock:hover,
 #clock:hover,
-#pulseaudio:hover
-{
-  transition: background ease 150ms;
-  background: #1e1e1e;
+#pulseaudio:hover {
+    transition: background ease 150ms;
+    background: #1e1e1e;
 }
-
 
 /* left */
 
 #workspaces {
-  margin-left: 0.5rem;
+    margin-left: 0.5rem;
 }
 
-#workspaces button{
-  padding-right: 1rem;
+#workspaces button {
+    padding-right: 1rem;
 
-  color: #444444;
+    color: #444444;
 }
 
 #workspaces button.active {
-  color: #FFFFFF;
+    color: #ffffff;
 }
 
-
 /* center */
-
-
-
 
 /* right */
 #pulseaudio,
@@ -67,20 +63,19 @@
 #tray,
 #custom-lock,
 #custom-power {
-  margin-right: 0.5rem;
+    margin-right: 0.5rem;
 }
 
 #custom-power > * {
-  padding-left: 41rem;
-  padding-right: 41rem;
+    padding-left: 41rem;
+    padding-right: 41rem;
 }
-
 
 #custom-lock {
-  padding-right: 0.65rem;
+    padding-right: 0.65rem;
 }
 
-/* 
+/*
 #custom-music,
 #tray,
 #backlight,
@@ -121,10 +116,9 @@
   border-radius: 0;
 } */
 
-
 #custom-music {
-  color: #ca9ee6;
-  border-radius: 5px;
+    color: #ca9ee6;
+    border-radius: 5px;
 }
 
 /* #custom-docker {
@@ -137,10 +131,10 @@
    */
 
 #custom-power {
-  /* margin-right: 1rem; */
-  /* border-radius: 0px 5px 5px 0px; */
-  padding: 0;
-  color: #e78284;
+    /* margin-right: 1rem; */
+    /* border-radius: 0px 5px 5px 0px; */
+    padding: 0;
+    color: #e78284;
 }
 
 /* #custom-docker.docker {
@@ -156,29 +150,29 @@
 } */
 
 #custom-weather.clear {
-  color: #e5c890; /* Sunny yellow */
+    color: #e5c890; /* Sunny yellow */
 }
 
 #custom-weather.cloud {
-  color: #99d1db; /* Light blue */
+    color: #99d1db; /* Light blue */
 }
 
 #custom-weather.rain {
-  color: #8caaee; /* Blue */
+    color: #8caaee; /* Blue */
 }
 
 #custom-weather.snow {
-  color: #c6d0f5; /* White-ish */
+    color: #c6d0f5; /* White-ish */
 }
 
 #custom-weather.thunder {
-  color: #ca9ee6; /* Purple */
+    color: #ca9ee6; /* Purple */
 }
 
 #custom-weather.fog {
-  color: #b0b4bc; /* Gray */
+    color: #b0b4bc; /* Gray */
 }
 
 #custom-weather.error {
-  color: #e78284; /* Red */
+    color: #e78284; /* Red */
 }

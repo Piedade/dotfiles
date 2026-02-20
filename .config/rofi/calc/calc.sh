@@ -21,7 +21,7 @@ while true; do
     fi
 
     if [ -n "$result" ]; then
-        calc_result=$(qalc -t "$result")
+        calc_result=$(echo "$result" | bc -l)
         echo "$calc_result" | wl-copy
     fi
 done
