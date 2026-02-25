@@ -93,6 +93,29 @@ setup_direnv() {
 
 export -f setup_direnv
 
+create_envrc() {
+    local dir="$PWD"
+    local env_file="$dir/.envrc"
+
+        if [[ ! -f "$env_file" ]]; then
+cat > "$env_file" << EOF
+PHP=$(php -v 2>/dev/null | grep -oP '(?<=PHP )\d+\.\d+' | head -1)
+NODE=
+COMPOSER=
+
+setup_direnv \\
+    --php "\$PHP" \\
+    --node "\$NODE" \\
+    --composer "\$COMPOSER"
+EOF
+
+        direnv allow
+        echo_success "Created .envrc in $dir"
+    else
+        echo_error ".envrc already exists in $dir"
+    fi
+}
+
 # # Function to search for a .phprc file and set PHP_BIN
 # autoload_php() {
 #   local dir="$PWD"

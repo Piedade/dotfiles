@@ -457,9 +457,6 @@ for file in $HOME/.dotfiles/.bash/*.sh; do
   [ -f "$file" ] && source "$file"
 done
 
-# Load Angular CLI autocompletion.
-source <(ng completion script)
-
 # export XKB_DEFAULT_COMPILE_DIRECTORY=/usr/share/X11/locale
 # export XKB_CONFIG_ROOT=/usr/share/X11/xkb
 export LC_ALL=en_US.UTF-8

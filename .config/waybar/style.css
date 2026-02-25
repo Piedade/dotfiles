@@ -20,8 +20,8 @@
 #custom-lock,
 #clock,
 #pulseaudio {
-    margin: 0.5rem 0;
-    padding: 0.25rem 0.5rem;
+    margin: 0.25rem 0;
+    padding: 0.125rem 0.25rem;
 
     background: transparent;
     border-radius: 0.4rem;
@@ -40,11 +40,11 @@
 /* left */
 
 #workspaces {
-    margin-left: 0.5rem;
+    margin-left: 0.25rem;
 }
 
 #workspaces button {
-    padding-right: 1rem;
+    padding-right: 0.5rem;
 
     color: #444444;
 }
@@ -63,7 +63,7 @@
 #tray,
 #custom-lock,
 #custom-power {
-    margin-right: 0.5rem;
+    margin-right: 0.25rem;
 }
 
 #custom-power > * {
