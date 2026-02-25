@@ -79,6 +79,8 @@ setup_direnv() {
         fi
 
         ln -sf "$HOME/.nvm/versions/node/$locally_resolved_nvm_version/bin/node" "$PWD/.direnv/bin/node"
+        ln -sf "$HOME/.nvm/versions/node/$locally_resolved_nvm_version/bin/npm" "$PWD/.direnv/bin/npm"
+        ln -sf "$HOME/.nvm/versions/node/$locally_resolved_nvm_version/bin/npx" "$PWD/.direnv/bin/npx"
     fi
 
     # Composer
