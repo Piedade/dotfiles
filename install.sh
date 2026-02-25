@@ -31,8 +31,9 @@ sleep 1
 source ./scripts/swaync.sh
 sleep 1
 
-source ./scripts/swappy.sh
-sleep 1
+# flameshot is better
+# source ./scripts/swappy.sh
+# sleep 1
 
 source ./scripts/sddm.sh
 sleep 1

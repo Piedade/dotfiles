@@ -44,15 +44,15 @@ setup_direnv() {
     # local COMPOSER_VERSION="${COMPOSER:-}"
 
     # Ensure direnv bin folder exists
-    mkdir -p "$PWD/.direnv/bin"
-    export PATH="$PWD/.direnv/bin:$PATH"
+    mkdir -p "$PWD/.direnv"
+    export PATH="$PWD/.direnv:$PATH"
 
     # PHP
     if [[ -n $PHP_VERSION ]]; then
         # export PHP_BIN="/usr/bin/php$PHP_VERSION"
         # echo "Using PHP $PHP_VERSION"
         if [[ -x "/usr/bin/php$PHP_VERSION" ]]; then
-            ln -sf "/usr/bin/php$PHP_VERSION" "$PWD/.direnv/bin/php"
+            ln -sf "/usr/bin/php$PHP_VERSION" "$PWD/.direnv/php"
         else
             echo_error "PHP version $PHP_VERSION is not installed!"
         fi
@@ -78,15 +78,15 @@ setup_direnv() {
             locally_resolved_nvm_version=$(nvm ls --no-colors "${NODE_VERSION}" | command tail -1 | command tr -d '\->*' | command tr -d '[:space:]')
         fi
 
-        ln -sf "$HOME/.nvm/versions/node/$locally_resolved_nvm_version/bin/node" "$PWD/.direnv/bin/node"
-        ln -sf "$HOME/.nvm/versions/node/$locally_resolved_nvm_version/bin/npm" "$PWD/.direnv/bin/npm"
-        ln -sf "$HOME/.nvm/versions/node/$locally_resolved_nvm_version/bin/npx" "$PWD/.direnv/bin/npx"
+        ln -sf "$HOME/.nvm/versions/node/$locally_resolved_nvm_version/bin/node" "$PWD/.direnv/node"
+        ln -sf "$HOME/.nvm/versions/node/$locally_resolved_nvm_version/bin/npm" "$PWD/.direnv/npm"
+        ln -sf "$HOME/.nvm/versions/node/$locally_resolved_nvm_version/bin/npx" "$PWD/.direnv/npx"
     fi
 
     # Composer
     if [[ -n $COMPOSER_VERSION ]]; then
         if [[ -x "/usr/local/bin/composer$COMPOSER_VERSION" ]]; then
-            ln -sf "/usr/local/bin/composer$COMPOSER_VERSION" "$PWD/.direnv/bin/composer"
+            ln -sf "/usr/local/bin/composer$COMPOSER_VERSION" "$PWD/.direnv/composer"
         else
             echo_error "Composer version $COMPOSER_VERSION is not installed!"
         fi
