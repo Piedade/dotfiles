@@ -78,9 +78,18 @@ setup_direnv() {
             locally_resolved_nvm_version=$(nvm ls --no-colors "${NODE_VERSION}" | command tail -1 | command tr -d '\->*' | command tr -d '[:space:]')
         fi
 
-        ln -sf "$HOME/.nvm/versions/node/$locally_resolved_nvm_version/bin/node" "$PWD/.direnv/node"
-        ln -sf "$HOME/.nvm/versions/node/$locally_resolved_nvm_version/bin/npm" "$PWD/.direnv/npm"
-        ln -sf "$HOME/.nvm/versions/node/$locally_resolved_nvm_version/bin/npx" "$PWD/.direnv/npx"
+        # Use NVM
+        if [ "$(nvm current)" != "${locally_resolved_nvm_version}" ]; then
+            nvm use "${NODE_VERSION}" --silent
+        fi
+        #
+        # OR MANUAL
+        # # add global packages to bash PATH
+        # export PATH="$HOME/.nvm/versions/node/$locally_resolved_nvm_version/bin:$PWD/.direnv/bin:$PATH"
+
+        # ln -sf "$HOME/.nvm/versions/node/$locally_resolved_nvm_version/bin/node" "$PWD/.direnv/node"
+        # ln -sf "$HOME/.nvm/versions/node/$locally_resolved_nvm_version/bin/npm" "$PWD/.direnv/npm"
+        # ln -sf "$HOME/.nvm/versions/node/$locally_resolved_nvm_version/bin/npx" "$PWD/.direnv/npx"
     fi
 
     # Composer
