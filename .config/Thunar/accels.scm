@@ -1,4 +1,4 @@
-; Thunar GtkAccelMap rc-file         -*- scheme -*-
+; thunar GtkAccelMap rc-file         -*- scheme -*-
 ; this file is an automated accelerator map dump
 ;
 ; (gtk_accel_path "<Actions>/ThunarBookmarks/b4b0237bcb0932c5eb27cf942fe4c57b" "")
@@ -23,6 +23,7 @@
 ; (gtk_accel_path "<Actions>/ThunarActionManager/open" "<Primary>o")
 ; (gtk_accel_path "<Actions>/ThunarStandardView/sort-ascending" "")
 ; (gtk_accel_path "<Actions>/ThunarWindow/toggle-split-view" "F3")
+; (gtk_accel_path "<Actions>/ThunarBookmarks/ccf48b4df8fc731be5a2b2674503ba99" "")
 ; (gtk_accel_path "<Actions>/ThunarActionManager/copy-2" "<Primary>Insert")
 ; (gtk_accel_path "<Actions>/ThunarActionManager/trash-delete" "Delete")
 ; (gtk_accel_path "<Actions>/ThunarWindow/open-recent" "")
@@ -121,12 +122,12 @@
 ; (gtk_accel_path "<Actions>/ThunarWindow/empty-trash" "")
 ; (gtk_accel_path "<Actions>/ThunarWindow/preferences" "")
 ; (gtk_accel_path "<Actions>/ThunarActionManager/delete" "")
-; (gtk_accel_path "<Actions>/ThunarWindow/open-network" "")
+; (gtk_accel_path "<Actions>/ThunarWindow/search-alt" "Search")
 ; (gtk_accel_path "<Actions>/ThunarWindow/view-side-pane-tree" "<Primary>e")
 ; (gtk_accel_path "<Actions>/ThunarWindow/open-file-system" "")
-; (gtk_accel_path "<Actions>/ThunarWindow/search-alt" "Search")
+; (gtk_accel_path "<Actions>/ThunarStandardView/make-link" "")
 ; (gtk_accel_path "<Actions>/ThunarWindow/switch-next-tab-alt" "<Primary>Tab")
 ; (gtk_accel_path "<Actions>/ThunarActionManager/sendto-desktop" "")
-; (gtk_accel_path "<Actions>/ThunarStandardView/make-link" "")
+; (gtk_accel_path "<Actions>/ThunarWindow/open-network" "")
 ; (gtk_accel_path "<Actions>/ThunarWindow/zoom-reset-alt" "<Primary>KP_0")
 ; (gtk_accel_path "<Actions>/ThunarWindow/about" "")

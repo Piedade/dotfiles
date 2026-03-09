@@ -43,12 +43,14 @@ setup_direnv() {
     # local NODE_VERSION="${NODE:-}"
     # local COMPOSER_VERSION="${COMPOSER:-}"
 
-    # Ensure direnv bin folder exists
-    mkdir -p "$PWD/.direnv"
-    export PATH="$PWD/.direnv:$PATH"
+    direnv_created=false
 
     # PHP
     if [[ -n $PHP_VERSION ]]; then
+        # Ensure direnv bin folder exists
+        mkdir -p "$PWD/.direnv"
+        direnv_created=true
+
         # export PHP_BIN="/usr/bin/php$PHP_VERSION"
         # echo "Using PHP $PHP_VERSION"
         if [[ -x "/usr/bin/php$PHP_VERSION" ]]; then
@@ -94,11 +96,21 @@ setup_direnv() {
 
     # Composer
     if [[ -n $COMPOSER_VERSION ]]; then
+        # Ensure direnv bin folder exists
+        mkdir -p "$PWD/.direnv"
+        direnv_created=true
+
         if [[ -x "/usr/local/bin/composer$COMPOSER_VERSION" ]]; then
             ln -sf "/usr/local/bin/composer$COMPOSER_VERSION" "$PWD/.direnv/composer"
         else
             echo_error "Composer version $COMPOSER_VERSION is not installed!"
         fi
+    fi
+
+
+    # Update PATH if direnv is created
+    if [ "$direnv_created" = true ]; then
+        export PATH="$PWD/.direnv:$PATH"
     fi
 }
 
