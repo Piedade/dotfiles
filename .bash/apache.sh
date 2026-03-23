@@ -65,7 +65,7 @@ create_domain() {
 </VirtualHost>
 EOF
 
-    ( cd /var/www/ssl ; mkcert $DOMAIN )
+    ( cd /var/www/ssl > /dev/null && mkcert "$DOMAIN" )
 
     # Enable site and restart Apache
     sudo a2ensite "$DOMAIN.conf" > /dev/null

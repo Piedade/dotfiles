@@ -32,6 +32,13 @@ link_file ".config/starship.toml" $GITPATH $USER_HOME
 
 link_file ".config/mimeapps.list" $GITPATH $USER_HOME
 
+link_file ".config/swappy" $GITPATH $USER_HOME
+
+link_file ".config/swaync" $GITPATH $USER_HOME
+
+link_file ".config/gtk-3.0" $GITPATH $USER_HOME
+
+
 # link_file ".vscode" $GITPATH $USER_HOME
 
 echo_success "Linked config done!"

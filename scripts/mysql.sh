@@ -25,7 +25,7 @@ enable_log
 echo "mysql_native_password=ON" | "${SUDO_CMD}" tee -a /etc/mysql/mysql.conf.d/mysqld.cnf
 
 # root password
-"${SUDO_CMD}" mysql --user=root <<-EOF
+"${SUDO_CMD}" mysql <<-EOF
 ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'admin';
 DELETE FROM mysql.user WHERE User='';
 DROP DATABASE IF EXISTS test;

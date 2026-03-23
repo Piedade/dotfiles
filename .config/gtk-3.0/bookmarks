@@ -1,5 +1,5 @@
 file:///home/piedade/Documents/_EXAMPLES
 file:///home/piedade/Downloads
 file:///var/www
-smb://192.168.1.131/ NAS
-smb://192.168.1.131/03%20red%20group/%23%23%20GESTAO/09_COLABORADORES/Pedro%20Piedade
+smb://nas-redpost.local/ NAS-REDPOST
+smb://nas-redmedia.local/ NAS-REDMEDIA

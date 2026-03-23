@@ -58,7 +58,7 @@ if [[ $iatest -gt 0 ]]; then bind "set show-all-if-ambiguous On"; fi
 # Set the default editor and terminal
 export EDITOR=code
 export VISUAL=code
-export TERMINAL=ghostty
+export TERMINAL=alacritty
 alias vim='nvim'
 
 # To have colors for ls and all grep commands such as grep, egrep and zgrep
@@ -343,10 +343,10 @@ function whatsmyip () {
     # Internal IP Lookup.
     if command -v ip &> /dev/null; then
         echo -n "Internal IP: "
-        ip addr show enp11s0 | grep "inet " | awk '{print $2}' | cut -d/ -f1
+        ip addr show eno1 | grep "inet " | awk '{print $2}' | cut -d/ -f1
     else
         echo -n "Internal IP: "
-        ifconfig enp11s0 | grep "inet " | awk '{print $2}'
+        ifconfig eno1 | grep "inet " | awk '{print $2}'
     fi
 
     # External IP Lookup
@@ -451,6 +451,9 @@ eval "$(zoxide init bash)"
 
 # load variables per folder
 eval "$(direnv hook bash)"
+
+# ssh key password
+# eval $(keychain --eval --quiet ~/.ssh/id_ed25519)
 
 # Load custom .dotfiles bash scripts
 for file in $HOME/.dotfiles/.bash/*.sh; do

@@ -1,8 +1,8 @@
 # Colors (Nordic)
 
 [colors.primary]
-background = '#2E3440'
-foreground = '#D8DEE9'
+background = '#101010' #'#2E3440'
+foreground = '#EFEFEF' # '#D8DEE9'
 
 [colors.normal]
 black = '#191C1D'

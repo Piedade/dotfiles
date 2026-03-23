@@ -66,6 +66,9 @@ server() {
 
     local ACCOUNT="$1"
 
+    # Authenticating SSH key
+    ssh "$ACCOUNT@server" "true" || { echo_error "SSH authentication failed"; return 1; }
+
     # Check shell access
     check_shell_access "$ACCOUNT" 1
     case $? in

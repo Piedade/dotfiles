@@ -9,6 +9,9 @@ get_database(){
         echo "Database: ${DATABASE_NAME}"
     fi
 
+    # Authenticating SSH key...
+    ssh root@server "true" || { echo_error "SSH authentication failed"; exit 1; }
+
     if [ -z "$2" ]; then
         DATABASE_PREFIX="false"
         echo -e "${BLUE}Not a prestashop site...$RESET"
@@ -60,6 +63,7 @@ EOF
         if [ "$DATABASE_PREFIX" != "false" ]; then
 mysql <<EOF
 use ${DATABASE_NAME};
+UPDATE ${DATABASE_PREFIX}_configuration SET value = 0 WHERE name = 'PS_SMARTY_CACHE';
 UPDATE ${DATABASE_PREFIX}_configuration SET value = 0 WHERE name = 'PS_CSS_THEME_CACHE';
 UPDATE ${DATABASE_PREFIX}_configuration SET value = 0 WHERE name = 'PS_JS_THEME_CACHE';
 UPDATE ${DATABASE_PREFIX}_configuration SET value = ${SSL} WHERE name = 'PS_SSL_ENABLED';
