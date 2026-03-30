@@ -1,12 +1,9 @@
 [general]
 live_config_reload = true
-working_directory = "~/Downloads"
+# working_directory = "/home/piedade/Downloads"
 
 # Themes --
-import = [
-  "~/.config/alacritty/nordic.toml",
-  "~/.config/alacritty/keybinds.toml",
-]
+import = ["~/.config/alacritty/nordic.toml", "~/.config/alacritty/keybinds.toml"]
 
 [window]
 title = "Alacritty"

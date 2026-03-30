@@ -1,9 +1,10 @@
 create_prestashop() {
-    DOMAIN="$1"
-    ZIP_SOURCE="$2"
+    ACCOUNT="$1"
+    DOMAIN="$2"
+    ZIP_SOURCE="$3"
 
-    if [ -z "$DOMAIN" ]; then
-        echo "Usage: create_prestashop <domain>"
+    if [ -z "$ACCOUNT" ] || [ -z "$DOMAIN" ] ; then
+        echo "Usage: create_prestashop <account> <domain>"
         return 1
     fi
 
@@ -14,61 +15,61 @@ create_prestashop() {
     PS_DIR="/var/www/$DOMAIN"
 
     # Config - adjust these as needed or add parameters
-    DB_NAME="prestashop"
+    DB_NAME="${ACCOUNT}_site"
     DB_USER="root"
     DB_PASS="admin"
     DB_HOST="127.0.0.1"
-    SHOP_NAME="My Shop"
-    ADMIN_FIRSTNAME="Admin"
-    ADMIN_LASTNAME="User"
-    ADMIN_EMAIL="admin@$DOMAIN"
-    ADMIN_PASS="admin123"
+    SHOP_NAME="$ACCOUNT"
+    ADMIN_FIRSTNAME="Webmaster"
+    ADMIN_LASTNAME="RED"
+    ADMIN_EMAIL="webmaster@redpost.pt"
+    ADMIN_PASS=$(gen_pass)
     LANGUAGE="pt"
     COUNTRY="pt"
     DOMAIN_URL="$DOMAIN"
 
-    create_domain "$DOMAIN"
+    # create_domain "$DOMAIN"
 
-    mkdir -p "$TMP_DIR"
+    # mkdir -p "$TMP_DIR"
 
-    if [ -n "$ZIP_SOURCE" ] && [ -f "$ZIP_SOURCE" ]; then
-        echo_info "📦 Using local PrestaShop ZIP: $ZIP_SOURCE"
-        cp "$ZIP_SOURCE" "$ZIP_FILE"
-    else
-        echo_info "⬇️  Downloading latest PrestaShop..."
-        LATEST_URL=$(curl -s https://api.github.com/repos/PrestaShop/PrestaShop/releases/latest | jq -r '.assets[] | select(.name | test("zip$")) | .browser_download_url')
+    # if [ -n "$ZIP_SOURCE" ] && [ -f "$ZIP_SOURCE" ]; then
+    #     echo_info "📦 Using local PrestaShop ZIP: $ZIP_SOURCE"
+    #     cp "$ZIP_SOURCE" "$ZIP_FILE"
+    # else
+    #     echo_info "⬇️  Downloading latest PrestaShop..."
+    #     LATEST_URL=$(curl -s https://api.github.com/repos/PrestaShop/PrestaShop/releases/latest | jq -r '.assets[] | select(.name | test("zip$")) | .browser_download_url')
 
-        if [ -z "$LATEST_URL" ]; then
-            echo "❌ Failed to get download URL."
-            return 1
-        fi
+    #     if [ -z "$LATEST_URL" ]; then
+    #         echo "❌ Failed to get download URL."
+    #         return 1
+    #     fi
 
-        curl -# -L "$LATEST_URL" -o "$ZIP_FILE"
-    fi
+    #     curl -# -L "$LATEST_URL" -o "$ZIP_FILE"
+    # fi
 
-    echo "📦 Extracting files..."
-    ZIP_SIZE=$(stat -c %s "$ZIP_FILE")
-    mkdir -p "$TMP_DIR/unpacked"
-    pv -s "$ZIP_SIZE" "$ZIP_FILE" | bsdtar -xf - -C "$TMP_DIR/unpacked"
+    # echo "📦 Extracting files..."
+    # ZIP_SIZE=$(stat -c %s "$ZIP_FILE")
+    # mkdir -p "$TMP_DIR/unpacked"
+    # pv -s "$ZIP_SIZE" "$ZIP_FILE" | bsdtar -xf - -C "$TMP_DIR/unpacked"
 
-    echo "📁 Moving PrestaShop files to $PS_DIR..."
-    ZIP_FILE=$(find "$TMP_DIR/unpacked" -maxdepth 1 -type f -iname "prestashop*.zip" | head -n1)
-    if [ -z "$ZIP_FILE" ] || [ ! -f "$ZIP_FILE" ]; then
-        echo "❌ Expected internal PrestaShop ZIP file not found!"
-        return 1
-    fi
-    ZIP_SIZE=$(stat -c %s "$ZIP_FILE")
-    mkdir -p "$TMP_DIR/unpacked"
-    pv -s "$ZIP_SIZE" "$ZIP_FILE" | bsdtar -xf - -C "$PS_DIR"
+    # echo "📁 Moving PrestaShop files to $PS_DIR..."
+    # ZIP_FILE=$(find "$TMP_DIR/unpacked" -maxdepth 1 -type f -iname "prestashop*.zip" | head -n1)
+    # if [ -z "$ZIP_FILE" ] || [ ! -f "$ZIP_FILE" ]; then
+    #     echo "❌ Expected internal PrestaShop ZIP file not found!"
+    #     return 1
+    # fi
+    # ZIP_SIZE=$(stat -c %s "$ZIP_FILE")
+    # mkdir -p "$TMP_DIR/unpacked"
+    # pv -s "$ZIP_SIZE" "$ZIP_FILE" | bsdtar -xf - -C "$PS_DIR"
 
     # Change to PrestaShop directory before fixing permissions and running installer
     cd "$PS_DIR" || return 1
 
     echo_info "📝 Creating composer.json..."
-    tee composer.json > /dev/null <<'EOF'
+    tee composer.json > /dev/null <<EOF
 {
-    "$schema": "https://getcomposer.org/schema.json",
-    "name": "red/lenamotos",
+    "\$schema": "https://getcomposer.org/schema.json",
+    "name": "red/${ACCOUNT}",
     "type": "project",
     "description": "",
     "keywords": [
@@ -86,7 +87,7 @@ create_prestashop() {
     "scripts": {
         "dev": [
             "Composer\\Config::disableProcessTimeout",
-            "npx concurrently -c \"#fdba74\" \"cd themes/lenamotos && npm run dev\" --names=vite"
+            "npx concurrently -c \"#fdba74\" \"cd themes/${ACCOUNT} && npm run dev\" --names=vite"
         ]
     },
     "minimum-stability": "stable",
@@ -110,7 +111,7 @@ EOF
         --db_password="$DB_PASS" \
         --db_create="1" \
         --ssl="1" \
-        --fixtures="1" \
+        --fixtures="0" \
         --name="$SHOP_NAME" \
         --email="$ADMIN_EMAIL" \
         --password="$ADMIN_PASS" \
@@ -124,6 +125,7 @@ EOF
     rm -rf install "$TMP_DIR" "$ZIP_FILE"
 
     echo "✅ PrestaShop installed and ready at https://$DOMAIN"
+    echo "Admin Pass: $ADMIN_PASS"
 }
 
 

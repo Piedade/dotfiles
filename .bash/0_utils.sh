@@ -37,3 +37,18 @@ check_permission() {
 
     stat -c "%a %n" "$1"
 }
+
+gen_pass() {
+  openssl rand -base64 18 | tr -dc 'A-Za-z0-9!@#$%^&*()_+=' | head -c 20
+}
+
+run_remote() {
+  local CMD="$1"
+  ssh "$ACCOUNT@server" "$CMD"
+  local STATUS=$?
+  if [ $STATUS -ne 0 ]; then
+        echo_error "Command failed: $CMD (Exit status: $STATUS)"
+        read -r  # mantém terminal aberto
+        exit $STATUS
+  fi
+}

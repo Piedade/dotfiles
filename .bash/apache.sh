@@ -126,10 +126,25 @@ fix_permissions() {
     echo -e "for $BOLD$appName$RESET $ITALIC($current_folder)$RESET on the folders:"
 
     # FIX permissions
-    # sudo chown -R $USER:$USER "$current_dir"
-    find "$current_dir" -type d -exec chmod 0755 {} \+
-    find "$current_dir" -type f -exec chmod 0644 {} \+
-    find "$current_dir" -type f -name '*.php' -exec chmod 0600 {} \;
+    # # sudo chown -R $USER:$USER "$current_dir"
+    # find "$current_dir" -type d -exec chmod 0755 {} \+
+    # find "$current_dir" -type f -exec chmod 0644 {} \+
+    # find "$current_dir" -type f -name '*.php' -exec chmod 0600 {} \;
+
+    EXCLUDES=(
+        "$current_dir/node_modules"
+        "$current_dir/vendor"
+    )
+
+    PRUNE_EXPR=""
+    for dir in "${EXCLUDES[@]}"; do
+        PRUNE_EXPR+=" -path $dir -prune -o"
+    done
+
+    # Directories
+    eval "find \"$current_dir\" $PRUNE_EXPR -type d -exec chmod 0755 {} +"
+    eval "find \"$current_dir\" $PRUNE_EXPR -type f -exec chmod 0644 {} +"
+    eval "find \"$current_dir\" $PRUNE_EXPR -type f -name '*.php' -exec chmod 0600 {} +"
 
     for folder in ${folders}; do
         if [ ! -d "$folder" ]; then

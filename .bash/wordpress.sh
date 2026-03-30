@@ -1,20 +1,5 @@
 #!/bin/bash
 
-gen_pass() {
-  openssl rand -base64 18 | tr -dc 'A-Za-z0-9!@#$%^&*()_+=' | head -c 20
-}
-
-run_remote() {
-  local CMD="$1"
-  ssh "$ACCOUNT@server" "$CMD"
-  local STATUS=$?
-  if [ $STATUS -ne 0 ]; then
-        echo_error "Command failed: $CMD (Exit status: $STATUS)"
-        read -r  # mantém terminal aberto
-        exit $STATUS
-  fi
-}
-
 create_wordpress() {
     local ACCOUNT=$1
     local DOMAIN=$2
@@ -69,9 +54,9 @@ create_wordpress() {
             ;;
     esac
 
-    local DB_PASS='v5aXW9O0bJ0LnJsPoFIo'
-    local WP_ADMIN_PASS='yVJLYx32F6SgeOd+w73E'
-    local EMAIL_PASS='xcgAzvhLBNLDzxogwPkZ'
+    local DB_PASS=$(gen_pass)
+    local WP_ADMIN_PASS=$(gen_pass)
+    local EMAIL_PASS=$(gen_pass)
 
     local WP_BIN="/opt/alt/php84/usr/bin/php -d memory_limit=-1 /usr/local/bin/wp"
 

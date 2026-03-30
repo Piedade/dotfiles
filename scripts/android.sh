@@ -8,7 +8,7 @@ echo_info "Installing Android Studio..."
 "${SUDO_CMD}" apt-get -y install default-jdk
 
 # 32-bit libraries (for 64-bit systems): Android Studio and the emulator often rely on some 32-bit libraries.
-"${SUDO_CMD}" apt-get -y install libc6:i386 libncurses5:i386 libstdc++6:i386 lib32z1 libbz2-1.0:i386
+"${SUDO_CMD}" apt-get -y install libc6:i386 libncurses6:i386 libstdc++6:i386 zlib1g:i386 libbz2-1.0:i386
 
 # Download Android Studio
 wget -O android-studio.tar.gz "$ANDROID_STUDIO_FILE"
@@ -18,5 +18,10 @@ tar -xvzf android-studio.tar.gz
 
 # Hardware VM acceleration uses your computer's processor to significantly improve the execution speed of the emulator
 "${SUDO_CMD}" apt-get install qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils
+
+# vim ~/.local/share/applications/jetbrains-studio.desktop
+# ...
+# Exec=/opt/android-studio/bin/studio %f
+# ...
 
 echo_success "Android Studio installed! (you should run /opt/android-studio/bin/studio.sh)"
