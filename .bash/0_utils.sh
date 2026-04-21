@@ -52,3 +52,23 @@ run_remote() {
         exit $STATUS
   fi
 }
+
+select_account() {
+    local account
+    account=$(ssh root@server "cut -d: -f1 /etc/trueuserowners" | fzf --prompt="Select account: ")
+    [[ -z "$account" ]] && return 1
+    echo "$account"
+}
+
+# select_email() {
+#     local account=$1
+#     local domain
+#     domain=$(ssh "$SERVER" "grep '^DNS=' /var/cpanel/users/$account | cut -d= -f2")
+#     [[ -z "$domain" ]] && { echo "Domain not found for $account"; return 1; }
+
+#     local options=("info@$domain" "geral@$domain" "support@$domain" "admin@$domain")
+#     local email
+#     email=$(printf "%s\n" "${options[@]}" | fzf --prompt="Select email: ")
+#     [[ -z "$email" ]] && return 1
+#     echo "$email"
+# }

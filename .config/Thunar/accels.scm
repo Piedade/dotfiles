@@ -1,4 +1,4 @@
-; thunar GtkAccelMap rc-file         -*- scheme -*-
+; Thunar GtkAccelMap rc-file         -*- scheme -*-
 ; this file is an automated accelerator map dump
 ;
 ; (gtk_accel_path "<Actions>/ThunarBookmarks/b4b0237bcb0932c5eb27cf942fe4c57b" "")
@@ -72,22 +72,23 @@
 ; (gtk_accel_path "<Actions>/ThunarActionManager/open-with-other" "")
 ; (gtk_accel_path "<Actions>/ThunarStandardView/invert-selection" "<Primary><Shift>i")
 ; (gtk_accel_path "<Actions>/ThunarBookmarks/c203a459459b0de0ea381bf8b5cd955a" "")
+; (gtk_accel_path "<Actions>/ThunarStandardView/sort-by-mtime" "")
 ; (gtk_accel_path "<Actions>/ThunarWindow/view-side-pane-shortcuts" "<Primary>b")
 ; (gtk_accel_path "<Actions>/ThunarWindow/reload-alt-2" "Reload")
 ; (gtk_accel_path "<Actions>/ThunarWindow/view-location-selector-menu" "")
-; (gtk_accel_path "<Actions>/ThunarStandardView/sort-by-mtime" "")
-; (gtk_accel_path "<Actions>/ThunarWindow/edit-menu" "")
 ; (gtk_accel_path "<Actions>/ThunarActionManager/copy" "<Primary>c")
+; (gtk_accel_path "<Actions>/ThunarWindow/edit-menu" "")
+; (gtk_accel_path "<Actions>/ThunarBookmarks/926b39ff6407d709d9adb06e338bd2d7" "")
 ; (gtk_accel_path "<Actions>/ThunarWindow/bookmarks-menu" "")
 ; (gtk_accel_path "<Actions>/ThunarStandardView/forward-alt" "Forward")
 ; (gtk_accel_path "<Actions>/ThunarActionManager/move-to-trash" "")
 ; (gtk_accel_path "<Actions>/ThunarWindow/reload-alt-1" "F5")
 ; (gtk_accel_path "<Actions>/ThunarActionManager/delete-3" "<Shift>KP_Delete")
 ; (gtk_accel_path "<Actions>/ThunarWindow/reload" "<Primary>r")
-; (gtk_accel_path "<Actions>/ThunarWindow/open-computer" "")
+; (gtk_accel_path "<Actions>/ThunarBookmarks/a9ddd0072b176250351b6de22f42cd79" "")
 ; (gtk_accel_path "<Actions>/ThunarStandardView/arrange-items-menu" "")
 ; (gtk_accel_path "<Actions>/ThunarStandardView/unselect-all-files" "Escape")
-; (gtk_accel_path "<Actions>/ThunarBookmarks/a9ddd0072b176250351b6de22f42cd79" "")
+; (gtk_accel_path "<Actions>/ThunarWindow/open-computer" "")
 ; (gtk_accel_path "<Actions>/ThunarWindow/toggle-image-preview" "")
 ; (gtk_accel_path "<Actions>/ThunarWindow/toggle-side-pane" "F9")
 ; (gtk_accel_path "<Actions>/ThunarWindow/view-as-icons" "<Primary>1")

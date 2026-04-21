@@ -54,96 +54,95 @@ create_wordpress() {
             ;;
     esac
 
-    local DB_PASS=$(gen_pass)
+    local DB_PASS='eZR5ErcJ+fdw+9XZ'
     local WP_ADMIN_PASS=$(gen_pass)
-    local EMAIL_PASS=$(gen_pass)
-
+    local EMAIL_PASS='LP%538=1mLGaXtg)'
     local WP_BIN="/opt/alt/php84/usr/bin/php -d memory_limit=-1 /usr/local/bin/wp"
 
-    echo_info "Setting PHP version to 8.4..."
-    run_remote "selectorctl --interpreter=php --set-user-current=8.4"
+    # echo_info "Setting PHP version to 8.4..."
+    # run_remote "selectorctl --interpreter=php --set-user-current=8.4"
 
 
-    echo_info "Creating database and user..."
-    # run_remote "uapi Mysql list_users"
-    run_remote "uapi Mysql create_database name='${ACCOUNT}_site'"
-    run_remote "uapi Mysql create_user name='${ACCOUNT}_site' password='${DB_PASS}'"
-    run_remote "uapi Mysql set_privileges_on_database user='${ACCOUNT}_site' database='${ACCOUNT}_site' privileges='ALL PRIVILEGES'"
+#     echo_info "Creating database and user..."
+#     # run_remote "uapi Mysql list_users"
+#     run_remote "uapi Mysql create_database name='${ACCOUNT}_site'"
+#     run_remote "uapi Mysql create_user name='${ACCOUNT}_site' password='${DB_PASS}'"
+#     run_remote "uapi Mysql set_privileges_on_database user='${ACCOUNT}_site' database='${ACCOUNT}_site' privileges='ALL PRIVILEGES'"
 
 
-    echo_info "Creating email..."
-    run_remote "uapi Email add_pop email='noreply@${DOMAIN}' password='${EMAIL_PASS}'"
-    run_remote "uapi Email suspend_incoming email='noreply@${DOMAIN}'"
+#     echo_info "Creating email..."
+#     run_remote "uapi Email add_pop email='noreply@${DOMAIN}' password='${EMAIL_PASS}'"
+#     run_remote "uapi Email suspend_incoming email='noreply@${DOMAIN}'"
 
 
-    echo_info "Disable Nginx cache..."
-    run_remote "uapi NginxCaching disable_cache"
+#     echo_info "Disable Nginx cache..."
+#     run_remote "uapi NginxCaching disable_cache"
 
 
-    echo_info "Creating .htaccess..."
-    run_remote "cat > ~/$ROOT_DIR/.htaccess <<'EOL'
-# http to https
-RewriteEngine On
-RewriteCond %{SERVER_PORT} 80
-RewriteRule (.*) https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+#     echo_info "Creating .htaccess..."
+#     run_remote "cat > ~/$ROOT_DIR/.htaccess <<'EOL'
+# # http to https
+# RewriteEngine On
+# RewriteCond %{SERVER_PORT} 80
+# RewriteRule (.*) https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
 
-# www to non-www
-RewriteCond %{HTTP_HOST} ^www\.(.*)$ [NC]
-RewriteRule ^(.*)$ http://%1%{REQUEST_URI} [R=301,QSA,NC,L]
+# # www to non-www
+# RewriteCond %{HTTP_HOST} ^www\.(.*)$ [NC]
+# RewriteRule ^(.*)$ http://%1%{REQUEST_URI} [R=301,QSA,NC,L]
 
-# Block WordPress xmlrpc.php requests
-<Files xmlrpc.php>
-order deny,allow
-deny from all
-</Files>
+# # Block WordPress xmlrpc.php requests
+# <Files xmlrpc.php>
+# order deny,allow
+# deny from all
+# </Files>
 
-# Block wp-config.php
-<files wp-config.php>
-order allow,deny
-deny from all
-</files>
+# # Block wp-config.php
+# <files wp-config.php>
+# order allow,deny
+# deny from all
+# </files>
 
-# Block the include-only files.
-<IfModule mod_rewrite.c>
-RewriteEngine On
-RewriteBase /
-RewriteRule ^wp-admin/includes/ - [F,L]
-RewriteRule !^wp-includes/ - [S=3]
-RewriteRule ^wp-includes/[^/]+\.php$ - [F,L]
-RewriteRule ^wp-includes/js/tinymce/langs/.+\.php - [F,L]
-RewriteRule ^wp-includes/theme-compat/ - [F,L]
-</IfModule>
+# # Block the include-only files.
+# <IfModule mod_rewrite.c>
+# RewriteEngine On
+# RewriteBase /
+# RewriteRule ^wp-admin/includes/ - [F,L]
+# RewriteRule !^wp-includes/ - [S=3]
+# RewriteRule ^wp-includes/[^/]+\.php$ - [F,L]
+# RewriteRule ^wp-includes/js/tinymce/langs/.+\.php - [F,L]
+# RewriteRule ^wp-includes/theme-compat/ - [F,L]
+# </IfModule>
 
-# BEGIN cPanel-generated php ini directives, do not edit
-<IfModule php8_module>
-   php_flag display_errors Off
-   php_value max_execution_time 30
-   php_value max_input_time 60
-   php_value max_input_vars 1000
-   php_value memory_limit 256M
-   php_value post_max_size 32M
-   php_value session.gc_maxlifetime 1440
-   php_value session.save_path "/var/cpanel/php/sessions/ea-php84"
-   php_value upload_max_filesize 16M
-   php_flag zlib.output_compression Off
-</IfModule>
-<IfModule lsapi_module>
-   php_flag display_errors Off
-   php_value max_execution_time 30
-   php_value max_input_time 60
-   php_value max_input_vars 1000
-   php_value memory_limit 256M
-   php_value post_max_size 32M
-   php_value session.gc_maxlifetime 1440
-   php_value session.save_path "/var/cpanel/php/sessions/ea-php84"
-   php_value upload_max_filesize 16M
-   php_flag zlib.output_compression Off
-</IfModule>
-# END cPanel-generated php ini directives, do not edit
-EOL"
+# # BEGIN cPanel-generated php ini directives, do not edit
+# <IfModule php8_module>
+#    php_flag display_errors Off
+#    php_value max_execution_time 30
+#    php_value max_input_time 60
+#    php_value max_input_vars 1000
+#    php_value memory_limit 256M
+#    php_value post_max_size 32M
+#    php_value session.gc_maxlifetime 1440
+#    php_value session.save_path "/var/cpanel/php/sessions/ea-php84"
+#    php_value upload_max_filesize 16M
+#    php_flag zlib.output_compression Off
+# </IfModule>
+# <IfModule lsapi_module>
+#    php_flag display_errors Off
+#    php_value max_execution_time 30
+#    php_value max_input_time 60
+#    php_value max_input_vars 1000
+#    php_value memory_limit 256M
+#    php_value post_max_size 32M
+#    php_value session.gc_maxlifetime 1440
+#    php_value session.save_path "/var/cpanel/php/sessions/ea-php84"
+#    php_value upload_max_filesize 16M
+#    php_flag zlib.output_compression Off
+# </IfModule>
+# # END cPanel-generated php ini directives, do not edit
+# EOL"
 
-    echo_info "Installing WordPress..."
-    run_remote "cd ~/$ROOT_DIR && $WP_BIN core download --locale='pt_PT'"
+#     echo_info "Installing WordPress..."
+#     run_remote "cd ~/$ROOT_DIR && $WP_BIN core download --locale='pt_PT'"
     run_remote "cd ~/$ROOT_DIR && $WP_BIN config create --dbname='${ACCOUNT}_site' --dbuser='${ACCOUNT}_site' --dbpass='${DB_PASS}'"
     run_remote "cd ~/$ROOT_DIR && $WP_BIN core install --url='https://${DOMAIN}' --title='${ACCOUNT}' --admin_user='redpost' --admin_password='${WP_ADMIN_PASS}' --admin_email='webmaster@redpost.pt' --skip-email"
 

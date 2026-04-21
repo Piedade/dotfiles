@@ -6,7 +6,7 @@ resize(){
         echo -e "${RED}No resize value defined!$RESET"
     else
         # Define the file pattern to include both JPG and PNG files
-        FILES_TO_RESIZE=(*.jpg *.png)
+        FILES_TO_RESIZE=(*.jpg *.png *.webp)
         RESIZE=$1
         ORIGINAL_FOLDER="_original"
 
@@ -50,6 +50,54 @@ resize(){
             fi
         done
     fi
+}
+
+
+# WebP conversion script using ImageMagick
+to_webp() {
+    # Set quality from first argument, default to 80
+    QUALITY=${1:-80}
+    ORIGINAL_FOLDER="_original"
+
+    # 1. Enable nullglob so if a pattern (like *.jpeg) matches nothing,
+    # it disappears instead of remaining as a literal string.
+    shopt -s nullglob
+
+    # 2. Collect all files into one array
+    MATCHES=(*.jpg *.jpeg *.png *.JPG *.JPEG *.PNG)
+
+    # 3. Disable nullglob to return shell to normal behavior
+    shopt -u nullglob
+
+    # Check if the array is empty
+    if [ ${#MATCHES[@]} -eq 0 ]; then
+        echo_error "No JPG or PNG files found in current directory."
+        return
+    fi
+
+    echo_info "Converting ${#MATCHES[@]} images to WebP (Quality: $QUALITY%)..."
+
+    # Create the backup directory
+    mkdir -p "$ORIGINAL_FOLDER"
+
+    for image in "${MATCHES[@]}"; do
+        # Double check it is a file and not the directory itself
+        if [[ -f "$image" ]]; then
+            filename="${image%.*}"
+
+            echo "------------------------------------------------"
+            echo "Processing: $image -> $filename.webp"
+
+            # cwebp execution
+            # Adding -short to make the output less "noisy" so you can see progress
+            cwebp -q "$QUALITY" -m 6 -short "$image" -o "$filename.webp"
+
+            # Move original to backup folder
+            mv "$image" "$ORIGINAL_FOLDER/"
+        fi
+    done
+
+    echo_success "Done! ${#MATCHES[@]} originals moved to $ORIGINAL_FOLDER/"
 }
 
 create_favicon(){
