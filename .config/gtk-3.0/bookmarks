@@ -2,5 +2,5 @@ file:///home/piedade/Documents
 file:///home/piedade/Documents/_EXAMPLES
 file:///home/piedade/Downloads
 file:///var/www
-smb://nas-redpost.local/ NAS-REDPOST
-smb://nas-redmedia.local/ NAS-REDMEDIA
+smb://192.168.1.85/ NAS-REDPOST
+smb://192.168.1.251/ NAS-REDMEDIA

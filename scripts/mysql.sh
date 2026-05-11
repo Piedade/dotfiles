@@ -22,7 +22,11 @@ enable_log
 "${SUDO_CMD}" DEBIAN_FRONTEND=noninteractive apt-get install mysql-server -y
 
 # enable mysql_native_password plugin
-echo "mysql_native_password=ON" | "${SUDO_CMD}" tee -a /etc/mysql/mysql.conf.d/mysqld.cnf
+# echo "mysql_native_password=ON" | "${SUDO_CMD}" tee -a /etc/mysql/mysql.conf.d/mysqld.cnf
+"${SUDO_CMD}" tee /etc/mysql/conf.d/native-password.cnf >/dev/null <<'EOF'
+[mysqld]
+mysql_native_password=ON
+EOF
 
 # root password
 "${SUDO_CMD}" mysql <<-EOF

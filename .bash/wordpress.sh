@@ -1,5 +1,28 @@
 #!/bin/bash
 
+setup_ssh_key() {
+    local account=$1
+    local key_name=${2:-"Piedade"}
+    local pub_key_file=~/.ssh/id_ed25519.pub
+
+    [ ! -f "$pub_key_file" ] && { echo_error "~/.ssh/id_ed25519.pub not found"; return 1; }
+
+    echo_info "Setting up SSH key for $account..."
+    ssh "$SERVER" "
+        mkdir -p /home/$account/.ssh &&
+        chown $account:$account /home/$account/.ssh &&
+        chmod 700 /home/$account/.ssh
+    "
+    ssh "$SERVER" "cat > /home/$account/.ssh/${key_name}.pub" < "$pub_key_file"
+    ssh "$SERVER" "
+        grep -qxF \"\$(cat /home/$account/.ssh/${key_name}.pub)\" /home/$account/.ssh/authorized_keys 2>/dev/null ||
+            cat /home/$account/.ssh/${key_name}.pub >> /home/$account/.ssh/authorized_keys &&
+        chown $account:$account /home/$account/.ssh/${key_name}.pub /home/$account/.ssh/authorized_keys 2>/dev/null &&
+        chmod 644 /home/$account/.ssh/${key_name}.pub &&
+        chmod 600 /home/$account/.ssh/authorized_keys
+    "
+}
+
 create_wordpress() {
     local ACCOUNT=$1
     local DOMAIN=$2
@@ -7,21 +30,37 @@ create_wordpress() {
     local DB_NAME=$4
     local ENABLE_MULTI_PHP=$5
 
-    if [ -z "$ACCOUNT" ]; then
-        echo_error "Usage: create_wordpress <account> [domain] [root_dir] [db_name] [enable_multi_php]"
-        return 1
-    fi
+    if [ $# -eq 0 ]; then
+        read -rp "Account: " ACCOUNT
+        if [ -z "$ACCOUNT" ]; then
+            echo_error "Account is required."
+            return 1
+        fi
 
-    if [ -z "$DOMAIN" ]; then
-        DOMAIN="$ACCOUNT.dev.red.com.pt"
-    fi
+        local _default_domain="$ACCOUNT.dev.red.com.pt"
+        read -rp "Domain [$_default_domain]: " DOMAIN
+        [ -z "$DOMAIN" ] && DOMAIN="$_default_domain"
 
-    if [ -z "$ROOT_DIR" ]; then
-        ROOT_DIR="public_html"
-    fi
+        read -rp "Root directory [public_html]: " ROOT_DIR
+        [ -z "$ROOT_DIR" ] && ROOT_DIR="public_html"
 
-    if [ -z "$DB_NAME" ]; then
-        DB_NAME="site"
+        read -rp "Database name [site]: " DB_NAME
+        [ -z "$DB_NAME" ] && DB_NAME="site"
+
+        read -rp "Enable MultiPHP? [y/N]: " _multi
+        case "$_multi" in
+            [Yy]*) ENABLE_MULTI_PHP="yes" ;;
+            *) ENABLE_MULTI_PHP="" ;;
+        esac
+    else
+        if [ -z "$ACCOUNT" ]; then
+            echo_error "Usage: create_wordpress <account> [domain] [root_dir] [db_name] [enable_multi_php]"
+            return 1
+        fi
+
+        [ -z "$DOMAIN" ] && DOMAIN="$ACCOUNT.dev.red.com.pt"
+        [ -z "$ROOT_DIR" ] && ROOT_DIR="public_html"
+        [ -z "$DB_NAME" ] && DB_NAME="site"
     fi
 
     # Confirmation to the user that the variables are correct
@@ -63,6 +102,8 @@ create_wordpress() {
             return 1
             ;;
     esac
+
+    setup_ssh_key "$ACCOUNT"
 
     local DB_PASS=$(gen_pass)
     local WP_ADMIN_PASS=$(gen_pass)
@@ -174,6 +215,8 @@ EOL"
     run_remote "cd ~/$ROOT_DIR && $WP_BIN config create --dbname='${ACCOUNT}_${DB_NAME}' --dbuser='${ACCOUNT}_${DB_NAME}' --dbpass='${DB_PASS}'"
     run_remote "cd ~/$ROOT_DIR && $WP_BIN core install --url='https://${DOMAIN}' --title='${ACCOUNT}' --admin_user='redpost' --admin_password='${WP_ADMIN_PASS}' --admin_email='webmaster@redpost.pt' --skip-email"
 
+    echo_info "Deleting default post..."
+    run_remote "cd ~/$ROOT_DIR && $WP_BIN post delete 1 --force"
 
     echo_info "Applying security settings..."
     run_remote "cd ~/$ROOT_DIR && $WP_BIN config shuffle-salts"
@@ -205,6 +248,8 @@ EOL"
     run_remote "cd ~/$ROOT_DIR && find . -type f -exec chmod 644 {} \;"
     run_remote "cd ~/$ROOT_DIR && chmod 400 wp-config.php"
 
+    echo_info "Testing email..."
+    run_remote "cd ~/$ROOT_DIR && $WP_BIN eval \"if (wp_mail('webmaster@redpost.pt', 'Email Test from ${ACCOUNT}', 'This is a test email from your new WordPress site for https://${DOMAIN} (${ACCOUNT}).')) { echo 'Email sent successfully'; } else { echo 'Failed to send email'; }\""
 
     echo "🌍 Site: https://$DOMAIN/wp-admin/admin.php?page=elementor"
     echo "👤 Admin: redpost"

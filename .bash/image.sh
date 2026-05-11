@@ -5,10 +5,19 @@ resize(){
     if [ -z "$1" ]; then
         echo -e "${RED}No resize value defined!$RESET"
     else
-        # Define the file pattern to include both JPG and PNG files
-        FILES_TO_RESIZE=(*.jpg *.png *.webp)
         RESIZE=$1
         ORIGINAL_FOLDER="_original"
+
+        # $2 = optional individual image file; $3 = "text" for text mode, or output extension (jpg/png/webp)
+        if [ -n "$2" ]; then
+            if [[ ! -f "$2" ]]; then
+                echo -e "${RED}Image not found: $2$RESET"
+                return 1
+            fi
+            FILES_TO_RESIZE=("$2")
+        else
+            FILES_TO_RESIZE=(*.jpg *.png *.webp)
+        fi
 
         echo -e "${GREEN}A redimensionar as imagens...$RESET"
 
@@ -25,25 +34,22 @@ resize(){
                 basename=$(basename -- "$image")
                 filename="${basename%%.*}"
 
-                if [ -z "$2" ]; then
+                if [ "$3" = "text" ]; then
+                    extension="${basename##*.}"
+                    echo "$image => text mode"
+                elif [ -n "$3" ]; then
+                    extension=$3
+                    echo "$image => $extension"
+                else
                     extension="${basename##*.}"
                     echo $image
-                else
-                    extension=$2
-                    echo "$image => $extension"
                 fi
 
-                # Resize the image and save it with the same base name but with a .jpg extension
-
-                # https://stackoverflow.com/questions/11221336/imagemagick-scale-and-image-quality
-                # Using -sharpen 0x1.2 with -resize x% with -quality 95 produces good results for me.
-                # -density 400 better quality?
-                # -quality 80 -adaptive-resize is better for larger photos.
-                # If you need to blur the output, use -interpolative-resize instead of -adaptive-resize
-
-                # convert "$ORIGINAL_FOLDER/$image" -sharpen 0x1.2 -resize $RESIZE -quality 95 "${base_name%.*}.jpg"
-
-                convert "$ORIGINAL_FOLDER/$image" -interlace plane -adaptive-resize $RESIZE "$filename.$extension"
+                if [ "$3" = "text" ]; then
+                    convert "$ORIGINAL_FOLDER/$image" -resize $RESIZE -unsharp 0x0.5+0.5+0 "$filename.$extension"
+                else
+                    convert "$ORIGINAL_FOLDER/$image" -interlace plane -adaptive-resize $RESIZE "$filename.$extension"
+                fi
 
                 # https://www.smashingmagazine.com/2015/06/efficient-image-resizing-with-imagemagick
                 # mogrify -format png -path ./ -filter Triangle -define filter:support=2 -thumbnail $RESIZE -unsharp 0.25x0.08+8.3+0.045 -dither None -posterize 136 -quality 82 -define jpeg:fancy-upsampling=off -define png:compression-filter=5 -define png:compression-level=9 -define png:compression-strategy=1 -define png:exclude-chunk=all -interlace none -colorspace sRGB $ORIGINAL_FOLDER/$image
