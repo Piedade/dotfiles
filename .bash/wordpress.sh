@@ -249,8 +249,17 @@ EOL"
     run_remote "cd ~/$ROOT_DIR && chmod 400 wp-config.php"
 
     echo_info "Testing email..."
-    run_remote "cd ~/$ROOT_DIR && $WP_BIN eval \"if (wp_mail('webmaster@redpost.pt', 'Email Test from ${ACCOUNT}', 'This is a test email from your new WordPress site for https://${DOMAIN} (${ACCOUNT}).')) { echo 'Email sent successfully'; } else { echo 'Failed to send email'; }\""
+    run_remote "
+        cd ~/$ROOT_DIR && $WP_BIN eval \"
+            if (wp_mail('webmaster@redpost.pt', 'Email Test from ${ACCOUNT}', 'This is a test email from your new WordPress site for https://${DOMAIN} (${ACCOUNT}).')) {
+                echo 'Email sent successfully';
+            } else {
+                echo 'Failed to send email';
+            }
+        \"
+    "
 
+    echo
     echo "🌍 Site: https://$DOMAIN/wp-admin/admin.php?page=elementor"
     echo "👤 Admin: redpost"
     echo "🔑 Admin Password: $WP_ADMIN_PASS"

@@ -2,6 +2,8 @@
 
 # Script simples para Rofi + nmcli Wi-Fi
 
+# ==============> nmtui
+
 # Obter lista de SSID disponíveis (remove duplicados)
 SSIDS=$(nmcli -t -f SSID dev wifi | grep -v '^$' | sort -u)
 

@@ -44,7 +44,10 @@ gen_pass() {
 
 run_remote() {
   local CMD="$1"
-  ssh "$ACCOUNT@server" "$CMD"
+  ssh "$ACCOUNT@server" /bin/bash <<-EOF
+$CMD
+EOF
+
   local STATUS=$?
   if [ $STATUS -ne 0 ]; then
         echo_error "Command failed: $CMD (Exit status: $STATUS)"
