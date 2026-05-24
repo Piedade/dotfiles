@@ -72,8 +72,9 @@ sleep 1
 # source ./scripts/git-delta.sh
 # sleep 1
 
-source ./scripts/fonts.sh
-sleep 1
+# FIXME: FONTS
+# source ./scripts/fonts.sh
+# sleep 1
 
 source ./scripts/starship.sh
 sleep 1
