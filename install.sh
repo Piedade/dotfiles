@@ -34,7 +34,7 @@ sleep 1
 # mako o lighter
 # source ./scripts/swaync.sh
 echo_info "Installing mako..."
-sudo apt-get install mako -y
+sudo apt-get install mako-notifier -y
 sleep 1
 
 # # flameshot is better
