@@ -1,0 +1,16 @@
+font=Sans 11
+width=320
+height=110
+margin=10
+padding=12
+border-size=2
+border-radius=8
+default-timeout=5000
+ignore-timeout=0
+
+background-color=#1e1e2e
+text-color=#ffffff
+border-color=#89b4fa
+
+anchor=top-right
+layer=overlay

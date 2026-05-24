@@ -14,12 +14,15 @@ sleep 1
 source ./scripts/audio.sh
 sleep 1
 
-# for hyprpolkitagent
-sudo apt-get install -y polkitd pkexec gnome-keyring libsecret-1-0 libsecret-tools libpam-gnome-keyring
-# source "./scripts/lxpolkit.sh"
+# # for hyprpolkitagent
+# sudo apt-get install -y polkitd pkexec gnome-keyring libsecret-1-0 libsecret-tools libpam-gnome-keyring
+source "./scripts/lxpolkit.sh"
 sleep 1
 
-source "./scripts/hyprland/install.sh"
+# source "./scripts/hyprland/install.sh"
+# sleep 1
+
+source "./scripts/sway.sh"
 sleep 1
 
 source ./scripts/nwg-displays.sh
@@ -28,15 +31,23 @@ sleep 1
 source ./scripts/nwg-look.sh
 sleep 1
 
-source ./scripts/swaync.sh
+# mako o lighter
+# source ./scripts/swaync.sh
+echo_info "Installing mako..."
+sudo apt-get install mako -y
 sleep 1
 
-# flameshot is better
-# source ./scripts/swappy.sh
+# # flameshot is better
+# # source ./scripts/swappy.sh
+# "${SUDO_CMD}" apt-get install flameshot 
+# mkdir -p "$USER_HOME/Pictures"
+# # fix permissions
+# sudo chown -R $USER:$USER "$USER_HOME/Pictures"
+source ./scripts/satty.sh
+sleep 1
+
+# source ./scripts/sddm.sh
 # sleep 1
-
-source ./scripts/sddm.sh
-sleep 1
 
 source ./scripts/alacritty.sh
 sleep 1
@@ -44,7 +55,8 @@ sleep 1
 source ./scripts/thunar.sh
 sleep 1
 
-source ./scripts/rofi.sh
+# source ./scripts/rofi.sh
+source ./scripts/fuzzel.sh
 sleep 1
 
 source ./scripts/wl-copy.sh
@@ -55,9 +67,10 @@ sleep 1
 
 # system
 # source ./scripts/dependencies.sh
+
 # source ./scripts/github.sh
-source ./scripts/git-delta.sh
-sleep 1
+# source ./scripts/git-delta.sh
+# sleep 1
 
 source ./scripts/fonts.sh
 sleep 1
