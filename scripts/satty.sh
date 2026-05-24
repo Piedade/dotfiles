@@ -38,5 +38,5 @@ make build-release
 echo "Installing (optional)..."
 sudo PREFIX=/usr/local make install
 
-echo "Done."
-echo "Run with: satty"
+cd ..
+rm -rf ./satty
