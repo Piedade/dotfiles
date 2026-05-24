@@ -1,8 +1,10 @@
 #!/bin/bash
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source $SCRIPT_DIR/utils.sh
 
 set -e
 
-echo "Installing dependencies..."
+echo_info "Installing dependencies..."
 
 sudo apt-get install -y \
     git \
@@ -26,17 +28,17 @@ fi
 
 echo "Cloning Satty..."
 
-rm -rf "$HOME/satty"
-git clone https://github.com/gabm/Satty.git "$HOME/satty"
+rm -rf "$SCRIPT_DIR/satty"
+git clone https://github.com/gabm/Satty.git "$SCRIPT_DIR/satty"
 
-cd "$HOME/satty"
+cd "$SCRIPT_DIR/satty"
 
 echo "Building release binary..."
 
 make build-release
 
-echo "Installing (optional)..."
+echo_info "Installing (optional)..."
 sudo PREFIX=/usr/local make install
 
-cd ..
-rm -rf ./satty
+cd ../..
+rm -rf "$SCRIPT_DIR/satty"
