@@ -28,6 +28,9 @@ enable_log
 mysql_native_password=ON
 EOF
 
+"${SUDO_CMD}" systemctl restart mysql
+sleep 1
+
 # root password
 "${SUDO_CMD}" mysql <<-EOF
 ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'admin';
@@ -40,4 +43,4 @@ EOF
 
 # clean
 rm -f "$APT_CONFIG_FILE"
-rm -f libaio1_0.3.113-4_amd64.deb
+# rm -f libaio1_0.3.113-4_amd64.deb
