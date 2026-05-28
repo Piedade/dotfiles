@@ -11,7 +11,7 @@ echo_info "Installing PostgreSQL..."
 # # Python 3.11 para o odoo v17
 
 # # odoo deps
-# sudo apt install libpq-dev libldap2-dev libsasl2-dev
+# sudo apt install libpq-dev libldap2-dev libsasl2-dev inotify-tools
 
 # sudo apt update
 # sudo apt install -y \
