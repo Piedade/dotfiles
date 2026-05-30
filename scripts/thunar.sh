@@ -3,10 +3,10 @@
 echo_info "Installing thunar..."
 
 # Install
-"${SUDO_CMD}" apt-get install -y thunar gvfs gvfs-backends gvfs-fuse thunar tumbler-plugins-extra thunar-archive-plugin
+"${SUDO_CMD}" apt-get install -y thunar gvfs gvfs-backends gvfs-fuse tumbler-plugins-extra thunar-archive-plugin
 
 # Network discovery
-"${SUDO_CMD}" apt-get install -y avahi-daemon  samba
+"${SUDO_CMD}" apt-get install -y avahi-daemon samba
 
 # default
 echo_info "Setting Thunar as default file manager."
