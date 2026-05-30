@@ -2,7 +2,6 @@
 
 SWAY_CONFIG="$HOME/.config/sway/config"
 KEYBINDS="$HOME/.config/sway/keybindings.conf"
-THEME="$HOME/.config/sway/rofi/keybinds.rasi"
 
 # Resolve sway "set $var value" definitions so keybind columns show $mod→Super etc.
 declare -A vars
@@ -68,20 +67,19 @@ rows=$(awk '
     { last = "" }
 ' "$KEYBINDS")
 
-# Resolve $mod etc. and apply Pango markup
+# Resolve $mod etc. into plain text
 formatted=$(while IFS='|' read -r type a b; do
     case "$type" in
         SECTION)
             name=$(resolve_vars "$a")
-            printf '<span size="large" weight="bold" foreground="#ff8f40">── %s ──</span>\n' "${name//&/&amp;}"
+            printf '── %s ──\n' "$name"
             ;;
         ROW)
             key=$(resolve_vars "$a")
             desc=$(resolve_vars "$b")
-            printf '<span foreground="#78a9ff">%-35s</span>  %s\n' "${key//&/&amp;}" "${desc//&/&amp;}"
+            printf '%-35s  %s\n' "$key" "$desc"
             ;;
     esac
 done <<< "$rows")
 
-echo "$formatted" | rofi -dmenu -markup-rows -i -p "Sway Keybindings" \
-    -line-padding 4 -hide-scrollbar -theme "$THEME"
+echo "$formatted" | fuzzel --dmenu --prompt "Keybindings: "

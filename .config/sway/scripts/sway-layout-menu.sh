@@ -8,7 +8,7 @@ layouts=(
     "󰕮 Toggle Split          Shift+Control+5"
 )
 
-selected=$(printf "%s\n" "${layouts[@]}" | rofi -dmenu -i -p "Select Layout" -line-padding 4 -hide-scrollbar -theme ~/.config/sway/rofi/config.rasi)
+selected=$(printf "%s\n" "${layouts[@]}" | fuzzel --dmenu --prompt "Layout: ")
 
 # Extract just the first two fields (layout name)
 layout_name=$(echo "$selected" | awk '{print $1, $2}')
