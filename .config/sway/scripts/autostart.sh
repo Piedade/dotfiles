@@ -22,6 +22,7 @@ systemctl --user import-environment SSH_AUTH_SOCK
 wl-paste --watch cliphist store &
 
 ## systemd / D-Bus environment for portals
+export XDG_CURRENT_DESKTOP=sway
 systemctl --user import-environment DISPLAY WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP
 dbus-update-activation-environment --systemd DISPLAY WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP
 systemctl --user start xdg-desktop-portal-wlr
