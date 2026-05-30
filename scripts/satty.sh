@@ -21,6 +21,8 @@ sudo apt-get install -y \
 
 echo "Installing Rust toolchain (if missing)..."
 
+[ -f "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
+
 if ! command -v cargo >/dev/null 2>&1; then
     curl https://sh.rustup.rs -sSf | sh -s -- -y
     source "$HOME/.cargo/env"
@@ -31,14 +33,14 @@ echo "Cloning Satty..."
 rm -rf "$SCRIPT_DIR/satty"
 git clone https://github.com/gabm/Satty.git "$SCRIPT_DIR/satty"
 
-cd "$SCRIPT_DIR/satty"
+pushd "$SCRIPT_DIR/satty" > /dev/null
 
 echo "Building release binary..."
 
 make build-release
 
-echo_info "Installing (optional)..."
+echo_info "Installing..."
 sudo PREFIX=/usr/local make install
 
-cd ../..
+popd > /dev/null
 rm -rf "$SCRIPT_DIR/satty"

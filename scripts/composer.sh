@@ -6,27 +6,30 @@ source $SCRIPT_DIR/check_env.sh
 
 echo_info "Installing composer ..."
 
-php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+TMPDIR=$(mktemp -d)
+
+php -r "copy('https://getcomposer.org/installer', '$TMPDIR/composer-setup.php');"
 
 echo "Fetching expected signature..."
 EXPECTED_HASH="$(wget -q -O - https://composer.github.io/installer.sig)"
 
 echo "Calculating actual signature..."
-ACTUAL_HASH="$(php -r "echo hash_file('sha384', 'composer-setup.php');")"
+ACTUAL_HASH="$(php -r "echo hash_file('sha384', '$TMPDIR/composer-setup.php');")"
 
 if [ "$EXPECTED_HASH" != "$ACTUAL_HASH" ]; then
     echo_error "ERROR: Invalid installer signature"
     echo_error "Expected: $EXPECTED_HASH"
     echo_error "Actual  : $ACTUAL_HASH"
-    rm composer-setup.php
+    rm -rf "$TMPDIR"
     exit 1
 fi
 
-php composer-setup.php --quiet
-rm composer-setup.php
+php "$TMPDIR/composer-setup.php" --quiet --install-dir="$TMPDIR"
+rm -rf "$TMPDIR/composer-setup.php"
 
-${SUDO_CMD} mv composer.phar /usr/local/bin/composer
+${SUDO_CMD} mv "$TMPDIR/composer.phar" /usr/local/bin/composer
 ${SUDO_CMD} chmod +x /usr/local/bin/composer
+rm -rf "$TMPDIR"
 
 echo_success "Composer installed successfully."
 
