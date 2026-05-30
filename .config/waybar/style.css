@@ -1,8 +1,8 @@
 /* Polybar-inspired styling from bspwm-setup */
-@define-color bg #0d1117;
-@define-color bg-alt #2f363d;
+@define-color bg #111111;
+@define-color bg-alt #1e1e1e;
 @define-color fg #d0d7de;
-@define-color primary #D29922;
+@define-color primary #d0d7de;
 @define-color secondary #539bf5;
 @define-color disabled #4e5b55;
 @define-color alert #D29922;
@@ -10,8 +10,8 @@
 * {
     border: none;
     border-radius: 0;
-    font-family: "Roboto Mono Nerd Font", "JetBrainsMono Nerd Font", monospace;
-    font-size: 15px;
+    font-family: 'MesloLGS Nerd Font Mono', 'Fira Code', 'Roboto Mono Nerd Font', 'JetBrainsMono Nerd Font', monospace;
+    font-size: 1rem;
     min-height: 0;
 }
 
@@ -22,23 +22,23 @@ window#waybar {
 
 window#waybar > box {
     background-color: @bg;
-    border-radius: 6px;
-    margin: 6px 6px 0 6px;
+    /* border-radius: 6px; */
+    margin: 0;
 }
 
 /* Workspaces */
 #workspaces {
     background-color: transparent;
-    padding-left: 4px;
+    padding-left: 0;
 }
 
 #workspaces button {
-    padding: 0 12px;
+    padding: 0.25rem 6px;
     background-color: transparent;
     color: @fg;
     border: none;
     border-bottom: 3px solid transparent;
-    min-width: 28px;
+    min-width: 14px;
 }
 
 #workspaces button.empty {

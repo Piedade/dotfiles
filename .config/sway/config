@@ -10,17 +10,13 @@ set $term alacritty
 set $menu fuzzel
 set $config_dir ~/.config/sway
 
-### Output configuration
-# Simple static wallpaper with swaybg
-# output * bg $config_dir/wallpaper/wallhaven-218x7m_3440x1440.png fill
-
 # For multiple monitors:
 # output HDMI-A-1 resolution 1920x1080 position 1920,0
 
-### Idle configuration
-#exec swayidle -w \
-#    timeout 900 'swaymsg "output * dpms off"' \
-#         resume 'swaymsg "output * dpms on"'
+## Idle configuration
+exec swayidle -w \
+   timeout 900 'swaymsg "output * dpms off"' \
+        resume 'swaymsg "output * dpms on"'
 
 ### Input configuration
 input type:touchpad {
@@ -38,16 +34,24 @@ input type:keyboard {
 }
 
 ### Appearance
-font pango:Lilex Nerd Font Mono 11
+font pango:Lilex Nerd Font Mono 8
 
 # Colors
 include $config_dir/theme/colors.conf
 
 # class                 border   backgr  text    indicator child_border
-client.focused          $barbie  $cyan   $gray   $blue     $barbie
+client.focused          $barbie  $cyan   $fg     $blue     $barbie
 client.focused_inactive $gray    $bg     $fg     $bg       $gray
 client.unfocused        $gray    $bg     $fg     $bg       $gray
 client.urgent           $blue    $blue   $bg     $blue     $blue
+
+# Borders & gaps
+default_border pixel 2
+default_floating_border pixel 2
+titlebar_padding 8 4
+gaps inner 0
+gaps outer 0
+
 
 ### Includes
 include $config_dir/workspaces.conf
