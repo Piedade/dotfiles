@@ -1,5 +1,13 @@
 #!/bin/bash
 
+win_count() {
+    swaymsg -t get_tree | jq "
+        (first(.. | objects | select(.type == \"workspace\" and .name == \"$1\")) // {})
+        | [.. | objects | select(.type == \"con\" and ((.nodes // []) | length) == 0)]
+        | length
+    " 2>/dev/null || echo 0
+}
+
 launch() {
     local ws=$1
     shift
@@ -12,13 +20,19 @@ launch() {
         echo "launch: '$1' not found, skipping"
         return 0
     fi
-    swaymsg workspace $ws
-    [[ -n "$layout" ]] && swaymsg layout $layout
-    # Subscribe before launching so no window event is missed, then wait until sway registers the new window
-    swaymsg -t subscribe '["window"]' 2>/dev/null | grep -m1 '"change": "new"' > /dev/null &
-    local wait_pid=$!
+    swaymsg workspace "$ws"
+    [[ -n "$layout" ]] && swaymsg layout "$layout"
+
+    local before
+    before=$(win_count "$ws")
     "$@" > /dev/null 2>&1 &
-    wait $wait_pid
+
+    local i=0
+    while [ $i -lt 50 ]; do
+        [ "$(win_count "$ws")" -gt "$before" ] && return 0
+        sleep 0.1
+        ((i++))
+    done
 }
 
 launch 1 code
