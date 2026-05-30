@@ -2,15 +2,9 @@
 output-filename = "~/Screenshots/%d-%m-%Y_%H%M%S.png"
 copy-command = "wl-copy"
 early-exit = true
-initial-tool = "arrow" 
+initial-tool = "arrow"
+# floating-hack = false
+fullscreen = "current-screen"
 
 [color-palette]
-palette = [
-    "#e31523",
-    "#FF9100",
-    "#00E676",
-    "#29B6F6",
-    "#E040FB",
-    "#FFFFFF",
-    "#000000"
-]
+palette = ["#e31523", "#FF9100", "#00E676", "#29B6F6", "#E040FB", "#FFFFFF", "#000000"]
