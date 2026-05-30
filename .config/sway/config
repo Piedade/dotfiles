@@ -49,8 +49,8 @@ client.urgent           $blue    $blue   $bg     $blue     $blue
 default_border pixel 1
 default_floating_border pixel 1
 titlebar_padding 8 4
-gaps inner 10
-gaps outer 1
+gaps inner 0
+gaps outer 0
 
 # hold $mod to drag floating windows
 floating_modifier $mod normal

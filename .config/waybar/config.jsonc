@@ -11,12 +11,10 @@
     "modules-right": [
         // "disk",
         // "custom/sep",
+        "custom/mic",
         "pulseaudio",
-        "custom/sep",
-        "memory",
-        "custom/sep",
         "cpu",
-        "custom/sep",
+        "memory",
         "clock",
         // "custom/sep",
         // "network",
@@ -73,6 +71,7 @@
                 "today": "<span color='#539bf5'><b><u>{}</u></b></span>",
             },
         },
+        "on-click": "google-chrome --profile-directory=\"Profile 1\"",
     },
 
     "disk": {
@@ -150,6 +149,15 @@
         "format": "󰐥",
         "tooltip": false,
         "on-click": "~/.config/sway/scripts/power",
+    },
+
+    "custom/mic": {
+        "exec": "~/.config/waybar/mic-status.sh",
+        "on-click": "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle && pkill -SIGRTMIN+1 waybar",
+        "return-type": "json",
+        "interval": 5,
+        "signal": 1,
+        "tooltip": false,
     },
 
     "custom/notification": {
