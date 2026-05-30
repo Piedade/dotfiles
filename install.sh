@@ -19,6 +19,9 @@ sleep 1
 source "./scripts/lxpolkit.sh"
 sleep 1
 
+# # não é necessario porque estamos a utilizar gnome-keyring
+# source "./scripts/ssh-agent.sh"
+
 # source "./scripts/hyprland/install.sh"
 # sleep 1
 
@@ -31,15 +34,15 @@ sleep 1
 source ./scripts/nwg-look.sh
 sleep 1
 
+source ./scripts/swaync.sh
 # mako o lighter
-# source ./scripts/swaync.sh
-echo_info "Installing mako..."
-sudo apt-get install mako-notifier -y
+# echo_info "Installing mako..."
+# sudo apt-get install mako-notifier -y
 sleep 1
 
 # # flameshot is better
 # # source ./scripts/swappy.sh
-# "${SUDO_CMD}" apt-get install flameshot 
+# "${SUDO_CMD}" apt-get install flameshot
 # mkdir -p "$USER_HOME/Pictures"
 # # fix permissions
 # sudo chown -R $USER:$USER "$USER_HOME/Pictures"
@@ -132,6 +135,9 @@ source ./scripts/inkscape.sh
 sleep 1
 
 source ./scripts/libreoffice.sh
+sleep 1
+
+source ./scripts/galculator.sh
 sleep 1
 
 source ./scripts/direnv.sh

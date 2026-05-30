@@ -1,0 +1,26 @@
+#!/bin/bash
+# Screenshot helper for sway.
+# Usage: screenshot region|window|full
+
+DIR="$HOME/Screenshots"
+mkdir -p "$DIR"
+FILE="$DIR/$(date +%Y-%m-%d_%H-%M-%S).png"
+
+case "$1" in
+	region)
+		# grim -g "$(slurp)" "$FILE" && notify-send "📸 Screenshot saved to ~/Screenshots"
+		grim -g "$(slurp)" - | satty -f -
+		;;
+	window)
+		# grim -g "$(slurp)" - | wl-copy && notify-send "📋 Screenshot copied to clipboard"
+		swaymsg -t get_tree | jq -r '.. | select(.focused?) | .rect | "\(.x),\(.y) \(.width)x\(.height)"' | grim -g "$(slurp)" - | satty -f -
+		;;
+	full)
+		# grim "$FILE" && notify-send "📸 Screenshot saved to ~/Screenshots"
+		grim - | satty -f -
+		;;
+	*)
+		echo "Usage: $(basename "$0") region|window|full" >&2
+		exit 1
+		;;
+esac

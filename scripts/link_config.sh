@@ -18,9 +18,11 @@ link_file ".gitignore" $GITPATH $USER_HOME
 
 link_file ".config/waybar" $GITPATH $USER_HOME
 
-link_file ".config/hypr" $GITPATH $USER_HOME
+# link_file ".config/hypr" $GITPATH $USER_HOME
 
-link_file ".config/rofi" $GITPATH $USER_HOME
+# link_file ".config/rofi" $GITPATH $USER_HOME
+
+link_file ".config/fuzzel" $GITPATH $USER_HOME
 
 link_file ".config/Thunar" $GITPATH $USER_HOME
 
@@ -32,12 +34,17 @@ link_file ".config/starship.toml" $GITPATH $USER_HOME
 
 link_file ".config/mimeapps.list" $GITPATH $USER_HOME
 
-# link_file ".config/swappy" $GITPATH $USER_HOME
+link_file ".config/swaync" $GITPATH $USER_HOME
 
-# link_file ".config/swaync" $GITPATH $USER_HOME
-link_file ".config/mako" $GITPATH $USER_HOME
+link_file ".config/satty" $GITPATH $USER_HOME
 
 link_file ".config/gtk-3.0" $GITPATH $USER_HOME
+
+link_file ".config/gtk-4.0" $GITPATH $USER_HOME
+
+link_file ".config/galculator" $GITPATH $USER_HOME
+
+link_file ".config/nwg-look" $GITPATH $USER_HOME
 
 
 

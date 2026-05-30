@@ -1,329 +1,303 @@
-/* ----------- 💫 https://github.com/JaKooLit 💫 -------- */
-/* swaync colors - wallust from waybar.css */
-
-@import '../../.config/waybar/wallust/colors-waybar.css';
-
-@define-color noti-border-color @color12;
-@define-color noti-bg rgba(0, 0, 0, 0.8);
-@define-color noti-bg-alt @background-alt;
-@define-color noti-bg-hover @background;
-@define-color text-color @foreground;
-
+/* DWM Theme for SwayNC */
 * {
-    font-family: "JetBrains Mono Nerd Font";
-    font-weight: bold;
-    font-size: 1rem;
+  all: unset;
+  font-family: "JetBrainsMono Nerd Font";
+  font-size: 14px;
 }
 
-.control-center .notification-row:focus,
-.control-center .notification-row:hover {
-    opacity: 1;
-    background: @noti-bg;
-    border-radius: 10px
+/* Control Center */
+.control-center {
+  background: #00141d;
+  border: 3px solid #4fc3f7;
+  border-radius: 15px;
+  margin: 8px;
+  padding: 0;
 }
 
-.notification-row {
-    outline: none;
+.control-center .notification {
+  background: #1a1a1a;
+  border: 1px solid #4fc3f7;
+  border-radius: 15px;
+  margin: 4px;
+  padding: 15px;
 }
 
+/* Notification Window */
 .notification {
-	/*color: @text-color;*/
-    background: @noti-bg;
-    padding: 3px 10px 3px 6px;
-    border-radius: 10px;
-    border: 2px solid @noti-border-color;
+  background: #00141d;
+  border: 3px solid #b3e5fc;
+  border-radius: 15px;
+  margin: 8px;
+  padding: 0;
 }
 
-.notification-default-action {
-    margin: 0;
-    padding: 0;
-    border-radius: 10px;
+.notification-content {
+  background: transparent;
+  padding: 15px;
+  border-radius: 15px;
 }
 
 .close-button {
-    background: #f7768e;
-    color: @noti-bg;
-    text-shadow: none;
-    padding: 0;
-    border-radius: 10px;
-    margin-top: 5px;
-    margin-right: 5px;
+  background: #ff6b6b;
+  color: #FFFFFF;
+  border-radius: 8px;
+  padding: 4px;
+  margin: 4px;
 }
 
 .close-button:hover {
-    box-shadow: none;
-    background: #f7768e;
-    transition: all .15s ease-in-out;
-    border: none
+  background: #ff8888;
 }
 
+/* Title and Body */
+.notification-default-action .notification-content .summary {
+  color: #b3e5fc;
+  font-weight: bold;
+  font-size: 14px;
+}
 
+.notification-default-action .notification-content .body {
+  color: #FFFFFF;
+  margin-top: 4px;
+}
+
+.notification-default-action .notification-content .time {
+  color: #4fc3f7;
+  font-size: 11px;
+  margin-top: 4px;
+}
+
+/* Images */
+.notification-default-action .notification-content .image {
+  border-radius: 8px;
+  margin: 8px;
+}
+
+.notification-default-action .notification-content .icon {
+  color: #b3e5fc;
+  margin-right: 8px;
+}
+
+/* Buttons */
 .notification-action {
-    border: 1px solid @noti-border-color;
-    border-top: none;
-    border-radius: 10px;
+  background: #1a1a1a;
+  color: #FFFFFF;
+  border-radius: 8px;
+  margin: 4px;
+  padding: 6px 12px;
+  border: 1px solid #4fc3f7;
 }
 
-
-.notification-default-action:hover,
 .notification-action:hover {
-    color: @text-color;
-    background: @noti-bg
+  background: #4fc3f7;
+  color: #00141d;
 }
 
-
-.notification-default-action {
-    border-radius: 10px;
-    margin: 5px;
-}
-
-.notification-default-action:not(:only-child) {
-    border-bottom-left-radius: 7px;
-    border-bottom-right-radius: 7px
-}
-
-.notification-action:first-child {
-    border-bottom-left-radius: 10px;
-    background: @noti-bg
-}
-
-.notification-action:last-child {
-    border-bottom-right-radius: 10px;
-    background: @noti-bg-alt
-}
-
-.inline-reply {
-    margin-top: 8px
-}
-
-.inline-reply-entry {
-    background: @noti-bg;
-    color: @text-color;
-    caret-color: @text-color;
-    border: 1px solid @noti-border-color;
-    border-radius: 10px
-}
-
-.inline-reply-button {
-	font-size: 0.5rem;
-    margin-left: 4px;
-    background: @noti-bg;
-    border: 1px solid @noti-border-color;
-    border-radius: 10px;
-    color: @text-color
-}
-
-.inline-reply-button:disabled {
-    background: initial;
-    color: @text-color;
-    border: 1px solid transparent
-}
-
-.inline-reply-button:hover {
-    background: @noti-bg-hover
-}
-
-.body-image {
-    margin-top: 6px;
-    color: @text-color;
-    border-radius: 10px
-}
-
-.summary {
-    font-size: 1rem;
-    font-weight: bold;
-    background: transparent;
-    color: @text-color;
-    text-shadow: none
-}
-
-.time {
-    font-size: 1rem;
-    font-weight: bold;
-    background: transparent;
-    color: @text-color;
-    text-shadow: none;
-    margin-right: 18px
-}
-
-.body {
-    font-size: 1rem;
-    font-weight: bold;
-    background: transparent;
-    color: @text-color;
-    text-shadow: none
-}
-
-.control-center {
-    background: @noti-bg;
-    border: 1px solid @noti-border-color;
-	color: @text-color;
-    border-radius: 10px;
-}
-
-.control-center-list {
-    background: transparent
-}
-
-.control-center-list-placeholder {
-    opacity: 0.5
-}
-
-.floating-notifications {
-    background: transparent;
-}
-
-.blank-window {
-    background: alpha(black, 0.1)
-}
-
+/* Widget Styles */
 .widget-title {
-    color: @text-color;
-    background: @noti-bg-alt;
-    padding: 3px 6px;
-    margin: 5px;
-    font-size: 1rem;
-    border-radius: 10px;
+  background: #1a1a1a;
+  color: #b3e5fc;
+  font-size: 16px;
+  font-weight: bold;
+  padding: 12px;
+  margin: 8px;
+  border-radius: 8px;
+  border: none;
 }
 
-.widget-title>button {
-    font-size: 0.75rem;
-    color: @text-color;
-    border-radius: 10px;
-	background: transparent;
-	border: 0.5px solid @noti-border-color;
+.widget-title button {
+  background: #ff6b6b;
+  color: #FFFFFF;
+  border-radius: 8px;
+  padding: 6px 12px;
 }
 
-/* clear button */
-.widget-title>button:hover {
-    background: @text-color;
-    color: red;
+.widget-title button:hover {
+  background: #ff8888;
 }
 
+/* DND Toggle */
 .widget-dnd {
-    background: @noti-bg-alt;
-    padding: 3px 6px;
-    margin: 5px;
-    border-radius: 10px;
-    font-size: 0.5rem;
-    color: @noti-border-color;
+  background: #1a1a1a;
+  padding: 8px;
+  margin: 8px;
+  border-radius: 8px;
+  border: none;
 }
 
-.widget-dnd>switch {
-    border-radius: 10px;
-    border: 1px solid #7aa2f7;
-    background: @noti-border-color;
+.widget-dnd > switch {
+  background: #1a1a1a;
+  border-radius: 8px;
+  padding: 2px;
+  border: 1px solid #4fc3f7;
 }
 
-.widget-dnd>switch:checked {
-    background: #f7768e;
-    border: 1px solid #f7768e;
+.widget-dnd > switch:checked {
+  background: #4fc3f7;
 }
 
-.widget-dnd>switch slider {
-    background: @noti-bg;
-    border-radius: 10px
+.widget-dnd > switch slider {
+  background: #b3e5fc;
+  border-radius: 8px;
 }
 
-.widget-dnd>switch:checked slider {
-    background: @noti-bg;
-    border-radius: 10px
+.widget-dnd label {
+  color: #FFFFFF;
+  font-weight: bold;
+}
+
+/* Urgency Levels */
+.notification.critical {
+  border: 3px solid #d29922;
+}
+
+.notification.critical .notification-content .summary {
+  color: #d29922;
+}
+
+.notification.low {
+  border: 3px solid #539bf5;
+}
+
+/* Scrollbar */
+.control-center scrollbar {
+  background: transparent;
+}
+
+.control-center scrollbar trough {
+  background: #1a1a1a;
+  border-radius: 8px;
+}
+
+.control-center scrollbar slider {
+  background: #80bfff;
+  border-radius: 8px;
+}
+
+.control-center scrollbar slider:hover {
+  background: #b3e5fc;
+}
+
+/* Empty notification center */
+.blank-window {
+  background: transparent;
 }
 
 .widget-label {
-    margin: 5px;
+  color: #b3e5fc;
+  font-size: 18px;
 }
 
-.widget-label>label {
-    font-size: 1rem;
-    color: @text-color;
-}
-
+/* MPRIS (Media Player) Widget */
 .widget-mpris {
-    color: @text-color;
-    background: @noti-bg;
-    padding: 3px 6px;
-    margin: 5px;
-    border-radius: 10px;
-}
-
-.widget-mpris > box > button {
-    border-radius: 10px;
+  background: #1a1a1a;
+  padding: 8px;
+  margin: 8px;
+  border-radius: 8px;
+  border: none;
 }
 
 .widget-mpris-player {
-    padding: 3px 6px;
-    margin: 5px;
+  background: transparent;
+  padding: 8px;
 }
 
 .widget-mpris-title {
-    font-weight: 100;
-    font-size: 1rem
+  color: #b3e5fc;
+  font-weight: bold;
+  font-size: 14px;
 }
 
-.widget-mpris-subtitle {
-    font-size: 0.75rem
+.widget-mpris-artist {
+  color: #FFFFFF;
+  font-size: 12px;
 }
 
-.widget-buttons-grid {
-    font-size: large;
-	color: @noti-border-color;
-    padding: 2px;
-    margin: 5px;
-    border-radius: 10px;
-    background: @noti-bg-alt;
+.widget-mpris > box > button {
+  background: #00141d;
+  color: #b3e5fc;
+  border-radius: 8px;
+  border: 1px solid #4fc3f7;
+  margin: 2px;
 }
 
-.widget-buttons-grid>flowbox>flowboxchild>button {
-    margin: 1px;
-    background: @noti-bg;
-    border-radius: 10px;
-    color: @text-color
+.widget-mpris > box > button:hover {
+  background: #4fc3f7;
+  color: #00141d;
 }
 
-/* individual buttons */
-.widget-buttons-grid>flowbox>flowboxchild>button:hover {
-    background: @text-color;
-    color: @noti-bg-hover
-}
-
-.widget-menubar>box>.menu-button-bar>button {
-    border: none;
-    background: transparent
-}
-
-.topbar-buttons>button {
-    border: none;
-    background: transparent
-}
-
+/* Volume Slider */
 .widget-volume {
-    background: @noti-bg-alt;
-    padding: 2px;
-    margin: 10px 10px 5px 10px;
-    border-radius: 10px;
-    font-size: x-large;
-    color: @text-color
+  background: #1a1a1a;
+  padding: 8px;
+  margin: 8px;
+  border-radius: 8px;
+  border: none;
 }
 
-.widget-volume>box>button {
-    background: @noti-border-color;
-    border: none
+.widget-volume > box > label {
+  color: #b3e5fc;
+  font-size: 16px;
+  margin-right: 8px;
 }
 
-.per-app-volume {
-    background-color: @noti-bg;
-    padding: 4px 8px 8px;
-    margin: 0 8px 8px;
-    border-radius: 10px;
-	color: @text-color
+.widget-volume > box > scale {
+  background: transparent;
 }
 
+.widget-volume > box > scale trough {
+  background: #00141d;
+  border-radius: 8px;
+  min-height: 8px;
+  min-width: 200px;
+}
+
+.widget-volume > box > scale trough highlight {
+  background: #4fc3f7;
+  border-radius: 8px;
+}
+
+.widget-volume > box > scale trough slider {
+  background: #b3e5fc;
+  border-radius: 8px;
+  min-height: 16px;
+  min-width: 16px;
+}
+
+/* Backlight/Brightness Slider */
 .widget-backlight {
-    background: @noti-bg-alt;
-    padding: 5px;
-    margin: 10px 10px 5px 10px;
-    border-radius: 10px;
-    font-size: x-large;
-    color: @text-color
+  background: #1a1a1a;
+  padding: 8px;
+  margin: 8px;
+  border-radius: 8px;
+  border: none;
+}
+
+.widget-backlight > box > label {
+  color: #ffc107;
+  font-size: 16px;
+  margin-right: 8px;
+}
+
+.widget-backlight > box > scale {
+  background: transparent;
+}
+
+.widget-backlight > box > scale trough {
+  background: #00141d;
+  border-radius: 8px;
+  min-height: 8px;
+  min-width: 200px;
+}
+
+.widget-backlight > box > scale trough highlight {
+  background: #ffc107;
+  border-radius: 8px;
+}
+
+.widget-backlight > box > scale trough slider {
+  background: #ffd54f;
+  border-radius: 8px;
+  min-height: 16px;
+  min-width: 16px;
 }

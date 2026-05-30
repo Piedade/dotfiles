@@ -1,0 +1,42 @@
+#!/bin/bash
+
+TREE=$(swaymsg -t get_tree)
+
+# Single parse: build three ID lists using set arithmetic
+# hidden     = under __i3_scratch
+# scratchpad = scratchpad_state != none (hidden + visible on screen)
+# all        = every thunar window
+IDS=$(echo "$TREE" | jq '{
+  hidden:     [.. | objects | select(.name? == "__i3_scratch") | .. | objects | select(.app_id? == "thunar") | .id],
+  scratchpad: [.. | objects | select(.app_id? == "thunar" and (.scratchpad_state? // "none") != "none") | .id],
+  all:        [.. | objects | select(.app_id? == "thunar") | .id]
+}' 2>/dev/null)
+
+HIDDEN_IDS=$(echo  "$IDS" | jq -r '.hidden[]'                 2>/dev/null)
+VISIBLE_IDS=$(echo "$IDS" | jq -r '(.scratchpad - .hidden)[]' 2>/dev/null)
+REGULAR_IDS=$(echo "$IDS" | jq -r '(.all - .scratchpad)[]'    2>/dev/null)
+
+VISIBLE_COUNT=$(echo "$VISIBLE_IDS" | wc -w)
+HIDDEN_COUNT=$(echo  "$HIDDEN_IDS"  | wc -w)
+REGULAR_COUNT=$(echo "$REGULAR_IDS" | wc -w)
+TOTAL=$((VISIBLE_COUNT + HIDDEN_COUNT + REGULAR_COUNT))
+
+if [ "$TOTAL" -eq 0 ]; then
+    thunar &
+    for _ in $(seq 1 40); do
+        swaymsg -t get_tree | jq -e '[.. | objects | select(.app_id? == "thunar")] | length > 0' > /dev/null 2>&1 && break
+        sleep 0.05
+    done
+    swaymsg "[app_id=thunar] move scratchpad, scratchpad show"
+elif [ "$VISIBLE_COUNT" -gt 0 ]; then
+    for id in $VISIBLE_IDS $REGULAR_IDS; do
+        swaymsg "[con_id=$id] move scratchpad"
+    done
+else
+    for id in $REGULAR_IDS; do
+        swaymsg "[con_id=$id] move scratchpad"
+    done
+    for id in $HIDDEN_IDS $REGULAR_IDS; do
+        swaymsg "[con_id=$id] scratchpad show"
+    done
+fi

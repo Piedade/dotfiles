@@ -1,13 +1,62 @@
-# screenshots
-# inspiration: https://www.reddit.com/r/swaywm/comments/ghnlea/comment/fqnzxkx/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
-set $satty satty -f - --initial-tool=arrow --copy-command=wl-copy --actions-on-escape="save-to-clipboard,exit" --brush-smooth-history-size=5 --disable-notifications
-set $printscreen_mode 'printscreen (r:region, f:full, w:window)'
-mode $printscreen_mode {
-    bindsym r exec swaymsg 'mode "default"' && grim -t ppm -g "$(slurp -d)" - | $satty
-    bindsym f exec swaymsg 'mode "default"' && grim -t ppm - | $satty
-    bindsym w exec swaymsg 'mode "default"' && swaymsg -t get_tree | jq -r '.. | select(.focused?) | .rect | "\(.x),\(.y) \(.width)x\(.height)"' | grim -t ppm -g - - | $satty
+### Variables
+#
+# Logo key. Use Mod1 for Alt.
+set $mod Mod4
+set $left h
+set $down j
+set $up k
+set $right l
+set $term alacritty
+set $menu fuzzel
+set $config_dir ~/.config/sway
 
-    bindsym Return mode "default"
-    bindsym Escape mode "default"
+### Output configuration
+# Simple static wallpaper with swaybg
+# output * bg $config_dir/wallpaper/wallhaven-218x7m_3440x1440.png fill
+
+# For multiple monitors:
+# output HDMI-A-1 resolution 1920x1080 position 1920,0
+
+### Idle configuration
+#exec swayidle -w \
+#    timeout 900 'swaymsg "output * dpms off"' \
+#         resume 'swaymsg "output * dpms on"'
+
+### Input configuration
+input type:touchpad {
+    dwt enabled
+    tap enabled
+    natural_scroll enabled
+    middle_emulation enabled
 }
-bindsym $mod+Shift+p mode $printscreen_mode
+
+input type:keyboard {
+    xkb_layout "pt"
+    xkb_numlock enabled
+    repeat_delay 300
+    repeat_rate 50
+}
+
+### Appearance
+font pango:Lilex Nerd Font Mono 11
+
+# Colors
+include $config_dir/theme/colors.conf
+
+# class                 border   backgr  text    indicator child_border
+client.focused          $barbie  $cyan   $gray   $blue     $barbie
+client.focused_inactive $gray    $bg     $fg     $bg       $gray
+client.unfocused        $gray    $bg     $fg     $bg       $gray
+client.urgent           $blue    $blue   $bg     $blue     $blue
+
+### Includes
+include $config_dir/workspaces.conf
+include $config_dir/rules.conf
+include $config_dir/keybindings.conf
+
+### Autostart
+exec_always $config_dir/scripts/autostart.sh
+
+exec $config_dir/scripts/launch-apps.sh
+
+# include /etc/sway/config.d/*

@@ -2,4 +2,4 @@
 
 echo_info "Installing Notifications..."
 
-"${SUDO_CMD}" apt-get install -y sway-notification-center
+"${SUDO_CMD}" apt-get install -y sway-notification-center libnotify-bin
