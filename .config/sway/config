@@ -52,6 +52,12 @@ titlebar_padding 8 4
 gaps inner 0
 gaps outer 0
 
+# hold $mod to drag floating windows
+floating_modifier $mod normal
+
+# switch to the window's workspace when it requests focus (e.g. clicking a link opens browser on another workspace)
+# options: focus | smart (focus if on active workspace, else mark urgent) | urgent | none
+focus_on_window_activation focus
 
 ### Includes
 include $config_dir/workspaces.conf
