@@ -82,4 +82,4 @@ formatted=$(while IFS='|' read -r type a b; do
     esac
 done <<< "$rows")
 
-echo "$formatted" | fuzzel --dmenu --prompt "Keybindings: "
+echo "$formatted" | fuzzel --dmenu --prompt "Keybindings: " --width=90
