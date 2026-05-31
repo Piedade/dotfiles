@@ -4,7 +4,10 @@ set -e
 
 echo_info "Installing sway, greetd and tuigreet..."
 "${SUDO_CMD}" apt update
-"${SUDO_CMD}" apt install -y sway xwayland build-essential greetd tuigreet swayidle gtklock jq
+"${SUDO_CMD}" apt install -y sway xwayland waybar build-essential greetd tuigreet swayidle gtklock jq xdg-desktop-portal-wlr 
+
+# Portatil
+# brightnessctl
 
 # Backup config
 "${SUDO_CMD}" cp /etc/greetd/config.toml /etc/greetd/config.toml.bak 2>/dev/null || true
