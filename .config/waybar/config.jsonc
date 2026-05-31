@@ -86,6 +86,7 @@
         "format": "<span color='#D29922'>CPU</span> {usage}%",
         "tooltip": false,
         "interval": 2,
+        "on-click": "alacritty -e htop -s PERCENT_CPU"
     },
 
     "memory": {
@@ -93,6 +94,7 @@
         "format": "<span color='#D29922'>RAM</span>  {used:0.1f}G ({}%)",
         "tooltip": false,
         "interval": 30,
+        "on-click": "alacritty -e htop -s PERCENT_MEM"
     },
 
     "battery": {

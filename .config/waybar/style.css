@@ -26,12 +26,7 @@ window#waybar > box {
     margin: 0;
 }
 
-/* Workspaces */
-#workspaces {
-    background-color: transparent;
-    padding-left: 0;
-}
-
+/* Buttons */
 #workspaces button,
 #custom-power,
 #custom-lock,
@@ -39,17 +34,15 @@ window#waybar > box {
 #pulseaudio,
 #custom-vol,
 #custom-mic,
-#custom-notification {
+#custom-notification,
+#cpu,
+#memory {
     padding: 4px 6px 2px;
     background-color: transparent;
     color: @fg;
     border: none;
     border-bottom: 3px solid transparent;
     min-width: 14px;
-}
-
-#workspaces button.empty {
-    color: @disabled;
 }
 
 #workspaces button:hover,
@@ -59,8 +52,20 @@ window#waybar > box {
 #pulseaudio:hover,
 #custom-vol:hover,
 #custom-mic:hover,
-#custom-notification:hover {
+#custom-notification:hover,
+#cpu:hover,
+#memory:hover {
     background-color: @bg-alt;
+}
+
+/* Workspaces */
+#workspaces {
+    background-color: transparent;
+    padding-left: 0;
+}
+
+#workspaces button.empty {
+    color: @disabled;
 }
 
 /* Active/focused workspace - matches Polybar style */
