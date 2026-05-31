@@ -26,13 +26,4 @@ echo_info "Enabling greetd..."
 "${SUDO_CMD}" usermod -c "$USER" "$USER"
 "${SUDO_CMD}" usermod -aG render "$USER"
 
-# Configure logind idle suspend
-echo_info "Configuring logind idle suspend..."
-"${SUDO_CMD}" mkdir -p /etc/systemd/logind.conf.d
-"${SUDO_CMD}" tee /etc/systemd/logind.conf.d/idle.conf > /dev/null <<EOF
-[Login]
-IdleAction=suspend
-IdleActionSec=15min
-EOF
-
 echo_success "Sway installed!"
