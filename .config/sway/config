@@ -15,8 +15,11 @@ set $config_dir ~/.config/sway
 
 ## Idle configuration
 exec swayidle -w \
-   timeout 900 'swaymsg "output * dpms off"' \
-        resume 'swaymsg "output * dpms on"'
+    timeout 600  'gtklock' \
+    timeout 900  'swaymsg "output * dpms off"' \
+    timeout 1800 'systemctl suspend' \
+    resume       'swaymsg "output * dpms on"' \
+    before-sleep 'gtklock'
 
 ### Input configuration
 input type:touchpad {
