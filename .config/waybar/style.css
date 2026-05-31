@@ -37,6 +37,7 @@ window#waybar > box {
 #custom-lock,
 #clock,
 #pulseaudio,
+#custom-vol,
 #custom-mic,
 #custom-notification {
     padding: 4px 6px 2px;
@@ -56,6 +57,7 @@ window#waybar > box {
 #custom-lock:hover,
 #clock:hover,
 #pulseaudio:hover,
+#custom-vol:hover,
 #custom-mic:hover,
 #custom-notification:hover {
     background-color: @bg-alt;

@@ -12,7 +12,8 @@
         // "disk",
         // "custom/sep",
         "custom/mic",
-        "pulseaudio",
+        "custom/vol",
+        // "pulseaudio",
         "cpu",
         "memory",
         "clock",
@@ -113,6 +114,17 @@
         "interval": 5,
     },
 
+    "custom/vol": {
+        "exec": "~/.config/waybar/vol-status.sh",
+        "on-click": "~/.config/waybar/vol-toggle.sh && pkill -SIGRTMIN+2 waybar",
+        "on-scroll-up": "wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+ && pkill -SIGRTMIN+2 waybar",
+        "on-scroll-down": "wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%- && pkill -SIGRTMIN+2 waybar",
+        "return-type": "json",
+        "interval": 5,
+        "signal": 2,
+        "tooltip": false
+    },
+
     "pulseaudio": {
         "format": "<span color='#D29922'>VOL</span> {volume}%",
         "format-muted": "<span color='#4e5b55'>muted</span>",
@@ -154,6 +166,8 @@
     "custom/mic": {
         "exec": "~/.config/waybar/mic-status.sh",
         "on-click": "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle && pkill -SIGRTMIN+1 waybar",
+        "on-scroll-up": "wpctl set-volume @DEFAULT_AUDIO_SOURCE@ 5%+ && pkill -SIGRTMIN+1 waybar",
+        "on-scroll-down": "wpctl set-volume @DEFAULT_AUDIO_SOURCE@ 5%- && pkill -SIGRTMIN+1 waybar",
         "return-type": "json",
         "interval": 5,
         "signal": 1,
