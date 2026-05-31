@@ -6,8 +6,6 @@ source $SCRIPT_DIR/check_env.sh
 
 echo_info "Linking config files..."
 
-# ln -sfv ~/.dotfiles/.config/waybar ~/.config/waybar
-
 link_file ".bashrc" $GITPATH $USER_HOME
 
 link_file ".my.cnf" $GITPATH $USER_HOME
@@ -28,7 +26,7 @@ link_file ".config/Thunar" $GITPATH $USER_HOME
 
 link_file ".config/alacritty" $GITPATH $USER_HOME
 
-link_file ".config/wallpaper.sh" $GITPATH $USER_HOME
+# link_file ".config/wallpaper.sh" $GITPATH $USER_HOME
 
 link_file ".config/starship.toml" $GITPATH $USER_HOME
 
@@ -42,12 +40,11 @@ link_file ".config/gtk-3.0" $GITPATH $USER_HOME
 
 link_file ".config/gtk-4.0" $GITPATH $USER_HOME
 
+link_file ".config/dconf" $GITPATH $USER_HOME
+
 link_file ".config/galculator" $GITPATH $USER_HOME
 
 link_file ".config/nwg-look" $GITPATH $USER_HOME
-
-
-
 
 # link_file ".vscode" $GITPATH $USER_HOME
 

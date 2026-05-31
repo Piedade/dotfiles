@@ -27,6 +27,9 @@ systemctl --user import-environment DISPLAY WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT
 dbus-update-activation-environment --systemd DISPLAY WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP
 systemctl --user start xdg-desktop-portal-wlr
 
+###
+# Set wallpapers
+#
 # Folder with wallpapers
 WALLDIR="$HOME/.dotfiles/backgrounds"
 
