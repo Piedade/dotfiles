@@ -35,9 +35,6 @@ source ./scripts/nwg-look.sh
 sleep 1
 
 source ./scripts/swaync.sh
-# mako o lighter
-# echo_info "Installing mako..."
-# sudo apt-get install mako-notifier -y
 sleep 1
 
 # # flameshot is better
@@ -75,9 +72,9 @@ sleep 1
 # source ./scripts/git-delta.sh
 # sleep 1
 
-# FIXME: FONTS
-# source ./scripts/fonts.sh
-# sleep 1
+# FONTS
+source ./scripts/fonts.sh
+sleep 1
 
 source ./scripts/starship.sh
 sleep 1
@@ -151,5 +148,6 @@ sleep 1
 
 sudo apt-get install pv
 mkdir -p "${HOME}/Downloads"
+mkdir -p "${HOME}/Screenshots"
 
 "${SUDO_CMD}" systemctl reboot
