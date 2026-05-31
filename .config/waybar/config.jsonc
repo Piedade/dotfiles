@@ -83,18 +83,24 @@
     },
 
     "cpu": {
-        "format": "<span color='#D29922'>CPU</span> {usage}%",
-        "tooltip": false,
+        // "format": "<span color='#D29922'>CPU</span> {usage}%",
+        "format": "󰻠 {usage}%",
+        // "format-alt": "󰻠 {avg_frequency}GHz",
+        "tooltip": true,
+        "tooltip-format": "CPU Usage: {usage}%\nAverage Frequency: {avg_frequency}GHz\nLoad: {load}",
         "interval": 2,
-        "on-click": "alacritty -e htop -s PERCENT_CPU"
+        "on-click": "alacritty -e htop -s PERCENT_CPU",
     },
 
     "memory": {
         // "format": "<span color='#D29922'>RAM</span> {}%",
-        "format": "<span color='#D29922'>RAM</span>  {used:0.1f}G ({}%)",
-        "tooltip": false,
-        "interval": 30,
-        "on-click": "alacritty -e htop -s PERCENT_MEM"
+        // "format": "<span color='#D29922'>RAM</span>  {used:0.1f}G ({}%)",
+        "format": "󰍛 {used:0.1f}G",
+        // "format-alt": "󰍛 {used:0.1f}G ({}%)",
+        "tooltip": true,
+        "tooltip-format": "RAM: {used:0.1f}GB / {total:0.1f}GB ({percentage}%)\nSwap: {swapUsed:0.1f}GB / {swapTotal:0.1f}GB ({swapPercentage}%)\nAvailable: {avail:0.1f}GB",
+        "interval": 2,
+        "on-click": "alacritty -e htop -s PERCENT_MEM",
     },
 
     "battery": {
