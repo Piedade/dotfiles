@@ -4,7 +4,7 @@ set -e
 
 echo_info "Installing sway, greetd and tuigreet..."
 "${SUDO_CMD}" apt update
-"${SUDO_CMD}" apt install -y sway xwayland waybar build-essential greetd tuigreet swayidle gtklock jq xdg-desktop-portal-wlr 
+"${SUDO_CMD}" apt install -y sway xwayland waybar build-essential greetd tuigreet swayidle gtklock jq xdg-desktop-portal-wlr gnome-themes-extra
 
 # Portatil
 # brightnessctl
