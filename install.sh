@@ -125,6 +125,9 @@ sleep 1
 source ./scripts/obsidian.sh
 sleep 1
 
+source ./scripts/bruno.sh
+sleep 1
+
 source ./scripts/gimp.sh
 sleep 1
 
