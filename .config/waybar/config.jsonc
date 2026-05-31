@@ -26,10 +26,10 @@
     ],
 
     "sway/workspaces": {
-        "disable-scroll": false,
-        "all-outputs": true,
-        "format": "{name}",
-        "numeric-first": true,
+        "disable-scroll": true,
+        // "all-outputs": true,
+        // "format": "{name}",
+        // "numeric-first": true,
         // "persistent-workspaces": {
         //     "1": [],
         //     "2": [],
@@ -126,7 +126,7 @@
         "exec": "~/.config/waybar/vol-status.sh",
         "on-click": "~/.config/waybar/vol-toggle.sh && pkill -SIGRTMIN+2 waybar",
         "on-click-right": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle && pkill -SIGRTMIN+2 waybar",
-        "on-scroll-up": "wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+ && pkill -SIGRTMIN+2 waybar",
+        "on-scroll-up": "wpctl set-volume --limit 1.0 @DEFAULT_AUDIO_SINK@ 5%+ && pkill -SIGRTMIN+2 waybar",
         "on-scroll-down": "wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%- && pkill -SIGRTMIN+2 waybar",
         "return-type": "json",
         "interval": 5,
@@ -174,9 +174,9 @@
 
     "custom/mic": {
         "exec": "~/.config/waybar/mic-status.sh",
-        "on-click": "pavucontrol",
-        "on-click-right": "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle && pkill -SIGRTMIN+1 waybar",
-        "on-scroll-up": "wpctl set-volume @DEFAULT_AUDIO_SOURCE@ 5%+ && pkill -SIGRTMIN+1 waybar",
+        "on-click-right": "pavucontrol",
+        "on-click": "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle && pkill -SIGRTMIN+1 waybar",
+        "on-scroll-up": "wpctl set-volume --limit 1.0 @DEFAULT_AUDIO_SOURCE@ 5%+ && pkill -SIGRTMIN+1 waybar",
         "on-scroll-down": "wpctl set-volume @DEFAULT_AUDIO_SOURCE@ 5%- && pkill -SIGRTMIN+1 waybar",
         "return-type": "json",
         "interval": 5,

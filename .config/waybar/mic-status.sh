@@ -8,7 +8,7 @@ vol=$(echo "$info" | awk '{printf "%4s", sprintf("%d%%", int($2*100))}')
 label=""
 
 if echo "$info" | grep -q MUTED; then
-    text="<span color='#4e5b55'>󰍭 Off </span>"
+    text="<span color='#4e5b55'>󰍭  Off</span>"
     class="muted"
 else
     text="󰍬 ${vol}"

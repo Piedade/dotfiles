@@ -7,8 +7,10 @@ vol=$(echo "$info" | awk '{printf "%4s", sprintf("%d%%", int($2*100))}')
 
 if [[ "$current" == *"analog"* ]]; then
     icon="󰋋"
+    muted_icon="󰋐"
 else
     icon="󰕾"
+    muted_icon="󰝟"
     # if [ "$vol" -gt 40 ]; then
     #     icon="󰕾 "
     # elif [ "$vol" -gt 15 ]; then
@@ -22,7 +24,7 @@ fi
 label=""
 
 if echo "$info" | grep -q MUTED; then
-    text="<span color='#4e5b55'>󰝟 Off </span>"
+    text="<span color='#4e5b55'>${muted_icon}  Off</span>"
     class="muted"
 else
     text="${icon} ${vol}"
