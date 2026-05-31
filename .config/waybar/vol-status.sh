@@ -1,7 +1,8 @@
 #!/bin/bash
 
 current=$(wpctl inspect @DEFAULT_AUDIO_SINK@ 2>/dev/null | grep 'node.name' | awk -F'"' '{print $2}')
-info=$(wpctl get-volume @DEFAULT_AUDIO_SINK@)
+info=$(wpctl get-volume @DEFAULT_AUDIO_SINK@ 2>/dev/null)
+[ -z "$info" ] && echo '{"text":"VOL","class":"unknown"}' && exit 0
 # vol=$(echo "$info" | awk '{printf "%-4s", sprintf("%d%%", int($2*100))}')
 vol=$(echo "$info" | awk '{printf "%4s", sprintf("%d%%", int($2*100))}')
 

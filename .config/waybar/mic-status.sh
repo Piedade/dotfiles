@@ -1,6 +1,7 @@
 #!/bin/bash
 
-info=$(wpctl get-volume @DEFAULT_AUDIO_SOURCE@)
+info=$(wpctl get-volume @DEFAULT_AUDIO_SOURCE@ 2>/dev/null)
+[ -z "$info" ] && echo '{"text":"MIC","class":"unknown"}' && exit 0
 # vol=$(echo "$info" | awk '{printf "%-4s", sprintf("%d%%", int($2*100))}')
 vol=$(echo "$info" | awk '{printf "%4s", sprintf("%d%%", int($2*100))}')
 

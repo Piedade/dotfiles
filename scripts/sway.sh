@@ -11,10 +11,12 @@ sudo cp /etc/greetd/config.toml /etc/greetd/config.toml.bak 2>/dev/null || true
 
 sudo tee /etc/greetd/config.toml > /dev/null <<EOF
 [terminal]
-vt = 1
+vt = 7
 
 [default_session]
-command = "tuigreet --time --remember --cmd sway"
+# command = "tuigreet --time --remember --cmd sway"
+command = "tuigreet --time --remember --cmd 'sway > /home/piedade/sway.log 2>&1' --power-reboot '/usr/bin/systemctl reboot' --power-shutdown '/usr/bin/systemctl poweroff'"
+user = "_greetd"
 EOF
 
 # Enable greetd
@@ -24,3 +26,4 @@ sudo systemctl start greetd
 
 # Mudar o GECOS (nome completo) do utilizador
 sudo usermod -c "$USER" "$USER"
+sudo usermod -aG render "$USER"
