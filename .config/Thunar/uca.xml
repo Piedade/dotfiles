@@ -18,11 +18,10 @@
 	<name>Open with terminal</name>
 	<submenu></submenu>
 	<unique-id>1737908147118955-1</unique-id>
-	<command>exo-open --working-directory %f --launch TerminalEmulator</command>
+	<command>x-terminal-emulator --working-directory %f</command>
 	<description></description>
 	<range></range>
 	<patterns>*</patterns>
-	<startup-notify/>
 	<directories/>
 </action>
 <action>
