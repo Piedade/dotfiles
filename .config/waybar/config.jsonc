@@ -61,7 +61,7 @@
 
     "clock": {
         "timezone": "Europe/Lisbon",
-        "format": "{:%a %d %H:%M}",
+        "format": "{:%d/%m %H:%M}",
         "tooltip-format": "<b>{:%A, %B %d, %Y}</b>\n<tt><small>{calendar}</small></tt>",
         "calendar": {
             "mode": "month",
