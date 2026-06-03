@@ -1,5 +1,8 @@
 #!/bin/bash
 
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source "$SCRIPT_DIR/check_env.sh"
+
 ANDROID_STUDIO_FILE="https://redirector.gvt1.com/edgedl/android/studio/ide-zips/2025.1.1.14/android-studio-2025.1.1.14-linux.tar.gz"
 
 echo_info "Installing Android Studio..."

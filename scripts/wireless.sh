@@ -1,4 +1,7 @@
 #!/bin/bash
+
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source "$SCRIPT_DIR/check_env.sh"
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 echo_info "Installing Archer T2U Nano AC600 (RTL8821AU) Wireless USB Adapter..."

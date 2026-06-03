@@ -1,5 +1,8 @@
 #!/bin/bash
 
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source "$SCRIPT_DIR/check_env.sh"
+
 # Automatically handle wildcard *.test names and forward all of them to localhost (127.0.0.1).
 # https://community.zextras.com/how-to-install-your-dns-server-using-dnsmasq/
 echo_info "Installing dnsmasq..."

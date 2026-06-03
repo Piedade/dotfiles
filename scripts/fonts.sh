@@ -1,7 +1,7 @@
 #!/bin/bash
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-source $SCRIPT_DIR/utils.sh
+source "$SCRIPT_DIR/check_env.sh"
 
 echo_info "Installing fonts..."
 
@@ -60,7 +60,7 @@ else
 fi
 
 #FIX PERMISSIONS
-sudo chown -R $USER:$USER "$HOME/.local"
+sudo chown -R "$USER":"$USER" "$HOME/.local"
 
 installFont "Meslo" https://github.com/ryanoasis/nerd-fonts/releases/latest/download/Meslo.zip
 installFont "FiraCode" https://github.com/ryanoasis/nerd-fonts/releases/latest/download/FiraCode.zip

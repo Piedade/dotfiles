@@ -1,5 +1,8 @@
 #!/bin/bash
 
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source "$SCRIPT_DIR/check_env.sh"
+
 # No Windows (dentro da VM):
 #
 # Instalar o OpenSSH Server — Settings → Apps → Optional Features → Add "OpenSSH Server"

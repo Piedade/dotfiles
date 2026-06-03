@@ -1,5 +1,12 @@
 #!/bin/bash
 
+# Guard to prevent double-sourcing
+[ -n "$CHECK_ENV_SOURCED" ] && return
+CHECK_ENV_SOURCED=1
+
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source "$SCRIPT_DIR/utils.sh"
+
 echo_info "Checking environment..."
 
 # add variables to top level so can easily be accessed by all functions
@@ -7,7 +14,7 @@ SUGROUP=""
 GITPATH=""
 
 # for some reason, curl is not installed by default
-sudo apt-get install curl -y
+command_exists curl || sudo apt-get install curl -y
 
 # Get the correct user home directory.
 USER_HOME=$(getent passwd "${SUDO_USER:-$USER}" | cut -d: -f6)

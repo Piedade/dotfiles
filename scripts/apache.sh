@@ -1,5 +1,8 @@
 #!/bin/bash
 
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source "$SCRIPT_DIR/check_env.sh"
+
 echo_info "Installing apache2..."
 
 if command_exists apache2; then

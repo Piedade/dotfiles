@@ -1,6 +1,6 @@
 #!/bin/bash
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-source $SCRIPT_DIR/utils.sh
+source "$SCRIPT_DIR/check_env.sh"
 
 name="rofi"
 tag="2.0.0"

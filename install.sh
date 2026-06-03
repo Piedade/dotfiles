@@ -1,8 +1,6 @@
 #!/bin/bash
 
 LOG_FILE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/install.log"
-
-source ./scripts/utils.sh
 source ./scripts/check_env.sh
 
 enable_log
@@ -26,15 +24,15 @@ mkdir -p "${HOME}/Downloads"
 mkdir -p "${HOME}/Screenshots"
 
 source ./scripts/vim.sh
-source "./scripts/lxpolkit.sh"
+source ./scripts/lxpolkit.sh
 
 # audio should be installed before hyprland because xdg-desktop-portal-hyprland
 source ./scripts/audio.sh
 
 # # não é necessario porque estamos a utilizar gnome-keyring
-# source "./scripts/ssh-agent.sh"
+# source ./scripts/ssh-agent.sh
 
-source "./scripts/sway.sh"
+source ./scripts/sway.sh
 source ./scripts/nwg-displays.sh
 source ./scripts/nwg-look.sh
 source ./scripts/swaync.sh
