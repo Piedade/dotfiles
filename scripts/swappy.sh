@@ -29,7 +29,7 @@ if command_exists swappy; then
 fi
 
 if git clone --recursive -b $tag https://github.com/jtheoof/swappy; then
-    cd $name || exit 1
+    pushd $name > /dev/null
 
     # Install to /usr/local so pkg-config can prefer it over distro /usr
     meson setup build --prefix=/usr/local
@@ -41,7 +41,7 @@ if git clone --recursive -b $tag https://github.com/jtheoof/swappy; then
         echo_error "Installation failed for $name"
     fi
 
-    cd ..
+    popd > /dev/null
 else
     echo_error "Download failed for $name!"
 fi

@@ -12,8 +12,8 @@ if command_exists rofi; then
     return
 fi
 if git clone --recursive -b $tag https://github.com/davatorium/rofi; then
-    cd $name || exit 1
-    
+    pushd $name > /dev/null
+
     # Install to /usr/local so pkg-config can prefer it over distro /usr
     meson setup build --prefix=/usr/local
     meson compile -C build -j"$(nproc 2>/dev/null || getconf _NPROCESSORS_CONF)"
@@ -23,8 +23,8 @@ if git clone --recursive -b $tag https://github.com/davatorium/rofi; then
     else
         echo_error "Installation failed for $name"
     fi
-  
-    cd ..
+
+    popd > /dev/null
 else
     echo_error "Download failed for $name!"
 fi

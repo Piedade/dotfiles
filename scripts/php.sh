@@ -89,19 +89,14 @@ echo_info "Installing FastCGI mod..."
 sudo apt-get install libapache2-mod-fcgid -y
 
 installPHP "5.6"
-sleep 1
 
 installPHP "7.2"
-sleep 1
 
 installPHP "7.4"
-sleep 1
 
 installPHP "8.1"
-sleep 1
 
 installPHP "8.4"
-sleep 1
 
 # Select default PHP version
 # update-alternatives --config php

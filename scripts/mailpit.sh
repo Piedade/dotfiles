@@ -16,7 +16,7 @@ sudo mkdir -p "$DB_DIR"
 sudo chown ${SUDO_USER:-$USER}:${SUDO_USER:-$USER} "$DB_DIR"
 
 # Start when your computer starts
-cat << 'EOF' | sudo tee /etc/systemd/system/mailpit.service > /dev/null
+cat << EOF | sudo tee /etc/systemd/system/mailpit.service > /dev/null
 [Unit]
 Description=Mailpit Server
 
@@ -26,8 +26,8 @@ Restart=always
 # Restart service after 10 seconds service crashes
 RestartSec=10
 SyslogIdentifier=mailpit
-User=piedade
-Group=piedade
+User=${SUDO_USER:-$USER}
+Group=${SUDO_USER:-$USER}
 
 [Install]
 WantedBy=multi-user.target

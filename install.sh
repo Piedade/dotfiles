@@ -1,6 +1,6 @@
 #!/bin/bash
 
-LOG_FILE="../install.log"
+LOG_FILE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/install.log"
 
 source ./scripts/utils.sh
 source ./scripts/check_env.sh

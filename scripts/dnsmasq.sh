@@ -16,7 +16,7 @@ RESOLVCONF="/etc/resolv.conf";
 
 if ! sudo mv "$DNSMASQCONF" "$DNSMASQCONF".bak; then
     echo_error "Can't move the old dnsmasq.conf file!"
-    exit 1
+    return 1
 fi
 
 # Get the server's primary IPv4 address dynamically
@@ -26,7 +26,7 @@ LOCAL_IP=$(ip route get 8.8.8.8 | awk '{print $7; exit}')
 # Check if an IP was found
 if [ -z "$LOCAL_IP" ]; then
     echo "Error: Could not determine server's IP address. Please check network configuration."
-    exit 1
+    return 1
 fi
 
 # upstream DNS server for non-local domain names, using Cloudflare and google public DNS
@@ -47,7 +47,7 @@ EOF
 
 if ! sudo mv "$RESOLVCONF" "$RESOLVCONF".bak; then
     echo_error "Can't move the old resolv.conf file!"
-    exit 1
+    return 1
 fi
 
 echo -e "nameserver 127.0.0.1" | sudo tee -a "$RESOLVCONF" > /dev/null

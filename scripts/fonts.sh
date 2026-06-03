@@ -7,6 +7,8 @@ echo_info "Installing fonts..."
 
 sudo apt-get install -y fonts-recommended fonts-font-awesome fonts-noto-color-emoji
 
+FONT_DIR="$HOME/.local/share/fonts"
+
 installFont() {
     local fontName="$1"
 
@@ -47,8 +49,6 @@ installFont() {
         echo_success "$fontName font installed successfully"
     fi
 }
-
-FONT_DIR="$HOME/.local/share/fonts"
 
 # Create the fonts directory if it doesn't exist
 if [ ! -d "$FONT_DIR" ]; then

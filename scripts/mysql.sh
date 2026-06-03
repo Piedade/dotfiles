@@ -36,7 +36,6 @@ mysql_native_password=ON
 EOF
 
 sudo systemctl restart mysql
-sleep 1
 
 # root password
 sudo mysql <<-EOF

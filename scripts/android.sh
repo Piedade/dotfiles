@@ -22,7 +22,7 @@ sudo mv android-studio /opt/
 sudo rm -f android-studio.tar.gz
 
 # Hardware VM acceleration uses your computer's processor to significantly improve the execution speed of the emulator
-sudo apt-get install qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils
+sudo apt-get install -y qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils
 
 # vim ~/.local/share/applications/jetbrains-studio.desktop
 # ...

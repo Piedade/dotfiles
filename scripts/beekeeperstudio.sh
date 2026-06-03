@@ -14,6 +14,6 @@ curl -fsSL https://deb.beekeeperstudio.io/beekeeper.key | sudo gpg --dearmor --o
   | sudo tee /etc/apt/sources.list.d/beekeeper-studio-app.list > /dev/null
 
 # Update apt and install
-sudo apt update && sudo apt install beekeeper-studio -y
+sudo apt-get update && sudo apt-get install beekeeper-studio -y
 
 echo_success "Beekeeper Studio installed!"

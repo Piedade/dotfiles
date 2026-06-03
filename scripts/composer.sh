@@ -26,7 +26,7 @@ if [ "$EXPECTED_HASH" != "$ACTUAL_HASH" ]; then
     echo_error "Expected: $EXPECTED_HASH"
     echo_error "Actual  : $ACTUAL_HASH"
     rm -rf "$TMPDIR"
-    exit 1
+    return 1
 fi
 
 php "$TMPDIR/composer-setup.php" --quiet --install-dir="$TMPDIR"

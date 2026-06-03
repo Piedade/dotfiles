@@ -1,3 +1,5 @@
+#!/bin/bash
+
 echo_info "Installing Polkit Agent..."
 
 if command_exists lxpolkit; then
