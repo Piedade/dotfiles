@@ -8,4 +8,4 @@ if command_exists swaybg; then
 fi
 
 # Install
-"${SUDO_CMD}" apt-get install -y swaybg
+sudo apt-get install -y swaybg

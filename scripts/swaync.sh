@@ -7,4 +7,4 @@ if command_exists swaync; then
     return
 fi
 
-"${SUDO_CMD}" apt-get install -y sway-notification-center libnotify-bin
+sudo apt-get install -y sway-notification-center libnotify-bin

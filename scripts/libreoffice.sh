@@ -8,4 +8,4 @@ if command_exists libreoffice; then
 fi
 
 # Install
-"${SUDO_CMD}" apt-get install -y libreoffice
+sudo apt-get install -y libreoffice

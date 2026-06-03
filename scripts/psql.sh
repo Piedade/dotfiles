@@ -7,9 +7,9 @@ if command_exists psql; then
     return
 fi
 
-"${SUDO_CMD}" apt-get install -y postgresql
+sudo apt-get install -y postgresql
 
-"${SUDO_CMD}" su - postgres -c "createuser piedade --superuser"
+sudo su - postgres -c "createuser piedade --superuser"
 
 
 # TODO: Create script to install

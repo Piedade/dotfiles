@@ -8,7 +8,7 @@ if command_exists alacritty; then
 fi
 
 # Install
-"${SUDO_CMD}" apt-get install -y alacritty
+sudo apt-get install -y alacritty
 
 # Set as default terminal
-"${SUDO_CMD}" update-alternatives --set x-terminal-emulator $(which alacritty)
+sudo update-alternatives --set x-terminal-emulator $(which alacritty)

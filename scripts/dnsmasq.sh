@@ -9,12 +9,12 @@ if command_exists dnsmasq; then
     return
 fi
 
-"${SUDO_CMD}" apt-get install dnsmasq -y
+sudo apt-get install dnsmasq -y
 
 DNSMASQCONF="/etc/dnsmasq.conf";
 RESOLVCONF="/etc/resolv.conf";
 
-if ! "${SUDO_CMD}" mv "$DNSMASQCONF" "$DNSMASQCONF".bak; then
+if ! sudo mv "$DNSMASQCONF" "$DNSMASQCONF".bak; then
     echo_error "Can't move the old dnsmasq.conf file!"
     exit 1
 fi
@@ -31,7 +31,7 @@ fi
 
 # upstream DNS server for non-local domain names, using Cloudflare and google public DNS
 # add .test to resolve to your local machine
-"${SUDO_CMD}" tee "${DNSMASQCONF}" > /dev/null <<EOF
+sudo tee "${DNSMASQCONF}" > /dev/null <<EOF
 listen-address=127.0.0.1,${LOCAL_IP}
 # Or, if you prefer the simpler, listen on all interfaces:
 #listen-address=0.0.0.0
@@ -45,18 +45,18 @@ server=8.8.8.8
 address=/.test/${LOCAL_IP}
 EOF
 
-if ! "${SUDO_CMD}" mv "$RESOLVCONF" "$RESOLVCONF".bak; then
+if ! sudo mv "$RESOLVCONF" "$RESOLVCONF".bak; then
     echo_error "Can't move the old resolv.conf file!"
     exit 1
 fi
 
-echo -e "nameserver 127.0.0.1" | "${SUDO_CMD}" tee -a "$RESOLVCONF" > /dev/null
+echo -e "nameserver 127.0.0.1" | sudo tee -a "$RESOLVCONF" > /dev/null
 
 # Change the file’s attributes using the chattr command to make our file immutable.
 # This prevents the local network manager from overwriting our changes:
-"${SUDO_CMD}" chattr +i /etc/resolv.conf
+sudo chattr +i /etc/resolv.conf
 
 # reset nameservers
-"${SUDO_CMD}" systemctl restart dnsmasq
+sudo systemctl restart dnsmasq
 
-"${SUDO_CMD}" apt-get update
+sudo apt-get update

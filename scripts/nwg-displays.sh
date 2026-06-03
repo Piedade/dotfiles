@@ -7,4 +7,4 @@ if command_exists nwg-displays; then
     return
 fi
 
-"${SUDO_CMD}" apt-get install -y nwg-displays
+sudo apt-get install -y nwg-displays

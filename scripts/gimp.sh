@@ -8,4 +8,4 @@ if command_exists gimp; then
 fi
 
 # Install
-"${SUDO_CMD}" apt-get install -y gimp
+sudo apt-get install -y gimp

@@ -34,7 +34,7 @@ if command_exists virt-manager; then
     return
 fi
 
-"${SUDO_CMD}" apt-get install -y \
+sudo apt-get install -y \
     qemu-kvm \
     libvirt-daemon-system \
     libvirt-clients \
@@ -44,10 +44,10 @@ fi
     ovmf
 
 # Add user to required groups
-"${SUDO_CMD}" usermod -aG libvirt "$USER"
-"${SUDO_CMD}" usermod -aG kvm "$USER"
+sudo usermod -aG libvirt "$USER"
+sudo usermod -aG kvm "$USER"
 
 # Enable and start libvirt daemon
-"${SUDO_CMD}" systemctl enable --now libvirtd
+sudo systemctl enable --now libvirtd
 
 echo_success "QEMU/KVM installed! Log out and back in for group changes to take effect."

@@ -7,4 +7,4 @@ if command_exists direnv; then
     return
 fi
 
-"${SUDO_CMD}" apt-get install direnv -y
+sudo apt-get install direnv -y

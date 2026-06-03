@@ -8,8 +8,8 @@ if command_exists obsidian; then
 fi
 
 wget https://github.com/obsidianmd/obsidian-releases/releases/download/v1.8.10/obsidian_1.8.10_amd64.deb
-"${SUDO_CMD}" apt-get install ./obsidian_1.8.10_amd64.deb
+sudo apt-get install ./obsidian_1.8.10_amd64.deb
 
-"${SUDO_CMD}" rm -f obsidian_1.8.10_amd64.deb
+sudo rm -f obsidian_1.8.10_amd64.deb
 
 echo_success "Obsidian installed!"

@@ -5,6 +5,6 @@ if command_exists lxpolkit; then
     return
 fi
 
-"${SUDO_CMD}" apt-get install -y polkitd lxpolkit gnome-keyring # libsecret-1-0
+sudo apt-get install -y polkitd lxpolkit gnome-keyring # libsecret-1-0
 
 echo_success "Polkit installed!"

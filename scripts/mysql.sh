@@ -9,37 +9,37 @@ fi
 
 # # dependency
 # wget -q https://ftp.debian.org/debian/pool/main/liba/libaio/libaio1_0.3.113-4_amd64.deb
-# "${SUDO_CMD}" dpkg -i libaio1_0.3.113-4_amd64.deb
+# sudo dpkg -i libaio1_0.3.113-4_amd64.deb
 
 APT_CONFIG_FILE="mysql-apt-config_0.8.39-1_all.deb"
 
 wget "https://dev.mysql.com/get/$APT_CONFIG_FILE"
 
 # default to mysql lts version, skip all interactive prompts
-echo "mysql-apt-config mysql-apt-config/select-server select mysql-8.4-lts" | "${SUDO_CMD}" debconf-set-selections
-echo "mysql-apt-config mysql-apt-config/select-connectors select Disabled" | "${SUDO_CMD}" debconf-set-selections
-echo "mysql-apt-config mysql-apt-config/select-product select Ok" | "${SUDO_CMD}" debconf-set-selections
+echo "mysql-apt-config mysql-apt-config/select-server select mysql-8.4-lts" | sudo debconf-set-selections
+echo "mysql-apt-config mysql-apt-config/select-connectors select Disabled" | sudo debconf-set-selections
+echo "mysql-apt-config mysql-apt-config/select-product select Ok" | sudo debconf-set-selections
 
 disable_log
-"${SUDO_CMD}" DEBIAN_FRONTEND=noninteractive dpkg -i "$APT_CONFIG_FILE"
+sudo DEBIAN_FRONTEND=noninteractive dpkg -i "$APT_CONFIG_FILE"
 enable_log
 
 # update package list and install
-"${SUDO_CMD}" apt-get update -y
-"${SUDO_CMD}" DEBIAN_FRONTEND=noninteractive apt-get install mysql-server -y
+sudo apt-get update -y
+sudo DEBIAN_FRONTEND=noninteractive apt-get install mysql-server -y
 
 # enable mysql_native_password plugin
-# echo "mysql_native_password=ON" | "${SUDO_CMD}" tee -a /etc/mysql/mysql.conf.d/mysqld.cnf
-"${SUDO_CMD}" tee /etc/mysql/conf.d/native-password.cnf >/dev/null <<'EOF'
+# echo "mysql_native_password=ON" | sudo tee -a /etc/mysql/mysql.conf.d/mysqld.cnf
+sudo tee /etc/mysql/conf.d/native-password.cnf >/dev/null <<'EOF'
 [mysqld]
 mysql_native_password=ON
 EOF
 
-"${SUDO_CMD}" systemctl restart mysql
+sudo systemctl restart mysql
 sleep 1
 
 # root password
-"${SUDO_CMD}" mysql <<-EOF
+sudo mysql <<-EOF
 ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'admin';
 DELETE FROM mysql.user WHERE User='';
 DROP DATABASE IF EXISTS test;

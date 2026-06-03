@@ -7,4 +7,4 @@ if command_exists nwg-look; then
     return
 fi
 
-"${SUDO_CMD}" apt-get install -y nwg-look papirus-icon-theme
+sudo apt-get install -y nwg-look papirus-icon-theme

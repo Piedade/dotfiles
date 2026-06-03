@@ -8,4 +8,4 @@ if command_exists inkscape; then
 fi
 
 # Install
-"${SUDO_CMD}" apt-get install -y inkscape
+sudo apt-get install -y inkscape

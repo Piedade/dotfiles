@@ -6,16 +6,16 @@ if command_exists sway; then
     echo_success "Sway already installed!"
     return
 fi
-"${SUDO_CMD}" apt-get update
-"${SUDO_CMD}" apt-get install -y sway xwayland waybar build-essential greetd tuigreet swayidle gtklock jq xdg-desktop-portal-wlr gnome-themes-extra
+sudo apt-get update
+sudo apt-get install -y sway xwayland waybar build-essential greetd tuigreet swayidle gtklock jq xdg-desktop-portal-wlr gnome-themes-extra
 
 # Portatil
 # brightnessctl
 
 # Backup config
-"${SUDO_CMD}" cp /etc/greetd/config.toml /etc/greetd/config.toml.bak 2>/dev/null || true
+sudo cp /etc/greetd/config.toml /etc/greetd/config.toml.bak 2>/dev/null || true
 
-"${SUDO_CMD}" tee /etc/greetd/config.toml > /dev/null <<EOF
+sudo tee /etc/greetd/config.toml > /dev/null <<EOF
 [terminal]
 vt = 7
 
@@ -26,10 +26,10 @@ EOF
 
 # Enable greetd
 echo_info "Enabling greetd..."
-"${SUDO_CMD}" systemctl enable greetd
+sudo systemctl enable greetd
 
 # User groups
-"${SUDO_CMD}" usermod -c "$USER" "$USER"
-"${SUDO_CMD}" usermod -aG render "$USER"
+sudo usermod -c "$USER" "$USER"
+sudo usermod -aG render "$USER"
 
 echo_success "Sway installed!"

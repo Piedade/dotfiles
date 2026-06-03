@@ -8,4 +8,4 @@ if command_exists wl-copy; then
 fi
 
 # Install
-"${SUDO_CMD}" apt-get install -y wl-clipboard cliphist
+sudo apt-get install -y wl-clipboard cliphist

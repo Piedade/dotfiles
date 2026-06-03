@@ -8,7 +8,7 @@ if command_exists keychain; then
 fi
 
 # Install
-"${SUDO_CMD}" apt-get install -y keychain
+sudo apt-get install -y keychain
 
 systemctl --user enable --now ssh-agent.socket
 

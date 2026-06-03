@@ -32,8 +32,8 @@ fi
 php "$TMPDIR/composer-setup.php" --quiet --install-dir="$TMPDIR"
 rm -rf "$TMPDIR/composer-setup.php"
 
-${SUDO_CMD} mv "$TMPDIR/composer.phar" /usr/local/bin/composer
-${SUDO_CMD} chmod +x /usr/local/bin/composer
+sudo mv "$TMPDIR/composer.phar" /usr/local/bin/composer
+sudo chmod +x /usr/local/bin/composer
 rm -rf "$TMPDIR"
 
 echo_success "Composer installed successfully."

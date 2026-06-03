@@ -7,5 +7,5 @@ if command_exists lpstat; then
     return
 fi
 
-"${SUDO_CMD}" apt-get install -y cups printer-driver-all system-config-printer
-"${SUDO_CMD}" systemctl enable --now cups
+sudo apt-get install -y cups printer-driver-all system-config-printer
+sudo systemctl enable --now cups
