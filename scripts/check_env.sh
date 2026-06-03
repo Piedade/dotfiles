@@ -21,8 +21,6 @@ for req in $REQUIREMENTS; do
     fi
 done
 
-echo_info "Using $SUDO_CMD as privilege escalation software"
-
 # Check if the current directory is writable.
 GITPATH="$USER_HOME/.dotfiles"
 if [ ! -w "$GITPATH" ]; then

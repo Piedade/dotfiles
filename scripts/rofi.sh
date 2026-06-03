@@ -11,8 +11,8 @@ if command_exists rofi; then
     echo_success "Rofi already installed!"
     return
 fi
-if git clone --recursive -b $tag https://github.com/davatorium/rofi; then
-    pushd $name > /dev/null
+if git clone --recursive -b "$tag" https://github.com/davatorium/rofi; then
+    pushd "$name" > /dev/null
 
     # Install to /usr/local so pkg-config can prefer it over distro /usr
     meson setup build --prefix=/usr/local
@@ -29,4 +29,4 @@ else
     echo_error "Download failed for $name!"
 fi
 
-rm -rf ./$name
+rm -rf "./$name"

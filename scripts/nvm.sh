@@ -16,6 +16,6 @@ echo $NVM_DIR
 
 nvm install --lts
 
-# Angular CLI
-echo_info "Installing Angular CLI..."
-npm install -g @angular/cli@latest
+# # Angular CLI
+# echo_info "Installing Angular CLI..."
+# npm install -g @angular/cli@latest

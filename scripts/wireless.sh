@@ -27,12 +27,14 @@ fi
 sudo apt-get install -y linux-headers-generic build-essential dkms network-manager
 
 # https://github.com/lwfinger/rtw88
-cd $SCRIPT_DIR/rtw88
-sudo dkms install $PWD
+pushd "$SCRIPT_DIR/rtw88" > /dev/null
+sudo dkms install "$SCRIPT_DIR/rtw88"
 
 sudo make install_fw
 
-sudo cp rtw88.conf /etc/modprobe.d/
+popd > /dev/null
+
+sudo cp "$SCRIPT_DIR/rtw88/rtw88.conf" /etc/modprobe.d/
 
 # Secure Boot is enabled on your machine.
 sudo mokutil --import /var/lib/dkms/mok.pub

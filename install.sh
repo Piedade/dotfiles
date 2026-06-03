@@ -7,6 +7,18 @@ source ./scripts/check_env.sh
 
 enable_log
 
+# Ask if user wants to install backports kernel first
+while true; do
+    read -rp "Do you want to install the latest kernel from backports before proceeding? [y/n] " answer
+    case "${answer,,}" in
+        y) bash "$(dirname "${BASH_SOURCE[0]}")/backports.sh"
+           echo_info "Resuming installation..."
+           break ;;
+        n) break ;;
+        *) echo "Please answer y or n." ;;
+    esac
+done
+
 sudo apt autoremove -y
 
 sudo apt-get install pv -y

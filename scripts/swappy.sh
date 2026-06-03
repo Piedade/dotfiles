@@ -14,7 +14,7 @@ for dep in "${deps[@]}"; do
     install_package "$dep"
     if [ $? -ne 0 ]; then
         echo_error "$dep installation failed!"
-        exit 1
+        return 1
     fi
 done
 
@@ -28,8 +28,8 @@ if command_exists swappy; then
     return
 fi
 
-if git clone --recursive -b $tag https://github.com/jtheoof/swappy; then
-    pushd $name > /dev/null
+if git clone --recursive -b "$tag" https://github.com/jtheoof/swappy; then
+    pushd "$name" > /dev/null
 
     # Install to /usr/local so pkg-config can prefer it over distro /usr
     meson setup build --prefix=/usr/local
@@ -46,4 +46,4 @@ else
     echo_error "Download failed for $name!"
 fi
 
-rm -rf ./$name
+rm -rf "./$name"
