@@ -77,6 +77,8 @@ source ./scripts/android.sh
 source ./scripts/mouse.sh
 source ./scripts/print.sh
 
+source ./scripts/wayland-compat.sh
+
 source ./scripts/link_config.sh
 
 sudo systemctl reboot

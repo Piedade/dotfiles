@@ -26,10 +26,13 @@ if ! command -v cargo >/dev/null 2>&1; then
     source "$HOME/.cargo/env"
 fi
 
-echo "Cloning Satty..."
+SATTY_TAG="v0.20.1"
+
+echo "Cloning Satty $SATTY_TAG..."
 
 rm -rf "$SCRIPT_DIR/satty"
-git clone https://github.com/gabm/Satty.git "$SCRIPT_DIR/satty"
+git clone --branch "$SATTY_TAG" --depth 1 https://github.com/gabm/Satty.git "$SCRIPT_DIR/satty" \
+    || { echo_error "Failed to clone Satty $SATTY_TAG"; return 1; }
 
 pushd "$SCRIPT_DIR/satty" > /dev/null
 

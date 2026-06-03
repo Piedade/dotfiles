@@ -12,7 +12,7 @@ fi
 
 sudo apt-get install -y postgresql
 
-sudo su - postgres -c "createuser ${SUDO_USER:-$USER} --superuser"
+sudo su - postgres -c "createuser ${SUDO_USER:-$USER} --superuser" 2>/dev/null || true
 
 
 # TODO: Create script to install

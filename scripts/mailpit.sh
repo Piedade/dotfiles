@@ -16,7 +16,7 @@ sudo sh < <(curl -sL https://raw.githubusercontent.com/axllent/mailpit/develop/i
 # Database directory
 DB_DIR="/var/lib/mailpit"
 sudo mkdir -p "$DB_DIR"
-sudo chown ${SUDO_USER:-$USER}:${SUDO_USER:-$USER} "$DB_DIR"
+sudo chown "${SUDO_USER:-$USER}":"${SUDO_USER:-$USER}" "$DB_DIR"
 
 # Start when your computer starts
 cat << EOF | sudo tee /etc/systemd/system/mailpit.service > /dev/null

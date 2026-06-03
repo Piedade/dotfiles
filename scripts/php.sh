@@ -45,7 +45,7 @@ installPHP(){
     sudo apt-get install -y "${PACKAGES[@]}"
 
     # Change fpm user and group
-    sudo sed -i "s/^user = .*/user = "${SUDO_USER:-$USER}"/" "/etc/php/${VERSION}/fpm/pool.d/www.conf"
+    sudo sed -i "s/^user = .*/user = ${SUDO_USER:-$USER}/" "/etc/php/${VERSION}/fpm/pool.d/www.conf"
     # sudo systemctl start php${VERSION}-fpm
 
     # sudo sed -i "s/^user = .*/user = ${FPM_USER}/" "$CONF"
@@ -69,7 +69,8 @@ fi
 sudo mkdir -p /etc/apt/keyrings
 
 # Download repo key into keyrings (not deprecated trusted.gpg.d)
-sudo wget -O /etc/apt/keyrings/deb.sury.org-php.gpg https://packages.sury.org/php/apt.gpg
+sudo wget -O /etc/apt/keyrings/deb.sury.org-php.gpg https://packages.sury.org/php/apt.gpg \
+    || { echo_error "Failed to download PHP Sury GPG key"; return 1; }
 
 # Create DEB822 sources file
 cat <<EOF | sudo tee /etc/apt/sources.list.d/php-sury.sources > /dev/null

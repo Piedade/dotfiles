@@ -3,7 +3,7 @@
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source "$SCRIPT_DIR/check_env.sh"
 
-ANDROID_STUDIO_FILE="https://redirector.gvt1.com/edgedl/android/studio/ide-zips/2025.3.1.5/android-studio-2025.3.1.5-linux.tar.gz"
+ANDROID_STUDIO_FILE="https://edgedl.me.gvt1.com/android/studio/ide-zips/2026.1.1.8/android-studio-quail1-linux.tar.gz"
 
 echo_info "Installing Android Studio..."
 
@@ -19,7 +19,8 @@ sudo apt-get -y install default-jdk
 sudo apt-get -y install libc6:i386 libncurses6:i386 libstdc++6:i386 zlib1g:i386 libbz2-1.0:i386
 
 # Download Android Studio
-wget -O android-studio.tar.gz "$ANDROID_STUDIO_FILE"
+wget -O android-studio.tar.gz "$ANDROID_STUDIO_FILE" \
+    || { echo_error "Failed to download Android Studio"; return 1; }
 tar -xvzf android-studio.tar.gz
 sudo mv android-studio /opt/
 sudo rm -f android-studio.tar.gz

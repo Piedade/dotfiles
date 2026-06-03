@@ -26,7 +26,7 @@ sudo sed -i "s/^export APACHE_RUN_GROUP=.*/export APACHE_RUN_GROUP="${SUDO_USER:
 sudo systemctl restart apache2
 
 # FIX permissions
-sudo chown -R ${SUDO_USER:-$USER}:${SUDO_USER:-$USER} /var/www
+sudo chown -R "${SUDO_USER:-$USER}":"${SUDO_USER:-$USER}" /var/www
 sudo find /var/www -type d -exec chmod 2755 {} \+
 sudo find /var/www -type f -exec chmod 644 {} \+
 sudo find /var/www -type d -exec chmod g+s {} +

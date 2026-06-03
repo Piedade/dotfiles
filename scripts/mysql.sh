@@ -16,7 +16,8 @@ fi
 
 APT_CONFIG_FILE="mysql-apt-config_0.8.39-1_all.deb"
 
-wget "https://dev.mysql.com/get/$APT_CONFIG_FILE"
+wget "https://dev.mysql.com/get/$APT_CONFIG_FILE" \
+    || { echo_error "Failed to download mysql-apt-config"; return 1; }
 
 # default to mysql lts version, skip all interactive prompts
 echo "mysql-apt-config mysql-apt-config/select-server select mysql-8.4-lts" | sudo debconf-set-selections

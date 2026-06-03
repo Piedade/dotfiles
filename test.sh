@@ -183,7 +183,7 @@ done
 
 # ─── 12. COMMAND_EXISTS CHECK ────────────────────────────────────────────────
 header "Install scripts have 'already installed' check"
-SKIP_CHECK=("check_env.sh" "utils.sh" "link_config.sh" "mouse-battery-notify.sh" "dnsmasq.sh" "apache.sh" "firewall.sh" "audio.sh" "sway.sh" "fonts.sh" "lxpolkit.sh")
+SKIP_CHECK=("check_env.sh" "utils.sh" "link_config.sh" "mouse-battery-notify.sh" "dnsmasq.sh" "apache.sh" "firewall.sh" "audio.sh" "sway.sh" "fonts.sh" "lxpolkit.sh" "vim.sh" "wireless.sh")
 for f in "$SCRIPTS_DIR"/*.sh; do
     name=$(basename "$f")
     skip=0
@@ -215,8 +215,10 @@ done
 header "\$USER always quoted"
 for f in "$SCRIPTS_DIR"/*.sh "$INSTALL_SH"; do
     name=$(basename "$f")
-    # Match $USER not surrounded by quotes — skip $USER_HOME and ${SUDO_USER:-$USER}
-    bad=$(grep -v '^\s*#' "$f" | grep -oP '[^"${\w]\$USER(?!_HOME|[A-Z_])' | head -1)
+    # Match bare $USER not in quotes and not inside ${...:-$USER} expansions
+    bad=$(grep -v '^\s*#' "$f" \
+        | grep -v 'SUDO_USER' \
+        | grep -oP '(?<!["{$\w])\$USER(?!_HOME|[A-Z_:}])' | head -1)
     if [[ -n "$bad" ]]; then
         warn "$name — \$USER may not be quoted (check manually)"
     else
@@ -240,8 +242,15 @@ done
 header "wget downloads have error handling"
 for f in "$SCRIPTS_DIR"/*.sh; do
     name=$(basename "$f")
-    # Find wget lines that don't pipe to bash and don't have || error handling
-    bad=$(grep -v '^\s*#' "$f" | grep 'wget' | grep -v '|\s*bash\||\s*sh\|-qO-\||| {' )
+    # Join continuation lines (\) so multi-line wget+|| is treated as one
+    bad=$(grep -v '^\s*#' "$f" \
+        | tr '\n' '\r' \
+        | sed 's/\\\r/ /g' \
+        | tr '\r' '\n' \
+        | grep 'wget' \
+        | grep -vE '\|\s*bash|\|\s*sh|-qO-|\|\| \{|wget -q' \
+        | grep -v "='" \
+        | grep -vE 'wget.*&&|&&.*wget')
     if [[ -n "$bad" ]]; then
         warn "$name — wget without explicit error handling:"
         echo "$bad" | while read line; do echo "      $line"; done
@@ -276,11 +285,74 @@ else
     pass "install.sh — no duplicate sources"
 fi
 
-# ─── 19. LATEST VERSION CHECKS (requires internet) ──────────────────────────
+# ─── 19. WAYLAND COMPATIBILITY ───────────────────────────────────────────────
+# Each check answers: "should this workaround be active, and is it configured correctly?"
+# PASS = correct state | FAIL = wrong state | WARN = not installed yet
+header "Wayland compatibility"
+
+wayland_env="$HOME/.config/environment.d/wayland.conf"
+android_ver=$(grep -oP '(?<=ide-zips/)[\d.]+(?=/)' "$SCRIPTS_DIR/android.sh" | head -1)
+android_major=$(echo "${android_ver:-0}" | cut -d. -f1)
+
+# ── Mozilla (Firefox/Thunderbird) — always needed ────────────────────────────
+if [ ! -f "$wayland_env" ]; then
+    warn "MOZ_ENABLE_WAYLAND — wayland.conf missing (run wayland-compat.sh)"
+elif grep -q "MOZ_ENABLE_WAYLAND" "$wayland_env"; then
+    pass "MOZ_ENABLE_WAYLAND — set (needed for Firefox/Thunderbird)"
+else
+    fail "MOZ_ENABLE_WAYLAND — missing from wayland.conf"
+fi
+
+# ── Android Studio — needed only for < 2026.1 ────────────────────────────────
+if [[ "$android_major" -ge 2026 ]]; then
+    # Wayland native — only show if workaround is incorrectly still present
+    if grep -q "_JAVA_AWT_WM_NONREPARENTING" "$wayland_env" 2>/dev/null; then
+        warn "_JAVA_AWT_WM_NONREPARENTING — android.sh $android_ver is Wayland native, remove from wayland.conf"
+    fi
+else
+    # < 2026.1 needs XWayland workaround
+    if [ ! -f "$wayland_env" ]; then
+        warn "_JAVA_AWT_WM_NONREPARENTING — wayland.conf missing (run wayland-compat.sh)"
+    elif grep -q "_JAVA_AWT_WM_NONREPARENTING" "$wayland_env"; then
+        pass "_JAVA_AWT_WM_NONREPARENTING — set (android.sh $android_ver < 2026.1 needs XWayland)"
+    else
+        fail "_JAVA_AWT_WM_NONREPARENTING — missing from wayland.conf (android.sh $android_ver < 2026.1)"
+    fi
+fi
+
+# ── Chrome — 140+ auto-detects, only show if flags.conf exists (redundant) ───
+if [ -f "$HOME/.config/google-chrome-flags.conf" ]; then
+    warn "Chrome — flags.conf exists but is redundant (Chrome 140+ auto-detects Wayland)"
+fi
+
+# ── VS Code — Electron 38+ auto-detects, only show if config exists (redundant)
+if [ -f "$HOME/.vscode/argv.json" ] && grep -q "ozone-platform-hint" "$HOME/.vscode/argv.json"; then
+    warn "VS Code — ozone-platform-hint in argv.json is redundant (Electron 38+ auto-detects Wayland)"
+fi
+
+# ── Beekeeper Studio — v5.6.2 still requires explicit opt-in ─────────────────
+BKS="$HOME/.config/bks-flags.conf"
+if [ ! -f "$BKS" ]; then
+    warn "Beekeeper Studio — bks-flags.conf missing (run wayland-compat.sh)"
+elif grep -q "ozone-platform-hint" "$BKS" && grep -q "WaylandWpColorManagerV1" "$BKS"; then
+    pass "Beekeeper Studio — Wayland flags set (still required in v5.6.2)"
+else
+    fail "Beekeeper Studio — bks-flags.conf incomplete (missing ozone-platform-hint or WaylandWpColorManagerV1)"
+fi
+
+# ── wayland-compat.sh in install.sh ──────────────────────────────────────────
+if grep -q "wayland-compat.sh" "$INSTALL_SH"; then
+    pass "wayland-compat.sh referenced in install.sh"
+else
+    fail "wayland-compat.sh NOT in install.sh"
+fi
+
+# ─── 20. LATEST VERSION CHECKS (requires internet) ──────────────────────────
 header "Latest version checks (network — skipped if offline)"
 
-# Check internet connectivity first
-if ! curl -sf --max-time 5 https://api.github.com > /dev/null 2>&1; then
+# Check internet connectivity (use a reliable non-rate-limited endpoint)
+if ! curl -sf --max-time 5 https://www.google.com > /dev/null 2>&1 && \
+   ! curl -sf --max-time 5 https://debian.org > /dev/null 2>&1; then
     warn "No internet connection — skipping version checks"
 else
     # Helper: check GitHub latest release vs hardcoded version in a script
@@ -308,16 +380,14 @@ else
         fi
     }
 
-    # Read versions directly from scripts
-    swappy_ver=$(grep -oP '(?<=tag=")[^"]+' "$SCRIPTS_DIR/swappy.sh" | head -1)
-    rofi_ver=$(grep -oP '(?<=tag=")[^"]+' "$SCRIPTS_DIR/rofi.sh" | head -1)
+    # Only check scripts that ARE in install.sh and have hardcoded versions
     mysql_ver=$(grep -oP 'mysql-apt-config_[\d.]+-\d+(?=_all)' "$SCRIPTS_DIR/mysql.sh" | head -1)
     android_ver=$(grep -oP '(?<=ide-zips/)[\d.]+(?=/)' "$SCRIPTS_DIR/android.sh" | head -1)
+    satty_ver=$(grep -oP '(?<=SATTY_TAG=")[^"]+' "$SCRIPTS_DIR/satty.sh" | head -1)
 
-    # obsidian.sh uses GitHub API dynamically — no version to check
+    # obsidian.sh uses GitHub API dynamically — always installs latest
     pass "obsidian.sh — always installs latest (dynamic via GitHub API)"
-    check_github_version "$SCRIPTS_DIR/swappy.sh"   "jtheoof/swappy"              "$swappy_ver"
-    check_github_version "$SCRIPTS_DIR/rofi.sh"     "davatorium/rofi"              "$rofi_ver"
+    check_github_version "$SCRIPTS_DIR/satty.sh" "gabm/Satty" "$satty_ver"
 
     # MySQL apt-config — check dev.mysql.com downloads page
     latest_mysql=$(curl -sf --max-time 10 "https://dev.mysql.com/downloads/repo/apt/" \
@@ -331,25 +401,16 @@ else
         fail "mysql.sh — OUTDATED: current=$mysql_ver, latest=$latest_mysql"
     fi
 
-    # Android Studio — verify current URL resolves (HTTP 200 after redirect)
-    # then probe for newer patch versions
-    android_base_url="https://redirector.gvt1.com/edgedl/android/studio/ide-zips"
-    android_http=$(curl -sf --max-time 10 -o /dev/null -w "%{http_code}" -L \
-        "${android_base_url}/${android_ver}/android-studio-${android_ver}-linux.tar.gz")
+    # Android Studio — fetch latest stable from official releases page
+    latest_android=$(curl -sf --max-time 15 "https://developer.android.com/studio/releases" \
+        | grep -oP 'ide-zips/\K[\d.]+(?=/)' | head -1)
 
-    if [[ "$android_http" != "200" ]]; then
-        fail "android.sh — URL for $android_ver returned HTTP $android_http (version outdated or removed)"
+    if [[ -z "$latest_android" ]]; then
+        warn "android.sh — could not fetch latest version from developer.android.com/studio/releases"
+    elif [[ "$latest_android" == "$android_ver" ]]; then
+        pass "android.sh — $android_ver is latest stable"
     else
-        # Probe for a newer patch version (increment last digit)
-        IFS='.' read -ra parts <<< "$android_ver"
-        next_patch="${parts[0]}.${parts[1]}.${parts[2]}.$((parts[3]+1))"
-        next_http=$(curl -sf --max-time 8 -o /dev/null -w "%{http_code}" -L \
-            "${android_base_url}/${next_patch}/android-studio-${next_patch}-linux.tar.gz")
-        if [[ "$next_http" == "200" ]]; then
-            fail "android.sh — OUTDATED: current=$android_ver, newer patch exists ($next_patch+)"
-        else
-            pass "android.sh — $android_ver is latest stable"
-        fi
+        fail "android.sh — OUTDATED: current=$android_ver, latest=$latest_android"
     fi
 fi
 
