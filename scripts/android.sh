@@ -15,8 +15,14 @@ fi
 # JDK: Android Studio usually bundles its own JDK, but it's good to have OpenJDK installed
 sudo apt-get -y install default-jdk
 
-# 32-bit libraries (for 64-bit systems): Android Studio and the emulator often rely on some 32-bit libraries.
-sudo apt-get -y install libc6:i386 libncurses6:i386 libstdc++6:i386 zlib1g:i386 libbz2-1.0:i386
+# Enable 32-bit architecture — required for Android emulator dependencies
+sudo dpkg --add-architecture i386
+sudo apt-get update -y
+
+# 32-bit libraries for Android emulator (per developer.android.com/studio/install)
+# libncurses6:i386 replaces libncurses5:i386 (obsolete on Debian Trixie)
+# lib32z1 and zlib1g:i386 are equivalent — both included for compatibility
+sudo apt-get -y install libc6:i386 libncurses6:i386 libstdc++6:i386 lib32z1 zlib1g:i386 libbz2-1.0:i386
 
 # Download Android Studio
 wget -O android-studio.tar.gz "$ANDROID_STUDIO_FILE" \

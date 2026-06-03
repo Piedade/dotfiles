@@ -51,6 +51,9 @@ UPDATE mysql.user SET Host='localhost' WHERE User='root' AND Host!='localhost';
 FLUSH PRIVILEGES;
 EOF
 
+# Add arch=amd64 to fix N: Skipping acquire of configured file 'main/binary-i386/Packages'
+sudo sed -i 's/\[signed-by=/[arch=amd64 signed-by=/g' /etc/apt/sources.list.d/mysql.list
+
 # clean
 rm -f "${HOME}/.dotfiles/${APT_CONFIG_FILE}"
 # rm -f libaio1_0.3.113-4_amd64.deb

@@ -78,6 +78,7 @@ Types: deb
 URIs: https://packages.sury.org/php/
 Suites: $(lsb_release -sc)
 Components: main
+Architectures: amd64
 Signed-By: /etc/apt/keyrings/deb.sury.org-php.gpg
 EOF
 

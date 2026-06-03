@@ -65,6 +65,7 @@ source ./scripts/composer.sh
 source ./scripts/mailpit.sh
 
 source ./scripts/obsidian.sh
+source ./scripts/thunderbird.sh
 source ./scripts/bruno.sh
 source ./scripts/gimp.sh
 source ./scripts/inkscape.sh

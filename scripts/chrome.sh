@@ -18,4 +18,7 @@ wget -O "$TMPDIR/google-chrome.deb" https://dl.google.com/linux/direct/google-ch
 sudo apt-get install -y "$TMPDIR/google-chrome.deb"
 rm -rf "$TMPDIR"
 
+# Add arch=amd64 to fix N: Skipping acquire of configured file 'main/binary-i386/Packages'
+sudo sed -i '/^Signed-By:/i Architectures: amd64' /etc/apt/sources.list.d/google-chrome.sources
+
 echo_success "Chrome installed!"
