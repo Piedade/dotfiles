@@ -22,6 +22,12 @@ name="swappy"
 tag="v1.8.0"
 
 echo_info "Installing $name..."
+
+if command_exists swappy; then
+    echo_success "Swappy already installed!"
+    return
+fi
+
 if git clone --recursive -b $tag https://github.com/jtheoof/swappy; then
     cd $name || exit 1
 

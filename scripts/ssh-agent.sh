@@ -2,6 +2,11 @@
 
 echo_info "Installing ssh-agent..."
 
+if command_exists keychain; then
+    echo_success "Keychain already installed!"
+    return
+fi
+
 # Install
 "${SUDO_CMD}" apt-get install -y keychain
 

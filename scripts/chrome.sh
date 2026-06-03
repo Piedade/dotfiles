@@ -2,6 +2,11 @@
 
 echo_info "Installing Chrome..."
 
+if command_exists google-chrome; then
+    echo_success "Chrome already installed!"
+    return
+fi
+
 "${SUDO_CMD}" apt-get install -y fonts-liberation
 
 TMPDIR=$(mktemp -d)

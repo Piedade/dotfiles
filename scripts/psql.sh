@@ -2,6 +2,11 @@
 
 echo_info "Installing PostgreSQL..."
 
+if command_exists psql; then
+    echo_success "PostgreSQL already installed!"
+    return
+fi
+
 "${SUDO_CMD}" apt-get install -y postgresql
 
 "${SUDO_CMD}" su - postgres -c "createuser piedade --superuser"

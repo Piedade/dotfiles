@@ -2,6 +2,11 @@
 
 echo_info "Installing AnyDesk..."
 
+if command_exists anydesk; then
+    echo_success "AnyDesk already installed!"
+    return
+fi
+
 # Add the AnyDesk GPG key
 "${SUDO_CMD}" curl -fsSL https://keys.anydesk.com/repos/DEB-GPG-KEY -o /etc/apt/keyrings/keys.anydesk.com.asc
 "${SUDO_CMD}" chmod a+r /etc/apt/keyrings/keys.anydesk.com.asc

@@ -1,6 +1,11 @@
 #!/bin/bash
 
 echo_info "Installing sway, greetd and tuigreet..."
+
+if command_exists sway; then
+    echo_success "Sway already installed!"
+    return
+fi
 "${SUDO_CMD}" apt-get update
 "${SUDO_CMD}" apt-get install -y sway xwayland waybar build-essential greetd tuigreet swayidle gtklock jq xdg-desktop-portal-wlr gnome-themes-extra
 

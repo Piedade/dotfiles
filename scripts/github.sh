@@ -2,6 +2,11 @@
 
 echo_info "Installing GitHub CLI..."
 
+if command_exists gh; then
+    echo_success "GitHub CLI already installed!"
+    return
+fi
+
 (type -p wget >/dev/null || ("${SUDO_CMD}" apt-get update && "${SUDO_CMD}" apt-get install wget -y)) \
 && "${SUDO_CMD}" mkdir -p -m 755 /etc/apt/keyrings \
     && out=$(mktemp) && wget -nv -O$out https://cli.github.com/packages/githubcli-archive-keyring.gpg \

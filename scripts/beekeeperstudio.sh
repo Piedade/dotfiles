@@ -2,6 +2,11 @@
 
 echo_info "Installing Beekeeper Studio..."
 
+if command_exists beekeeper-studio; then
+    echo_success "Beekeeper Studio already installed!"
+    return
+fi
+
 # Install our GPG key
 curl -fsSL https://deb.beekeeperstudio.io/beekeeper.key | "${SUDO_CMD}" gpg --dearmor --output /usr/share/keyrings/beekeeper.gpg \
   && "${SUDO_CMD}" chmod go+r /usr/share/keyrings/beekeeper.gpg \

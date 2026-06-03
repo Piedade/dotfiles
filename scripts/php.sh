@@ -60,6 +60,11 @@ installPHP(){
 
 echo_info "Installing SURY repo..."
 
+if command_exists php; then
+    echo_success "PHP already installed!"
+    return
+fi
+
 # For up-to-date version see: https://packages.sury.org/php/README.txt
 # Make sure keyrings directory exists
 "${SUDO_CMD}" mkdir -p /etc/apt/keyrings

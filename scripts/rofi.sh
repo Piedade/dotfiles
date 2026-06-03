@@ -6,6 +6,11 @@ name="rofi"
 tag="2.0.0"
 
 echo_info "Installing $name..."
+
+if command_exists rofi; then
+    echo_success "Rofi already installed!"
+    return
+fi
 if git clone --recursive -b $tag https://github.com/davatorium/rofi; then
     cd $name || exit 1
     

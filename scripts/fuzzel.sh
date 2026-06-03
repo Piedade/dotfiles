@@ -2,6 +2,11 @@
 
 echo_info "Installing fuzzel..."
 
+if command_exists fuzzel; then
+    echo_success "Fuzzel already installed!"
+    return
+fi
+
 sudo apt-get install fuzzel -y
 
 # # Add Sway keybind if not present

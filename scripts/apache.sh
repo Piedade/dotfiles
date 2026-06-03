@@ -2,6 +2,11 @@
 
 echo_info "Installing apache2..."
 
+if command_exists apache2; then
+    echo_success "Apache2 already installed!"
+    return
+fi
+
 CONFIG_FILE="/etc/apache2/apache2.conf"
 
 "${SUDO_CMD}" apt-get install apache2 -y

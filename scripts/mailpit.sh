@@ -2,6 +2,11 @@
 
 echo_info "Installing mailpit..."
 
+if command_exists mailpit; then
+    echo_success "Mailpit already installed!"
+    return
+fi
+
 # Install
 "${SUDO_CMD}" sh < <(curl -sL https://raw.githubusercontent.com/axllent/mailpit/develop/install.sh)
 

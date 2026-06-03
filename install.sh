@@ -9,11 +9,13 @@ enable_log
 
 sudo apt autoremove -y
 
+sudo apt-get install pv
+mkdir -p "${HOME}/Downloads"
+mkdir -p "${HOME}/Screenshots"
+
 source ./scripts/vim.sh
 sleep 1
 
-# # for hyprpolkitagent
-# sudo apt-get install -y polkitd pkexec gnome-keyring libsecret-1-0 libsecret-tools libpam-gnome-keyring
 source "./scripts/lxpolkit.sh"
 sleep 1
 
@@ -23,9 +25,6 @@ sleep 1
 
 # # não é necessario porque estamos a utilizar gnome-keyring
 # source "./scripts/ssh-agent.sh"
-
-# source "./scripts/hyprland/install.sh"
-# sleep 1
 
 source "./scripts/sway.sh"
 sleep 1
@@ -39,17 +38,8 @@ sleep 1
 source ./scripts/swaync.sh
 sleep 1
 
-# # flameshot is better
-# # source ./scripts/swappy.sh
-# "${SUDO_CMD}" apt-get install flameshot
-# mkdir -p "$USER_HOME/Pictures"
-# # fix permissions
-# sudo chown -R $USER:$USER "$USER_HOME/Pictures"
 source ./scripts/satty.sh
 sleep 1
-
-# source ./scripts/sddm.sh
-# sleep 1
 
 source ./scripts/alacritty.sh
 sleep 1
@@ -66,9 +56,6 @@ sleep 1
 
 source ./scripts/swaybg.sh
 sleep 1
-
-# system
-# source ./scripts/dependencies.sh
 
 # source ./scripts/github.sh
 # source ./scripts/git-delta.sh
@@ -87,14 +74,14 @@ sleep 1
 source ./scripts/chrome.sh
 sleep 1
 
-# source ./scripts/tableplus.sh
+source ./scripts/tableplus.sh
+sleep 1
+
 source ./scripts/beekeeperstudio.sh
 sleep 1
 
 source ./scripts/anydesk.sh
 sleep 1
-
-# source ./scripts/lightdm.sh
 
 # web
 source ./scripts/firewall.sh
@@ -103,32 +90,32 @@ sleep 1
 source ./scripts/apache.sh
 sleep 1
 
-#source ./scripts/mysql.sh
-#sleep 1
+source ./scripts/mysql.sh
+sleep 1
 
-#source ./scripts/psql.sh
-#sleep 1
+source ./scripts/psql.sh
+sleep 1
 
 source ./scripts/php.sh
 sleep 1
 
-#source ./scripts/mkcert.sh
-#sleep 1
+source ./scripts/mkcert.sh
+sleep 1
 
-#source ./scripts/nvm.sh
-#sleep 1
+source ./scripts/nvm.sh
+sleep 1
 
-#source ./scripts/composer.sh
-#sleep 1
+source ./scripts/composer.sh
+sleep 1
 
-#source ./scripts/mailpit.sh
-#sleep 1
+source ./scripts/mailpit.sh
+sleep 1
 
-#source ./scripts/obsidian.sh
-#sleep 1
+source ./scripts/obsidian.sh
+sleep 1
 
-#source ./scripts/bruno.sh
-#sleep 1
+source ./scripts/bruno.sh
+sleep 1
 
 source ./scripts/gimp.sh
 sleep 1
@@ -148,11 +135,19 @@ sleep 1
 source ./scripts/dnsmasq.sh
 sleep 1
 
-source ./scripts/link_config.sh
+source ./scripts/qemu.sh
 sleep 1
 
-sudo apt-get install pv
-mkdir -p "${HOME}/Downloads"
-mkdir -p "${HOME}/Screenshots"
+source ./scripts/android.sh
+sleep 1
+
+source ./scripts/mouse.sh
+sleep 1
+
+source ./scripts/print.sh
+sleep 1
+
+source ./scripts/link_config.sh
+sleep 1
 
 "${SUDO_CMD}" systemctl reboot

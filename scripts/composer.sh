@@ -6,6 +6,11 @@ source $SCRIPT_DIR/check_env.sh
 
 echo_info "Installing composer ..."
 
+if command_exists composer; then
+    echo_success "Composer already installed!"
+    return
+fi
+
 TMPDIR=$(mktemp -d)
 
 php -r "copy('https://getcomposer.org/installer', '$TMPDIR/composer-setup.php');"

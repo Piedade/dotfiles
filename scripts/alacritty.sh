@@ -2,6 +2,11 @@
 
 echo_info "Installing alacritty..."
 
+if command_exists alacritty; then
+    echo_success "Alacritty already installed!"
+    return
+fi
+
 # Install
 "${SUDO_CMD}" apt-get install -y alacritty
 

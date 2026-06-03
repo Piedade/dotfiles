@@ -2,6 +2,11 @@
 
 echo_info "Installing mouse..."
 
+if command_exists solaar; then
+    echo_success "Solaar already installed!"
+    return
+fi
+
 "${SUDO_CMD}" apt-get install -y solaar
 
 "${SUDO_CMD}" usermod -aG plugdev $USER

@@ -16,17 +16,11 @@ link_file ".gitignore" $GITPATH $USER_HOME
 
 link_file ".config/waybar" $GITPATH $USER_HOME
 
-# link_file ".config/hypr" $GITPATH $USER_HOME
-
-# link_file ".config/rofi" $GITPATH $USER_HOME
-
 link_file ".config/fuzzel" $GITPATH $USER_HOME
 
 link_file ".config/Thunar" $GITPATH $USER_HOME
 
 link_file ".config/alacritty" $GITPATH $USER_HOME
-
-# link_file ".config/wallpaper.sh" $GITPATH $USER_HOME
 
 link_file ".config/starship.toml" $GITPATH $USER_HOME
 

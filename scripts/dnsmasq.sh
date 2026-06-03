@@ -4,6 +4,11 @@
 # https://community.zextras.com/how-to-install-your-dns-server-using-dnsmasq/
 echo_info "Installing dnsmasq..."
 
+if command_exists dnsmasq; then
+    echo_success "Dnsmasq already installed!"
+    return
+fi
+
 "${SUDO_CMD}" apt-get install dnsmasq -y
 
 DNSMASQCONF="/etc/dnsmasq.conf";

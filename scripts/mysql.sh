@@ -2,6 +2,11 @@
 
 echo_info "Installing MySQL from APT Repository..."
 
+if command_exists mysql; then
+    echo_success "MySQL already installed!"
+    return
+fi
+
 # # dependency
 # wget -q https://ftp.debian.org/debian/pool/main/liba/libaio/libaio1_0.3.113-4_amd64.deb
 # "${SUDO_CMD}" dpkg -i libaio1_0.3.113-4_amd64.deb

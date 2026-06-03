@@ -2,6 +2,11 @@
 
 echo_info "Installing thunar..."
 
+if command_exists thunar; then
+    echo_success "Thunar already installed!"
+    return
+fi
+
 # Install
 "${SUDO_CMD}" apt-get install -y thunar gvfs gvfs-backends gvfs-fuse tumbler-plugins-extra thunar-archive-plugin
 

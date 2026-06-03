@@ -4,6 +4,11 @@ ANDROID_STUDIO_FILE="https://redirector.gvt1.com/edgedl/android/studio/ide-zips/
 
 echo_info "Installing Android Studio..."
 
+if [ -d "/opt/android-studio" ]; then
+    echo_success "Android Studio already installed!"
+    return
+fi
+
 # JDK: Android Studio usually bundles its own JDK, but it's good to have OpenJDK installed
 "${SUDO_CMD}" apt-get -y install default-jdk
 

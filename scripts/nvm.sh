@@ -1,6 +1,11 @@
 #!/bin/bash
 
 echo_info "Installing nvm..."
+
+if [ -d "${HOME}/.nvm" ]; then
+    echo_success "NVM already installed!"
+    return
+fi
 wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/refs/heads/master/install.sh | bash
 
 export NVM_DIR="$USER_HOME/.nvm"

@@ -2,6 +2,11 @@
 
 echo_info "Installing Bruno..."
 
+if command_exists bruno; then
+    echo_success "Bruno already installed!"
+    return
+fi
+
 "${SUDO_CMD}" mkdir -p /etc/apt/keyrings
 curl -fsSL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x9FA6017ECABE0266" \
     | gpg --dearmor \
