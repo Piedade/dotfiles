@@ -1,46 +1,46 @@
 #!/bin/bash
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-source $SCRIPT_DIR/check_env.sh
+source "$SCRIPT_DIR/check_env.sh"
 
 echo_info "Linking config files..."
 
-link_file ".bashrc" $GITPATH $USER_HOME
+link_file ".bashrc" "$GITPATH" "$USER_HOME"
 
-link_file ".my.cnf" $GITPATH $USER_HOME
+link_file ".my.cnf" "$GITPATH" "$USER_HOME"
 
-link_file ".gitconfig" $GITPATH $USER_HOME
+link_file ".gitconfig" "$GITPATH" "$USER_HOME"
 
-link_file ".gitignore" $GITPATH $USER_HOME
+link_file ".gitignore" "$GITPATH" "$USER_HOME"
 
-link_file ".config/waybar" $GITPATH $USER_HOME
+link_file ".config/waybar" "$GITPATH" "$USER_HOME"
 
-link_file ".config/fuzzel" $GITPATH $USER_HOME
+link_file ".config/fuzzel" "$GITPATH" "$USER_HOME"
 
-link_file ".config/Thunar" $GITPATH $USER_HOME
+link_file ".config/Thunar" "$GITPATH" "$USER_HOME"
 
-link_file ".config/alacritty" $GITPATH $USER_HOME
+link_file ".config/alacritty" "$GITPATH" "$USER_HOME"
 
-link_file ".config/starship.toml" $GITPATH $USER_HOME
+link_file ".config/starship.toml" "$GITPATH" "$USER_HOME"
 
-link_file ".config/mimeapps.list" $GITPATH $USER_HOME
+link_file ".config/mimeapps.list" "$GITPATH" "$USER_HOME"
 
-link_file ".config/swaync" $GITPATH $USER_HOME
+link_file ".config/swaync" "$GITPATH" "$USER_HOME"
 
-link_file ".config/satty" $GITPATH $USER_HOME
+link_file ".config/satty" "$GITPATH" "$USER_HOME"
 
-link_file ".config/gtk-3.0" $GITPATH $USER_HOME
+link_file ".config/gtk-3.0" "$GITPATH" "$USER_HOME"
 
-link_file ".config/gtk-4.0" $GITPATH $USER_HOME
+link_file ".config/gtk-4.0" "$GITPATH" "$USER_HOME"
 
-link_file ".config/dconf" $GITPATH $USER_HOME
+link_file ".config/dconf" "$GITPATH" "$USER_HOME"
 
-link_file ".config/galculator" $GITPATH $USER_HOME
+link_file ".config/galculator" "$GITPATH" "$USER_HOME"
 
-link_file ".config/nwg-look" $GITPATH $USER_HOME
+link_file ".config/nwg-look" "$GITPATH" "$USER_HOME"
 
-link_file ".config/gtklock" $GITPATH $USER_HOME
+link_file ".config/gtklock" "$GITPATH" "$USER_HOME"
 
-# link_file ".vscode" $GITPATH $USER_HOME
+# link_file ".vscode" "$GITPATH" "$USER_HOME"
 
 echo_success "Linked config done!"

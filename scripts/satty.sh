@@ -35,10 +35,10 @@ pushd "$SCRIPT_DIR/satty" > /dev/null
 
 echo "Building release binary..."
 
-make build-release
+make build-release || { echo_error "Satty build failed!"; popd > /dev/null; rm -rf "$SCRIPT_DIR/satty"; return 1; }
 
 echo_info "Installing..."
-sudo PREFIX=/usr/local make install
+sudo PREFIX=/usr/local make install || { echo_error "Satty install failed!"; popd > /dev/null; rm -rf "$SCRIPT_DIR/satty"; return 1; }
 
 popd > /dev/null
 rm -rf "$SCRIPT_DIR/satty"

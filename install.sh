@@ -1,7 +1,8 @@
 #!/bin/bash
 
-LOG_FILE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/install.log"
-source ./scripts/check_env.sh
+INSTALL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LOG_FILE="$INSTALL_DIR/install.log"
+source "$INSTALL_DIR/scripts/check_env.sh"
 
 enable_log
 
