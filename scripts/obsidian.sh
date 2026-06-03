@@ -10,9 +10,23 @@ if command_exists obsidian; then
     return
 fi
 
-wget https://github.com/obsidianmd/obsidian-releases/releases/download/v1.8.10/obsidian_1.8.10_amd64.deb
-sudo apt-get install -y ./obsidian_1.8.10_amd64.deb
+OBSIDIAN_VER=$(curl -sf --max-time 10 \
+    "https://api.github.com/repos/obsidianmd/obsidian-releases/releases/latest" \
+    | grep -oP '"tag_name":\s*"\K[^"]*')
 
-sudo rm -f obsidian_1.8.10_amd64.deb
+if [[ -z "$OBSIDIAN_VER" ]]; then
+    echo_error "Could not fetch latest Obsidian version from GitHub API"
+    return 1
+fi
 
-echo_success "Obsidian installed!"
+OBSIDIAN_VER_CLEAN="${OBSIDIAN_VER#v}"
+DEB_FILE="obsidian_${OBSIDIAN_VER_CLEAN}_amd64.deb"
+
+echo_info "Installing Obsidian $OBSIDIAN_VER..."
+wget "https://github.com/obsidianmd/obsidian-releases/releases/download/${OBSIDIAN_VER}/${DEB_FILE}" \
+    || { echo_error "Failed to download Obsidian $OBSIDIAN_VER"; return 1; }
+
+sudo apt-get install -y "./${DEB_FILE}"
+sudo rm -f "$DEB_FILE"
+
+echo_success "Obsidian $OBSIDIAN_VER installed!"

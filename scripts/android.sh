@@ -3,7 +3,7 @@
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source "$SCRIPT_DIR/check_env.sh"
 
-ANDROID_STUDIO_FILE="https://redirector.gvt1.com/edgedl/android/studio/ide-zips/2025.1.1.14/android-studio-2025.1.1.14-linux.tar.gz"
+ANDROID_STUDIO_FILE="https://redirector.gvt1.com/edgedl/android/studio/ide-zips/2025.3.1.5/android-studio-2025.3.1.5-linux.tar.gz"
 
 echo_info "Installing Android Studio..."
 
@@ -27,9 +27,25 @@ sudo rm -f android-studio.tar.gz
 # Hardware VM acceleration uses your computer's processor to significantly improve the execution speed of the emulator
 sudo apt-get install -y qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils
 
-# vim ~/.local/share/applications/jetbrains-studio.desktop
-# ...
-# Exec=/opt/android-studio/bin/studio %f
-# ...
+# Register Android Studio in the application menu
+mkdir -p "$HOME/.local/share/applications"
+cat > "$HOME/.local/share/applications/jetbrains-studio.desktop" << 'EOF'
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Android Studio
+Comment=The Drive to Develop
+Exec=/opt/android-studio/bin/studio %f
+Icon=/opt/android-studio/bin/studio.svg
+Categories=Development;IDE;
+Terminal=false
+StartupNotify=false
+StartupWMClass=jetbrains-studio
+EOF
 
-echo_success "Android Studio installed! (you should run /opt/android-studio/bin/studio.sh)"
+# Update desktop database so launchers pick it up
+update-desktop-database "$HOME/.local/share/applications" 2>/dev/null || true
+
+echo_success "Android Studio installed!"
+echo_info "Run it with: /opt/android-studio/bin/studio.sh"
+echo_info "Or search for 'Android Studio' in your launcher"
