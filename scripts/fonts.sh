@@ -68,7 +68,6 @@ installFont "JetBrainsMono" https://github.com/ryanoasis/nerd-fonts/releases/lat
 installFont "RobotoMono" https://github.com/ryanoasis/nerd-fonts/releases/latest/download/RobotoMono.zip
 installFont "SourceCodePro" https://github.com/ryanoasis/nerd-fonts/releases/latest/download/SourceCodePro.zip
 installFont "Lilex" https://github.com/ryanoasis/nerd-fonts/releases/latest/download/Lilex.zip
-installFont "FiraCode" https://github.com/ryanoasis/nerd-fonts/releases/latest/download/FiraCode.zip
 installFont "NerdFontsSymbolsOnly" https://github.com/ryanoasis/nerd-fonts/releases/latest/download/NerdFontsSymbolsOnly.zip
 
 # INSTALL Apple Fonts

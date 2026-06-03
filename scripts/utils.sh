@@ -39,12 +39,12 @@ execute_script() {
 }
 
 # Function for installing packages with a progress bar
-install_package() { 
+install_package() {
   if dpkg -l | grep -q -w "$1" ; then
     echo_info "$1 is already installed. Skipping..."
-  else 
+  else
     sudo apt-get install -y "$1"
-    
+
     # Double check if the package successfully installed
     if dpkg -l | grep -q -w "$1"; then
         echo_success "Package $1 has been successfully installed!"
@@ -55,21 +55,21 @@ install_package() {
 }
 
 # Function for build depencies with a progress bar
-build_dep() { 
+build_dep() {
     echo_info "Building dependencies for $1"
     sudo apt-get build-dep -y "$1"
 }
 
 # Function for cargo install with a progress bar
-cargo_install() { 
+cargo_install() {
     echo_info "Installing $1 using cargo..."
     cargo install "$1"
 }
 
 # Function for re-installing packages with a progress bar
 re_install_package() {
-    sudo apt install --reinstall -y "$1"
-    
+    sudo apt-get install --reinstall -y "$1"
+
     if dpkg -l | grep -q -w "$1"; then
         echo_success "Package $1 has been successfully re-installed!"
     else

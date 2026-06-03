@@ -10,6 +10,7 @@ curl -fsSL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x9FA6017ECABE
 echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/bruno.gpg] http://debian.usebruno.com/ bruno stable" \
     | "${SUDO_CMD}" tee /etc/apt/sources.list.d/bruno.list
 
+"${SUDO_CMD}" apt-get update
 "${SUDO_CMD}" apt-get install -y bruno
 
 echo_success "Bruno installed!"

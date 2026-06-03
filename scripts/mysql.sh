@@ -10,11 +10,13 @@ APT_CONFIG_FILE="mysql-apt-config_0.8.39-1_all.deb"
 
 wget "https://dev.mysql.com/get/$APT_CONFIG_FILE"
 
-# default to mysql lts version
-# echo "mysql-apt-config mysql-apt-config/select-server select mysql-8.4-lts" | "${SUDO_CMD}" debconf-set-selections
+# default to mysql lts version, skip all interactive prompts
+echo "mysql-apt-config mysql-apt-config/select-server select mysql-8.4-lts" | "${SUDO_CMD}" debconf-set-selections
+echo "mysql-apt-config mysql-apt-config/select-connectors select Disabled" | "${SUDO_CMD}" debconf-set-selections
+echo "mysql-apt-config mysql-apt-config/select-product select Ok" | "${SUDO_CMD}" debconf-set-selections
 
 disable_log
-"${SUDO_CMD}" dpkg -i "$APT_CONFIG_FILE"
+"${SUDO_CMD}" DEBIAN_FRONTEND=noninteractive dpkg -i "$APT_CONFIG_FILE"
 enable_log
 
 # update package list and install
@@ -42,5 +44,5 @@ FLUSH PRIVILEGES;
 EOF
 
 # clean
-rm -f "$APT_CONFIG_FILE"
+rm -f "${HOME}/.dotfiles/${APT_CONFIG_FILE}"
 # rm -f libaio1_0.3.113-4_amd64.deb

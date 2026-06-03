@@ -7,16 +7,18 @@ source ./scripts/check_env.sh
 
 enable_log
 
-source ./scripts/vim.sh
-sleep 1
+sudo apt autoremove -y
 
-# audio should be installed before hyprland because xdg-desktop-portal-hyprland
-source ./scripts/audio.sh
+source ./scripts/vim.sh
 sleep 1
 
 # # for hyprpolkitagent
 # sudo apt-get install -y polkitd pkexec gnome-keyring libsecret-1-0 libsecret-tools libpam-gnome-keyring
 source "./scripts/lxpolkit.sh"
+sleep 1
+
+# audio should be installed before hyprland because xdg-desktop-portal-hyprland
+source ./scripts/audio.sh
 sleep 1
 
 # # não é necessario porque estamos a utilizar gnome-keyring
@@ -101,32 +103,32 @@ sleep 1
 source ./scripts/apache.sh
 sleep 1
 
-source ./scripts/mysql.sh
-sleep 1
+#source ./scripts/mysql.sh
+#sleep 1
 
-source ./scripts/psql.sh
-sleep 1
+#source ./scripts/psql.sh
+#sleep 1
 
 source ./scripts/php.sh
 sleep 1
 
-source ./scripts/mkcert.sh
-sleep 1
+#source ./scripts/mkcert.sh
+#sleep 1
 
-source ./scripts/nvm.sh
-sleep 1
+#source ./scripts/nvm.sh
+#sleep 1
 
-source ./scripts/composer.sh
-sleep 1
+#source ./scripts/composer.sh
+#sleep 1
 
-source ./scripts/mailpit.sh
-sleep 1
+#source ./scripts/mailpit.sh
+#sleep 1
 
-source ./scripts/obsidian.sh
-sleep 1
+#source ./scripts/obsidian.sh
+#sleep 1
 
-source ./scripts/bruno.sh
-sleep 1
+#source ./scripts/bruno.sh
+#sleep 1
 
 source ./scripts/gimp.sh
 sleep 1
