@@ -22,4 +22,14 @@ rm -rf "$TMPDIR"
 sudo sed -i '/^Signed-By:/i Architectures: amd64' /etc/apt/sources.list.d/google-chrome.sources
 sudo apt-get update
 
+# Set Chrome to use system title bars and borders (fix sway flickering)
+sudo mkdir -p /etc/opt/chrome
+sudo tee /etc/opt/chrome/initial_preferences > /dev/null <<'EOF'
+{
+  "browser": {
+    "custom_chrome_frame": false
+  }
+}
+EOF
+
 echo_success "Chrome installed!"
