@@ -31,8 +31,9 @@ tar -xvzf android-studio.tar.gz
 sudo mv android-studio /opt/
 sudo rm -f android-studio.tar.gz
 
+# Já é instalado em kvm.sh
 # Hardware VM acceleration uses your computer's processor to significantly improve the execution speed of the emulator
-sudo apt-get install -y qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils
+# sudo apt-get install -y qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils
 
 # Register Android Studio in the application menu
 mkdir -p "$HOME/.local/share/applications"

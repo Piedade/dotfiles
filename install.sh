@@ -77,7 +77,7 @@ source ./scripts/libreoffice.sh
 source ./scripts/galculator.sh
 source ./scripts/direnv.sh
 source ./scripts/dnsmasq.sh
-source ./scripts/qemu.sh
+source ./scripts/kvm.sh
 source ./scripts/android.sh
 source ./scripts/mouse.sh
 source ./scripts/print.sh
