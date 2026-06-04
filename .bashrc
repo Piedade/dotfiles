@@ -59,7 +59,7 @@ if [[ $iatest -gt 0 ]]; then bind "set show-all-if-ambiguous On"; fi
 export EDITOR=code
 export VISUAL=code
 export TERMINAL=alacritty
-alias vim='nvim'
+# alias vim='nvim'
 
 # To have colors for ls and all grep commands such as grep, egrep and zgrep
 export CLICOLOR=1

@@ -13,6 +13,8 @@ link_file ".gitconfig" "$GITPATH" "$USER_HOME"
 
 link_file ".gitignore" "$GITPATH" "$USER_HOME"
 
+link_file ".config/sway" "$GITPATH" "$USER_HOME"
+
 link_file ".config/waybar" "$GITPATH" "$USER_HOME"
 
 link_file ".config/fuzzel" "$GITPATH" "$USER_HOME"

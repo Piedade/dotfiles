@@ -20,5 +20,6 @@ rm -rf "$TMPDIR"
 
 # Add arch=amd64 to fix N: Skipping acquire of configured file 'main/binary-i386/Packages'
 sudo sed -i '/^Signed-By:/i Architectures: amd64' /etc/apt/sources.list.d/google-chrome.sources
+sudo apt-get update
 
 echo_success "Chrome installed!"

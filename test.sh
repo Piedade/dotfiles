@@ -181,7 +181,19 @@ for f in "$SCRIPTS_DIR"/*.sh; do
     fi
 done
 
-# ─── 12. COMMAND_EXISTS CHECK ────────────────────────────────────────────────
+# ─── 12. ALL .config ENTRIES LINKED IN link_config.sh ───────────────────────
+header "All .dotfiles/.config/ entries linked in link_config.sh"
+LINK_CONFIG="$SCRIPTS_DIR/link_config.sh"
+while IFS= read -r -d '' entry; do
+    rel=".config/$(basename "$entry")"
+    if grep -q "$rel" "$LINK_CONFIG"; then
+        pass "$rel — linked in link_config.sh"
+    else
+        fail "$rel — NOT linked in link_config.sh"
+    fi
+done < <(find "$DOTFILES_DIR/.config" -mindepth 1 -maxdepth 1 -print0 | sort -z)
+
+# ─── 13. COMMAND_EXISTS CHECK ─────────────────────────────────────────────────
 header "Install scripts have 'already installed' check"
 SKIP_CHECK=("check_env.sh" "utils.sh" "link_config.sh" "mouse-battery-notify.sh" "dnsmasq.sh" "apache.sh" "firewall.sh" "audio.sh" "sway.sh" "fonts.sh" "lxpolkit.sh" "vim.sh" "wireless.sh")
 for f in "$SCRIPTS_DIR"/*.sh; do
@@ -197,7 +209,7 @@ for f in "$SCRIPTS_DIR"/*.sh; do
     fi
 done
 
-# ─── 13. CD WITHOUT PUSHD/POPD ───────────────────────────────────────────────
+# ─── 14. CD WITHOUT PUSHD/POPD ───────────────────────────────────────────────
 header "No 'cd' without pushd/popd"
 for f in "$SCRIPTS_DIR"/*.sh; do
     name=$(basename "$f")
@@ -211,7 +223,7 @@ for f in "$SCRIPTS_DIR"/*.sh; do
     fi
 done
 
-# ─── 14. $USER WITHOUT QUOTES ────────────────────────────────────────────────
+# ─── 15. $USER WITHOUT QUOTES ────────────────────────────────────────────────
 header "\$USER always quoted"
 for f in "$SCRIPTS_DIR"/*.sh "$INSTALL_SH"; do
     name=$(basename "$f")
@@ -226,7 +238,7 @@ for f in "$SCRIPTS_DIR"/*.sh "$INSTALL_SH"; do
     fi
 done
 
-# ─── 15. NO REDUNDANT SOURCE UTILS.SH ────────────────────────────────────────
+# ─── 16. NO REDUNDANT SOURCE UTILS.SH ────────────────────────────────────────
 header "No redundant 'source utils.sh' (check_env.sh already sources it)"
 for f in "$SCRIPTS_DIR"/*.sh; do
     name=$(basename "$f")
@@ -238,7 +250,7 @@ for f in "$SCRIPTS_DIR"/*.sh; do
     fi
 done
 
-# ─── 16. WGET WITH ERROR HANDLING ────────────────────────────────────────────
+# ─── 17. WGET WITH ERROR HANDLING ────────────────────────────────────────────
 header "wget downloads have error handling"
 for f in "$SCRIPTS_DIR"/*.sh; do
     name=$(basename "$f")
@@ -259,7 +271,7 @@ for f in "$SCRIPTS_DIR"/*.sh; do
     fi
 done
 
-# ─── 17. APT-GET UPDATE BEFORE INSTALL (EXTERNAL REPOS) ─────────────────────
+# ─── 18. APT-GET UPDATE BEFORE INSTALL (EXTERNAL REPOS) ─────────────────────
 header "apt-get update present when external repo is added"
 for f in "$SCRIPTS_DIR"/*.sh; do
     name=$(basename "$f")
@@ -275,7 +287,7 @@ for f in "$SCRIPTS_DIR"/*.sh; do
     fi
 done
 
-# ─── 18. NO DUPLICATE SOURCES IN INSTALL.SH ──────────────────────────────────
+# ─── 19. NO DUPLICATE SOURCES IN INSTALL.SH ──────────────────────────────────
 header "No duplicate source lines in install.sh"
 dupes=$(grep '^source ' "$INSTALL_SH" | sort | uniq -d)
 if [[ -n "$dupes" ]]; then
@@ -285,7 +297,7 @@ else
     pass "install.sh — no duplicate sources"
 fi
 
-# ─── 19. WAYLAND COMPATIBILITY ───────────────────────────────────────────────
+# ─── 20. WAYLAND COMPATIBILITY ───────────────────────────────────────────────
 # Each check answers: "should this workaround be active, and is it configured correctly?"
 # PASS = correct state | FAIL = wrong state | WARN = not installed yet
 header "Wayland compatibility"
@@ -347,7 +359,7 @@ else
     fail "wayland-compat.sh NOT in install.sh"
 fi
 
-# ─── 20. LATEST VERSION CHECKS (requires internet) ──────────────────────────
+# ─── 21. LATEST VERSION CHECKS (requires internet) ──────────────────────────
 header "Latest version checks (network — skipped if offline)"
 
 # Check internet connectivity (use a reliable non-rate-limited endpoint)
@@ -363,7 +375,7 @@ else
         local name
         name=$(basename "$script_file")
 
-        latest=$(curl -sf --max-time 10 \
+        latest=$(curl -sfL --max-time 10 \
             "https://api.github.com/repos/$repo/releases/latest" \
             | grep -oP '"tag_name"\s*:\s*"\K[^"]*' | head -1)
 

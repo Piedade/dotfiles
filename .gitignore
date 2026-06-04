@@ -17,3 +17,4 @@ tmp/**/*
 .idea/
 .direnv/
 .htaccess
+install.log

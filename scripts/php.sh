@@ -69,7 +69,7 @@ fi
 sudo mkdir -p /etc/apt/keyrings
 
 # Download repo key into keyrings (not deprecated trusted.gpg.d)
-sudo wget -O /etc/apt/keyrings/deb.sury.org-php.gpg https://packages.sury.org/php/apt.gpg \
+sudo wget -qO /etc/apt/keyrings/deb.sury.org-php.gpg https://packages.sury.org/php/apt.gpg \
     || { echo_error "Failed to download PHP Sury GPG key"; return 1; }
 
 # Create DEB822 sources file
