@@ -66,8 +66,8 @@
                     "label": "󰤨",
                     "type": "toggle",
                     "active": false,
-                    "command": "~/.config/sway/scripts/wifi-toggle",
-                    "update-command": "sh -c '[ \"$(nmcli radio wifi)\" = \"enabled\" ] && echo true || echo false'"
+                    "command": "bash -c 'swaync-client -cp && swaymsg exec ~/.config/sway/scripts/wifi-connect'",
+                    "update-command": "nmcli radio wifi | grep -q enabled && echo true || echo false"
                 }
             ]
         },

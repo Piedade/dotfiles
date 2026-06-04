@@ -5,7 +5,7 @@ wait_for_networks() {
     local msg="${1:-A inicializar WiFi...}"
     local elapsed=0
 
-    echo "$msg" | fuzzel --dmenu --prompt "WiFi: " --lines 1 &
+    echo "$msg" | fuzzel --dmenu --prompt "WiFi: " --no-exit-on-keyboard-focus-loss --lines 1 &
     local loading=$!
 
     until nmcli -t -f SSID device wifi list --rescan no 2>/dev/null | grep -qE "^.+$"; do
@@ -21,6 +21,10 @@ wait_for_networks() {
     kill "$loading" 2>/dev/null
     wait "$loading" 2>/dev/null
 }
+
+if [ "$(nmcli radio wifi)" = "disabled" ]; then
+    nmcli radio wifi on &
+fi
 
 wait_for_networks "A inicializar WiFi..."
 
@@ -42,13 +46,20 @@ build_list() {
 }
 
 RESCAN="󰑐  Rescan"
+DISCONNECT="󰤮  Desligar"
 NETWORK_LIST=$(build_list)
 
 while true; do
-    SELECTION=$(printf "%s\n%s" "$NETWORK_LIST" "$RESCAN" \
-        | fuzzel --dmenu --prompt "WiFi: " --width=30)
+    SELECTION=$(printf "%s\n%s\n%s" "$NETWORK_LIST" "$RESCAN" "$DISCONNECT" \
+        | fuzzel --dmenu --prompt "WiFi: " --width=30 --no-exit-on-keyboard-focus-loss)
 
     [ -z "$SELECTION" ] && exit 0
+
+    if [ "$SELECTION" = "$DISCONNECT" ]; then
+        nmcli radio wifi off
+        notify-send "WiFi" "Desligado"
+        exit 0
+    fi
 
     if [ "$SELECTION" = "$RESCAN" ]; then
         echo "A procurar redes..." | fuzzel --dmenu --prompt "WiFi: " --lines 1 &
