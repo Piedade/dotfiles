@@ -11,6 +11,7 @@
     "modules-right": [
         // "disk",
         // "custom/sep",
+        // "custom/network",
         "custom/mic",
         "custom/vol",
         // "pulseaudio",
@@ -153,6 +154,14 @@
             "unlocked": "",
         },
     },
+
+    // "custom/network": {
+    //     "exec": "~/.config/waybar/wifi-status.sh",
+    //     "return-type": "json",
+    //     "interval": 10,
+    //     "on-click": "swaymsg exec ~/.config/sway/scripts/wifi-connect",
+    //     "on-click-right": "~/.config/sway/scripts/wifi-toggle",
+    // },
 
     "custom/network": {
         "format": "󰤨",

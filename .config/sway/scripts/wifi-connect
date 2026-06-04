@@ -13,7 +13,7 @@ wait_for_networks() {
         elapsed=$((elapsed + 1))
         if [ "$elapsed" -ge "$TIMEOUT" ]; then
             kill "$loading" 2>/dev/null
-            notify-send "WiFi" "Sem redes encontradas"
+            notify-send "WiFi" "Sem redes encontradas (wifi está ligado?)"
             exit 1
         fi
     done
