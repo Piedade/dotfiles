@@ -1,0 +1,59 @@
+color=000000
+
+font=MesloLGS Nerd Font Mono
+font-size=24
+
+indicator-radius=100
+#indicator-thickness=7
+
+# Normal
+ring-color=0a0a0a
+inside-color=1a1a1a
+text-color=d0d7de
+line-color=00000000
+separator-color=00000000
+
+# Verifying
+ring-ver-color=d0d7de
+inside-ver-color=1a1a1a
+text-ver-color=d0d7de
+line-ver-color=00000000
+
+# Caps Lock
+ring-caps-lock-color=0a0a0a
+inside-caps-lock-color=1a1a1a
+line-caps-lock-color=00000000
+text-caps-lock-color=4A90D9
+
+
+# Cleared
+# ring-clear-color=0a0a0a
+# inside-clear-color=D29922
+# # text-clear-color=d0d7de
+# line-clear-color=0a0a0a
+ring-clear-color=0a0a0a
+inside-clear-color=1a1a1a
+text-clear-color=D29922
+line-clear-color=0a0a0a
+
+# Wrong password
+ring-wrong-color=0a0a0a
+inside-wrong-color=1a1a1a
+text-wrong-color=e31523
+line-wrong-color=0a0a0a
+# ring-wrong-color=0a0a0a
+# inside-wrong-color=e31523
+# line-wrong-color=0a0a0a
+# text-wrong-color=ffffff
+
+
+
+key-hl-color=ffffff
+bs-hl-color=D29922
+caps-lock-bs-hl-color=4A90D9
+caps-lock-key-hl-color=4A90D9
+
+indicator-caps-lock
+indicator-idle-visible
+show-failed-attempts
+ignore-empty-password

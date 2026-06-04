@@ -41,7 +41,9 @@ link_file ".config/galculator" "$GITPATH" "$USER_HOME"
 
 link_file ".config/nwg-look" "$GITPATH" "$USER_HOME"
 
-link_file ".config/gtklock" "$GITPATH" "$USER_HOME"
+# link_file ".config/gtklock" "$GITPATH" "$USER_HOME"
+
+link_file ".config/swaylock" "$GITPATH" "$USER_HOME"
 
 # link_file ".vscode" "$GITPATH" "$USER_HOME"
 

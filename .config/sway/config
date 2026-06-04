@@ -1,3 +1,5 @@
+#!/bin/bash
+
 ### Variables
 #
 # Logo key. Use Mod1 for Alt.
@@ -15,12 +17,18 @@ set $config_dir ~/.config/sway
 
 ## Idle configuration
 # 5 min → screen off | 10 min → lock | 15 min → suspend
+# exec swayidle -w \
+#     timeout 300  'swaymsg "output * dpms off"' \
+#     timeout 600  'pgrep gtklock || gtklock -d' \
+#     timeout 900  'systemctl suspend' \
+#     resume       'swaymsg "output * dpms on"' \
+#     before-sleep 'pgrep gtklock || gtklock -d'
 exec swayidle -w \
-    timeout 300  'swaymsg "output * dpms off"' \
-    timeout 600  'pgrep gtklock || gtklock -d' \
-    timeout 900  'systemctl suspend' \
+    timeout 300   'pgrep swaylock || swaylock -f' \
+    timeout 600   'swaymsg "output * dpms off"' \
     resume       'swaymsg "output * dpms on"' \
-    before-sleep 'pgrep gtklock || gtklock -d'
+    timeout 900   'systemctl suspend' \
+    before-sleep 'pgrep swaylock || swaylock -f'
 
 ### Input configuration
 input type:touchpad {
