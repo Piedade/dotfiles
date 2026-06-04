@@ -30,19 +30,19 @@ wait_for_networks "A inicializar WiFi..."
 
 build_list() {
     local rescan="${1:-no}"
-    nmcli -t -f SSID,SIGNAL,SECURITY,FREQ device wifi list --rescan "$rescan" \
-        | while IFS=: read -r ssid signal security freq; do
-            [ -z "$ssid" ] && continue
-            sig=$((signal + 0))
-            if   [ "$sig" -ge 75 ]; then icon="󰤨"
-            elif [ "$sig" -ge 50 ]; then icon="󰤥"
-            elif [ "$sig" -ge 25 ]; then icon="󰤢"
-            else icon="󰤟"; fi
-            [ -z "$security" ] || [ "$security" = "--" ] && lock="  " || lock="󰌾 "
-            freq_mhz=$(echo "$freq" | grep -oE '[0-9]+' | head -1)
-            [ "$freq_mhz" -ge 5000 ] 2>/dev/null && band="5G " || band="2.4G"
-            printf "%s %s  %-14s %3d%%  %s\n" "$icon" "$lock" "$ssid" "$sig" "$band"
-        done
+    while IFS=: read -r is_active ssid signal security freq; do
+        [ -z "$ssid" ] && continue
+        sig=$((signal + 0))
+        if   [ "$sig" -ge 75 ]; then icon="󰤨"
+        elif [ "$sig" -ge 50 ]; then icon="󰤥"
+        elif [ "$sig" -ge 25 ]; then icon="󰤢"
+        else icon="󰤟"; fi
+        [ -z "$security" ] || [ "$security" = "--" ] && lock="  " || lock="󰌾 "
+        freq_mhz=$(echo "$freq" | grep -oE '[0-9]+' | head -1)
+        [ "$freq_mhz" -ge 5000 ] 2>/dev/null && band="5G " || band="2.4G"
+        [ "$is_active" = "yes" ] && active="󰄬 " || active="  "
+        printf "%s %s  %-14s %3d%%  %s %s\n" "$icon" "$lock" "$ssid" "$sig" "$band" "$active"
+    done < <(nmcli -t -f ACTIVE,SSID,SIGNAL,SECURITY,FREQ device wifi list --rescan "$rescan" 2>/dev/null)
 }
 
 RESCAN="󰑐  Rescan"
@@ -51,7 +51,7 @@ NETWORK_LIST=$(build_list)
 
 while true; do
     SELECTION=$(printf "%s\n%s\n%s" "$NETWORK_LIST" "$RESCAN" "$DISCONNECT" \
-        | fuzzel --dmenu --prompt "WiFi: " --width=30 --no-exit-on-keyboard-focus-loss)
+        | fuzzel --dmenu --prompt "WiFi: " --width=32 --no-exit-on-keyboard-focus-loss)
 
     [ -z "$SELECTION" ] && exit 0
 
