@@ -5,9 +5,45 @@ source "$SCRIPT_DIR/check_env.sh"
 
 echo_info "Installing fonts..."
 
-sudo apt-get install -y fonts-recommended fonts-font-awesome fonts-noto-color-emoji
+echo "ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true" | sudo debconf-set-selections
+sudo apt-get install -y fonts-recommended fonts-font-awesome fonts-noto-color-emoji fonts-roboto fonts-lato ttf-mscorefonts-installer
 
 FONT_DIR="$HOME/.local/share/fonts"
+
+installGoogleFont() {
+    local fontName="$1"
+    local fontUrl="$2"
+    local FONT_ZIP="$FONT_DIR/$fontName.zip"
+    local FONT_INSTALLED
+    FONT_INSTALLED=$(fc-list | grep -i "$fontName")
+
+    if [ -n "$FONT_INSTALLED" ]; then
+        echo_success "$fontName font is already installed."
+        return
+    fi
+
+    echo_info "Installing $fontName font"
+
+    if [ ! -f "$FONT_ZIP" ]; then
+        wget -O "$FONT_ZIP" "$fontUrl" || {
+            echo_error "Failed to download $fontName font from $fontUrl"
+            return
+        }
+    else
+        echo_info "$fontName.zip already exists in $FONT_DIR, skipping download."
+    fi
+
+    if [ ! -d "$FONT_DIR/$fontName" ]; then
+        unzip -o "$FONT_ZIP" -d "$FONT_DIR/$fontName" || {
+            echo_error "Failed to unzip $FONT_ZIP"
+        }
+    else
+        echo_info "$fontName font files already unzipped, skipping."
+    fi
+
+    rm -f "$FONT_ZIP"
+    echo_success "$fontName font installed successfully"
+}
 
 installFont() {
     local fontName="$1"
@@ -109,6 +145,9 @@ else
         echo_error "Failed to remove $FONT_ZIP"
     }
 fi
+
+installGoogleFont "SourceSerif4" "https://fonts.google.com/download?family=Source+Serif+4"
+installFont "Inter" "https://github.com/rsms/inter/releases/latest/download/Inter.zip"
 
 # Rebuild the font cache
 fc-cache -fv || {

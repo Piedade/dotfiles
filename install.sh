@@ -18,6 +18,9 @@ while true; do
     esac
 done
 
+sudo sed -i 's/main non-free-firmware/main contrib non-free-firmware/g' /etc/apt/sources.list
+sudo apt update
+
 sudo apt autoremove -y
 
 sudo apt-get install pv -y
