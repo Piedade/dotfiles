@@ -6,14 +6,19 @@ source "$SCRIPT_DIR/check_env.sh"
 echo_info "Installing fonts..."
 
 echo "ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true" | sudo debconf-set-selections
-sudo apt-get install -y fonts-recommended fonts-font-awesome fonts-noto-color-emoji fonts-roboto fonts-lato ttf-mscorefonts-installer
+sudo apt-get install -y \
+    curl unzip \
+    fonts-recommended fonts-font-awesome fonts-noto-color-emoji \
+    fonts-roboto fonts-lato fonts-inter fonts-open-sans fonts-montserrat \
+    fonts-noto-core fonts-liberation fonts-dejavu \
+    fonts-adobe-sourcesans3 \
+    ttf-mscorefonts-installer
 
 FONT_DIR="$HOME/.local/share/fonts"
 
 installGoogleFont() {
     local fontName="$1"
-    local fontUrl="$2"
-    local FONT_ZIP="$FONT_DIR/$fontName.zip"
+    local fontSlug="${2:-$(echo "$fontName" | tr '[:upper:]' '[:lower:]' | tr -d ' ')}"
     local FONT_INSTALLED
     FONT_INSTALLED=$(fc-list | grep -i "$fontName")
 
@@ -23,26 +28,32 @@ installGoogleFont() {
     fi
 
     echo_info "Installing $fontName font"
+    local fontDir="$FONT_DIR/$fontName"
+    mkdir -p "$fontDir"
 
-    if [ ! -f "$FONT_ZIP" ]; then
-        wget -O "$FONT_ZIP" "$fontUrl" || {
-            echo_error "Failed to download $fontName font from $fontUrl"
-            return
-        }
-    else
-        echo_info "$fontName.zip already exists in $FONT_DIR, skipping download."
+    local api_response
+    api_response=$(curl -sf "https://api.github.com/repos/google/fonts/contents/ofl/${fontSlug}")
+
+    if [ -z "$api_response" ]; then
+        echo_error "Failed to fetch font list for $fontName from GitHub"
+        rmdir "$fontDir" 2>/dev/null
+        return
     fi
 
-    if [ ! -d "$FONT_DIR/$fontName" ]; then
-        unzip -o "$FONT_ZIP" -d "$FONT_DIR/$fontName" || {
-            echo_error "Failed to unzip $FONT_ZIP"
-        }
-    else
-        echo_info "$fontName font files already unzipped, skipping."
-    fi
+    local count=0
+    while IFS= read -r url; do
+        [ -z "$url" ] && continue
+        local fname
+        fname=$(basename "$url")
+        curl -sf -o "$fontDir/$fname" "$url" && count=$((count + 1))
+    done < <(echo "$api_response" | grep -oE 'https://raw\.githubusercontent\.com/[^"]+\.ttf')
 
-    rm -f "$FONT_ZIP"
-    echo_success "$fontName font installed successfully"
+    if [ "$count" -gt 0 ]; then
+        echo_success "$fontName installed ($count files)"
+    else
+        echo_error "No font files downloaded for $fontName"
+        rm -rf "$fontDir"
+    fi
 }
 
 installFont() {
@@ -146,8 +157,11 @@ else
     }
 fi
 
-installGoogleFont "SourceSerif4" "https://fonts.google.com/download?family=Source+Serif+4"
-installFont "Inter" "https://github.com/rsms/inter/releases/latest/download/Inter.zip"
+installGoogleFont "SourceSerif4" "sourceserif4"
+installGoogleFont "Poppins" "poppins"
+installGoogleFont "Nunito" "nunito"
+installGoogleFont "Merriweather" "merriweather"
+installGoogleFont "Raleway" "raleway"
 
 # Rebuild the font cache
 fc-cache -fv || {
