@@ -72,8 +72,8 @@ floating_modifier $mod normal
 focus_on_window_activation focus
 
 ### Includes
-include $config_dir/rules.conf
 include $config_dir/keybindings.conf
+include $config_dir/rules.conf
 
 ### nwg-displays
 include $config_dir/workspaces
