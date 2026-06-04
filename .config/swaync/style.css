@@ -281,7 +281,7 @@
 /* Volume Slider */
 .widget-volume {
     background: @bg;
-    padding: 8px 12px 16px;
+    padding: 8px 20px 16px 12px;
     margin: 4px 8px 0;
     border-bottom: 1px solid @disabled;
 }

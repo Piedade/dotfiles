@@ -82,7 +82,7 @@ if nmcli connection show "$SSID" &>/dev/null; then
     exit 0
 fi
 
-PASS=$(echo "" | fuzzel --dmenu --prompt "Password: " --password)
+PASS=$(echo "" | fuzzel --dmenu --no-exit-on-keyboard-focus-loss --prompt "Password: " --password)
 [ -z "$PASS" ] && exit 0
 
 nmcli device wifi connect "$SSID" password "$PASS"

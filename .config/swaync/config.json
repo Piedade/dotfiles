@@ -30,13 +30,13 @@
     "hide-on-action": true,
     "script-fail-notify": true,
 
-    "widgets": ["inhibitors", "title", "dnd", "buttons-grid", "mpris", "volume", "notifications", "menubar"],
+    "widgets": ["inhibitors", "title", "dnd", "buttons-grid", "mpris", "volume", "notifications"],
 
     "widget-config": {
         "title": {
             "text": "Notifications",
             "clear-all-button": true,
-            "button-text": "Clear All"
+            "button-text": "Clear all"
         },
         "dnd": {
             "text": "Do Not Disturb"
