@@ -1,0 +1,42 @@
+#!/bin/bash
+TIMEOUT=30
+ELAPSED=0
+
+# Show loading fuzzel immediately
+echo "⟳ A inicializar WiFi..." | fuzzel --dmenu --prompt "WiFi: " &
+FUZZEL_LOADING=$!
+
+# Wait for networks
+until nmcli -t -f SSID device wifi list --rescan no 2>/dev/null | grep -qE "^.+$"; do
+    sleep 1
+    ELAPSED=$((ELAPSED + 1))
+    if [ "$ELAPSED" -ge "$TIMEOUT" ]; then
+        kill "$FUZZEL_LOADING" 2>/dev/null
+        notify-send "WiFi" "Sem redes encontradas"
+        exit 1
+    fi
+done
+
+# Replace loading fuzzel with network list
+kill "$FUZZEL_LOADING" 2>/dev/null
+wait "$FUZZEL_LOADING" 2>/dev/null
+
+SSID=$(nmcli -f SSID,SIGNAL,SECURITY device wifi list --rescan no \
+    | tail -n +2 \
+    | awk '{print $1, $2"% "$3}' \
+    | fuzzel --dmenu --prompt "WiFi: " \
+    | awk '{print $1}')
+
+[ -z "$SSID" ] && exit 0
+
+if nmcli connection show "$SSID" &>/dev/null; then
+    nmcli connection up "$SSID"
+    notify-send "WiFi" "Ligado a $SSID"
+    exit 0
+fi
+
+PASS=$(echo "" | fuzzel --dmenu --prompt "Password: " --password)
+[ -z "$PASS" ] && exit 0
+
+nmcli device wifi connect "$SSID" password "$PASS"
+notify-send "WiFi" "Ligado a $SSID"

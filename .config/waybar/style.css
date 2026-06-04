@@ -4,7 +4,7 @@
 @define-color fg #d0d7de;
 @define-color primary #d0d7de;
 @define-color secondary #539bf5;
-@define-color disabled #4e5b55;
+@define-color disabled #2c2c2c;
 @define-color alert #D29922;
 
 * {

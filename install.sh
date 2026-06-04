@@ -33,6 +33,7 @@ source ./scripts/audio.sh
 # # não é necessario porque estamos a utilizar gnome-keyring
 # source ./scripts/ssh-agent.sh
 
+source ./scripts/networkmanager.sh
 source ./scripts/sway.sh
 source ./scripts/nwg-displays.sh
 source ./scripts/nwg-look.sh

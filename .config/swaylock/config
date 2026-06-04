@@ -23,8 +23,9 @@ line-ver-color=00000000
 ring-caps-lock-color=0a0a0a
 inside-caps-lock-color=1a1a1a
 line-caps-lock-color=00000000
-text-caps-lock-color=4A90D9
-
+text-caps-lock-color=539bf5
+caps-lock-bs-hl-color=539bf5
+caps-lock-key-hl-color=539bf5
 
 # Cleared
 # ring-clear-color=0a0a0a
@@ -46,12 +47,8 @@ line-wrong-color=0a0a0a
 # line-wrong-color=0a0a0a
 # text-wrong-color=ffffff
 
-
-
 key-hl-color=ffffff
 bs-hl-color=D29922
-caps-lock-bs-hl-color=4A90D9
-caps-lock-key-hl-color=4A90D9
 
 indicator-caps-lock
 indicator-idle-visible
