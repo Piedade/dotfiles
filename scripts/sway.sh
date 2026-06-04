@@ -10,7 +10,7 @@ if command_exists sway; then
     return
 fi
 sudo apt-get update
-sudo apt-get install -y sway xwayland waybar build-essential greetd tuigreet swayidle gtklock jq xdg-desktop-portal-wlr gnome-themes-extra
+sudo apt-get install -y sway xwayland waybar build-essential greetd tuigreet swayidle gtklock jq xdg-desktop-portal-wlr playerctl gnome-themes-extra
 
 # Remove foot for alacritty
 sudo apt-get remove -y foot
