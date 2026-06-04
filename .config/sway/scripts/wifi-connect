@@ -73,17 +73,27 @@ while true; do
     break
 done
 
-SSID=$(echo "$SELECTION" | sed -E 's/^. .{1,2}  //' | sed -E 's/ +[0-9]+%$//' | sed 's/ *$//')
+SSID=$(echo "$SELECTION" | sed -E 's/^. .{1,2}  //' | sed -E 's/ +[0-9]+%.*$//' | sed 's/ *$//')
 [ -z "$SSID" ] && exit 0
 
 if nmcli connection show "$SSID" &>/dev/null; then
-    nmcli connection up "$SSID"
-    notify-send "WiFi" "Ligado a $SSID"
+    ERR=$(nmcli connection up "$SSID" 2>&1)
+    if [ $? -eq 0 ]; then
+        notify-send "WiFi" "Ligado a $SSID"
+    else
+        notify-send -u critical "WiFi" "Falhou a ligar a $SSID"
+    fi
     exit 0
 fi
 
 PASS=$(echo "" | fuzzel --dmenu --no-exit-on-keyboard-focus-loss --prompt "Password: " --password)
 [ -z "$PASS" ] && exit 0
 
-nmcli device wifi connect "$SSID" password "$PASS"
-notify-send "WiFi" "Ligado a $SSID"
+ERR=$(nmcli device wifi connect "$SSID" password "$PASS" 2>&1)
+if [ $? -eq 0 ]; then
+    notify-send "WiFi" "Ligado a $SSID"
+elif echo "$ERR" | grep -qi "secrets\|password\|wrong key"; then
+    notify-send -u critical "WiFi" "Password incorreta para $SSID"
+else
+    notify-send -u critical "WiFi" "Falhou a ligar a $SSID"
+fi
