@@ -1,32 +1,68 @@
 #!/bin/bash
 TIMEOUT=30
-ELAPSED=0
 
-# Show loading fuzzel immediately
-echo "⟳ A inicializar WiFi..." | fuzzel --dmenu --prompt "WiFi: " &
-FUZZEL_LOADING=$!
+wait_for_networks() {
+    local msg="${1:-A inicializar WiFi...}"
+    local elapsed=0
 
-# Wait for networks
-until nmcli -t -f SSID device wifi list --rescan no 2>/dev/null | grep -qE "^.+$"; do
-    sleep 1
-    ELAPSED=$((ELAPSED + 1))
-    if [ "$ELAPSED" -ge "$TIMEOUT" ]; then
-        kill "$FUZZEL_LOADING" 2>/dev/null
-        notify-send "WiFi" "Sem redes encontradas"
-        exit 1
+    echo "$msg" | fuzzel --dmenu --prompt "WiFi: " --lines 1 &
+    local loading=$!
+
+    until nmcli -t -f SSID device wifi list --rescan no 2>/dev/null | grep -qE "^.+$"; do
+        sleep 1
+        elapsed=$((elapsed + 1))
+        if [ "$elapsed" -ge "$TIMEOUT" ]; then
+            kill "$loading" 2>/dev/null
+            notify-send "WiFi" "Sem redes encontradas"
+            exit 1
+        fi
+    done
+
+    kill "$loading" 2>/dev/null
+    wait "$loading" 2>/dev/null
+}
+
+wait_for_networks "A inicializar WiFi..."
+
+build_list() {
+    local rescan="${1:-no}"
+    nmcli -t -f SSID,SIGNAL,SECURITY,FREQ device wifi list --rescan "$rescan" \
+        | while IFS=: read -r ssid signal security freq; do
+            [ -z "$ssid" ] && continue
+            sig=$((signal + 0))
+            if   [ "$sig" -ge 75 ]; then icon="󰤨"
+            elif [ "$sig" -ge 50 ]; then icon="󰤥"
+            elif [ "$sig" -ge 25 ]; then icon="󰤢"
+            else icon="󰤟"; fi
+            [ -z "$security" ] || [ "$security" = "--" ] && lock="  " || lock="󰌾 "
+            freq_mhz=$(echo "$freq" | grep -oE '[0-9]+' | head -1)
+            [ "$freq_mhz" -ge 5000 ] 2>/dev/null && band="5G " || band="2.4G"
+            printf "%s %s  %-14s %3d%%  %s\n" "$icon" "$lock" "$ssid" "$sig" "$band"
+        done
+}
+
+RESCAN="󰑐  Rescan"
+NETWORK_LIST=$(build_list)
+
+while true; do
+    SELECTION=$(printf "%s\n%s" "$NETWORK_LIST" "$RESCAN" \
+        | fuzzel --dmenu --prompt "WiFi: " --width=30)
+
+    [ -z "$SELECTION" ] && exit 0
+
+    if [ "$SELECTION" = "$RESCAN" ]; then
+        echo "A procurar redes..." | fuzzel --dmenu --prompt "WiFi: " --lines 1 &
+        LOADING=$!
+        NETWORK_LIST=$(build_list yes)
+        kill "$LOADING" 2>/dev/null
+        wait "$LOADING" 2>/dev/null
+        continue
     fi
+
+    break
 done
 
-# Replace loading fuzzel with network list
-kill "$FUZZEL_LOADING" 2>/dev/null
-wait "$FUZZEL_LOADING" 2>/dev/null
-
-SSID=$(nmcli -f SSID,SIGNAL,SECURITY device wifi list --rescan no \
-    | tail -n +2 \
-    | awk '{print $1, $2"% "$3}' \
-    | fuzzel --dmenu --prompt "WiFi: " \
-    | awk '{print $1}')
-
+SSID=$(echo "$SELECTION" | sed -E 's/^. .{1,2}  //' | sed -E 's/ +[0-9]+%$//' | sed 's/ *$//')
 [ -z "$SSID" ] && exit 0
 
 if nmcli connection show "$SSID" &>/dev/null; then
