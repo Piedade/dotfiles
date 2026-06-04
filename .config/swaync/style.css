@@ -24,7 +24,7 @@
     background: @bg-alt;
     border: 1px solid @disabled;
     border-radius: 4px;
-    margin: 4px;
+    margin: 4px 8px;
     padding: 12px;
 }
 
@@ -185,8 +185,7 @@
 }
 
 .notification-group .notification-group-headers {
-    padding: 6px 12px;
-    margin: 0 0 2px 0;
+    padding: 6px 16px;
     color: @fg;
 }
 
@@ -195,7 +194,7 @@
 }
 
 .notification-group .notification-group-buttons {
-    margin: 0 8px 4px 8px;
+    margin: 0 16px 4px 8px;
 }
 
 /* Urgency Levels */
