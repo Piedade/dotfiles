@@ -41,6 +41,7 @@ launch 2 google-chrome --profile-directory=Default
 
 launch 3 alacritty
 launch 3 alacritty
+launch 3 alacritty
 
 #launch 4 tabbed google-chrome --profile-directory=Default --app-id=kjbdgfilnfhdoflbpgamdcdgpehopbep
 #launch 4 tabbed google-chrome --profile-directory=Default --app-id=hnpfjngllnobngcgfapefoaidbinmjnm

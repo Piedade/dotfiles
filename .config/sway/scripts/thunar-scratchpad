@@ -1,6 +1,7 @@
 #!/bin/bash
 
 TREE=$(swaymsg -t get_tree)
+CURRENT_WS_ID=$(swaymsg -t get_workspaces | jq -r '.[] | select(.focused) | .id')
 
 # Single parse: build three ID lists using set arithmetic
 # hidden     = under __i3_scratch
@@ -21,6 +22,18 @@ HIDDEN_COUNT=$(echo  "$HIDDEN_IDS"  | wc -w)
 REGULAR_COUNT=$(echo "$REGULAR_IDS" | wc -w)
 TOTAL=$((VISIBLE_COUNT + HIDDEN_COUNT + REGULAR_COUNT))
 
+# For each visible window, check if it's on the current workspace
+VISIBLE_OTHER_IDS=""
+for id in $VISIBLE_IDS; do
+    ON_CURRENT=$(echo "$TREE" | jq --argjson wsid "$CURRENT_WS_ID" --argjson id "$id" '
+        [.. | objects | select(.id? == $wsid) | .. | objects | select(.id? == $id)] | length
+    ' 2>/dev/null)
+    if [ "$ON_CURRENT" -eq 0 ]; then
+        VISIBLE_OTHER_IDS="$VISIBLE_OTHER_IDS $id"
+    fi
+done
+VISIBLE_OTHER_COUNT=$(echo "$VISIBLE_OTHER_IDS" | wc -w)
+
 if [ "$TOTAL" -eq 0 ]; then
     thunar &
     for _ in $(seq 1 40); do
@@ -28,7 +41,14 @@ if [ "$TOTAL" -eq 0 ]; then
         sleep 0.05
     done
     swaymsg "[app_id=thunar] move scratchpad, scratchpad show"
+elif [ "$VISIBLE_OTHER_COUNT" -gt 0 ]; then
+    # Visible on another workspace → move to current and focus
+    for id in $VISIBLE_OTHER_IDS; do
+        swaymsg "[con_id=$id] move to workspace current"
+        swaymsg "[con_id=$id] focus"
+    done
 elif [ "$VISIBLE_COUNT" -gt 0 ]; then
+    # Visible on current workspace → hide
     for id in $VISIBLE_IDS $REGULAR_IDS; do
         swaymsg "[con_id=$id] move scratchpad"
     done
