@@ -15,4 +15,7 @@ sudo apt-get install -y network-manager
 sudo systemctl enable NetworkManager
 sudo systemctl start NetworkManager
 
+# Disable WWAN radio
+nmcli radio wwan off
+
 echo_success "NetworkManager installed!"
