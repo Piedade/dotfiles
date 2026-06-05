@@ -4,18 +4,19 @@
 #
 # Logo key. Use Mod1 for Alt.
 set $mod Mod4
+# Home row direction keys, like vim
 set $left h
 set $down j
 set $up k
 set $right l
+
 set $term alacritty
 set $menu fuzzel
 set $config_dir ~/.config/sway
 
-# For multiple monitors:
-# output HDMI-A-1 resolution 1920x1080 position 1920,0
 
-## Idle configuration
+### Idle configuration
+#
 # 5 min → screen off | 10 min → lock | 15 min → suspend
 # exec swayidle -w \
 #     timeout 300  'swaymsg "output * dpms off"' \
@@ -23,6 +24,7 @@ set $config_dir ~/.config/sway
 #     timeout 900  'systemctl suspend' \
 #     resume       'swaymsg "output * dpms on"' \
 #     before-sleep 'pgrep gtklock || gtklock -d'
+
 exec swayidle -w \
     timeout 300   'pgrep swaylock || swaylock -f' \
     timeout 600   'swaymsg "output * dpms off"' \
@@ -30,13 +32,15 @@ exec swayidle -w \
     timeout 900   'systemctl suspend' \
     before-sleep 'pgrep swaylock || swaylock -f'
 
+
 ### Input configuration
-input type:touchpad {
-    dwt enabled
-    tap enabled
-    natural_scroll enabled
-    middle_emulation enabled
-}
+#
+# input type:touchpad {
+#     dwt enabled
+#     tap enabled
+#     natural_scroll enabled
+#     middle_emulation enabled
+# }
 
 input type:keyboard {
     xkb_layout "pt"
@@ -46,7 +50,9 @@ input type:keyboard {
 }
 
 ### Appearance
-font pango:Lilex Nerd Font Mono 8
+#
+# font pango:Lilex Nerd Font Mono 8
+font pango:MesloLGS Nerd Font Mono 8
 
 # Colors
 include $config_dir/theme/colors.conf
@@ -81,7 +87,6 @@ include $config_dir/outputs
 
 ### Autostart
 exec_always $config_dir/scripts/autostart.sh
-
 exec $config_dir/scripts/launch-apps.sh
 
 # include /etc/sway/config.d/*

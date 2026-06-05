@@ -43,6 +43,10 @@ function send_notification() {
         -t 2000
 }
 
+function is_mic_muted() {
+    wpctl get-volume @DEFAULT_AUDIO_SOURCE@ | grep -q MUTED
+}
+
 case $1 in
 up)
     wpctl set-volume --limit 1.0 @DEFAULT_AUDIO_SINK@ 5%+
@@ -67,6 +71,22 @@ mute)
             -t 2000
     else
         send_notification
+    fi
+    ;;
+micmute)
+    wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle
+    if is_mic_muted; then
+        notify-send -a "changevolume" -u low \
+            -h string:x-canonical-private-synchronous:volume \
+            -i "microphone-sensitivity-muted" \
+            "Microphone Muted" \
+            -t 2000
+    else
+        notify-send -a "changevolume" -u low \
+            -h string:x-canonical-private-synchronous:volume \
+            -i "microphone-sensitivity-high" \
+            "Microphone Active" \
+            -t 2000
     fi
     ;;
 esac

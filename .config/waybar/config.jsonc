@@ -6,7 +6,7 @@
     "margin-left": 0,
     "margin-right": 0,
 
-    "modules-left": ["sway/workspaces"],
+    "modules-left": ["sway/workspaces", "sway/mode"],
     "modules-center": ["sway/window"],
     "modules-right": [
         // "disk",
@@ -43,6 +43,11 @@
         //     "9": [],
         //     "10": [],
         // },
+    },
+
+    "sway/mode": {
+        "format": "{}",
+        "tooltip": false,
     },
 
     "sway/window": {

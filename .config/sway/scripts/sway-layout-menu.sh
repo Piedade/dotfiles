@@ -14,10 +14,10 @@ selected=$(printf "%s\n" "${layouts[@]}" | fuzzel --dmenu --prompt "Layout: ")
 layout_name=$(echo "$selected" | awk '{print $1, $2}')
 
 case "$layout_name" in
-    "󰙀 Horizontal") swaymsg "layout splith; border pixel 4" ;;
-    "󰕴 Vertical") swaymsg "layout splitv; border pixel 4" ;;
-    "󰝘 Tabbed") swaymsg "layout tabbed; border normal 4" ;;
-    "󰕬 Stacked") swaymsg "layout stacking; border normal 4" ;;
-    "󰕮 Toggle") swaymsg "layout toggle split; border pixel 4" ;;
+    "󰙀 Horizontal") swaymsg "layout splith;" ;;
+    "󰕴 Vertical") swaymsg "layout splitv;" ;;
+    "󰝘 Tabbed") swaymsg "layout tabbed;" ;;
+    "󰕬 Stacked") swaymsg "layout stacking;" ;;
+    "󰕮 Toggle") swaymsg "layout toggle split;" ;;
     *) exit 0 ;;  # Exit on cancel
 esac
