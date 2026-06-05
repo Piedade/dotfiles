@@ -86,6 +86,7 @@ include $config_dir/workspaces
 include $config_dir/outputs
 
 ### Autostart
+exec_always autotiling --limit 1
 exec_always $config_dir/scripts/autostart.sh
 exec $config_dir/scripts/launch-apps.sh
 
