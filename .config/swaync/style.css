@@ -243,15 +243,16 @@
 
 /* MPRIS */
 .widget-mpris {
-    background: @bg-alt;
+    padding: 6px 16px 0;
+    /* background: @bg-alt;
     padding: 8px;
     margin: 4px 8px;
-    border-radius: 4px;
+    border-radius: 4px; */
 }
 
 .widget-mpris-player {
     background: transparent;
-    padding: 8px;
+    border-radius: 4px;
 }
 
 .widget-mpris-title {
@@ -265,24 +266,24 @@
     font-size: 12px;
 }
 
-.widget-mpris > box > button {
+.widget-mpris button {
     background: transparent;
     color: @fg;
     border-radius: 4px;
     border: 1px solid @disabled;
-    margin: 2px;
+    margin: 2px 2px 10px;
 }
 
-.widget-mpris > box > button:hover {
+.widget-mpris button:hover {
     background: @bg-alt;
-    border-color: @fg;
+    border-color: #ffffff;
 }
 
 /* Volume Slider */
 .widget-volume {
     background: @bg;
-    padding: 8px 20px 16px 12px;
-    margin: 4px 8px 0;
+    padding: 0 20px 16px 12px;
+    margin: 0 8px 0;
     border-bottom: 1px solid @disabled;
 }
 
