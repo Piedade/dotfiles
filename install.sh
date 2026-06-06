@@ -38,6 +38,7 @@ source ./scripts/audio.sh
 
 source ./scripts/networkmanager.sh
 source ./scripts/sway.sh
+source ./scripts/xhci-resume-fix.sh
 source ./scripts/nwg-displays.sh
 source ./scripts/nwg-look.sh
 source ./scripts/swaync.sh
