@@ -1,5 +1,7 @@
 #!/bin/bash
 
+sleep 2
+
 win_count() {
     swaymsg -t get_tree | jq "
         (first(.. | objects | select(.type == \"workspace\" and .name == \"$1\")) // {})

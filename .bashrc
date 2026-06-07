@@ -335,7 +335,7 @@ pwdtail() {
     pwd | awk -F/ '{nlast = NF -1;print $nlast"/"$NF}'
 }
 
-# alias cat='batcat'
+alias cat='batcat'
 
 # IP address lookup
 alias whatismyip="whatsmyip"

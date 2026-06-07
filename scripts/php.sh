@@ -46,6 +46,11 @@ installPHP(){
 
     # Change fpm user and group
     sudo sed -i "s/^user = .*/user = ${SUDO_USER:-$USER}/" "/etc/php/${VERSION}/fpm/pool.d/www.conf"
+    sudo sed -i "s/^group = .*/group = ${SUDO_USER:-$USER}/" "/etc/php/${VERSION}/fpm/pool.d/www.conf"
+
+    sudo sed -i "s/^listen.owner = .*/listen.owner = ${SUDO_USER:-$USER}/" "/etc/php/${VERSION}/fpm/pool.d/www.conf"
+    sudo sed -i "s/^listen.group = .*/listen.group = ${SUDO_USER:-$USER}/" "/etc/php/${VERSION}/fpm/pool.d/www.conf"
+
     # sudo systemctl start php${VERSION}-fpm
 
     # sudo sed -i "s/^user = .*/user = ${FPM_USER}/" "$CONF"
