@@ -32,4 +32,26 @@ sudo tee /etc/opt/chrome/initial_preferences > /dev/null <<'EOF'
 }
 EOF
 
+# Install systemd user service to close Chrome gracefully before logout
+SERVICE_DIR="$HOME/.config/systemd/user"
+mkdir -p "$SERVICE_DIR"
+cat > "$SERVICE_DIR/chrome-shutdown.service" <<'EOF'
+[Unit]
+Description=Gracefully close Google Chrome before logout
+DefaultDependencies=no
+Before=exit.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/true
+ExecStop=/bin/bash -c 'pkill -TERM -x chrome; sleep 3; pkill -KILL -x chrome 2>/dev/null; true'
+TimeoutStopSec=6
+
+[Install]
+WantedBy=default.target
+EOF
+systemctl --user daemon-reload
+systemctl --user enable --now chrome-shutdown.service
+
 echo_success "Chrome installed!"

@@ -48,7 +48,8 @@ launch 3 alacritty
 launch 4 tabbed google-chrome --profile-directory=Default --app-id=kjbdgfilnfhdoflbpgamdcdgpehopbep
 launch 4 tabbed google-chrome --profile-directory=Default --app-id=hnpfjngllnobngcgfapefoaidbinmjnm
 
-launch 5 google-chrome --profile-directory="Profile 1"
+# launch 5 google-chrome --profile-directory="Profile 1"
+launch 5 google-chrome --profile-directory="Profile 1" --restore-last-session
 
 # lets go back to work
 swaymsg workspace 1
