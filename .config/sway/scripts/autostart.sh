@@ -17,6 +17,7 @@ lxpolkit &
 eval $(gnome-keyring-daemon --start --components=pkcs11,secrets,ssh)
 export SSH_AUTH_SOCK
 systemctl --user import-environment SSH_AUTH_SOCK
+ssh-add ~/.ssh/id_ed25519 2>/dev/null
 
 ## Clipboard history watcher
 wl-paste --watch cliphist store &
