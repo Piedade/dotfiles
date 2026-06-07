@@ -87,7 +87,6 @@ include $config_dir/outputs
 
 ### Autostart
 exec_always $config_dir/scripts/autostart.sh
-exec $config_dir/scripts/startup.sh
 exec $config_dir/scripts/launch-apps.sh
 
 # include /etc/sway/config.d/*
