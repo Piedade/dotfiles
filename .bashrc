@@ -454,6 +454,7 @@ eval "$(direnv hook bash)"
 
 # ssh key password
 # eval $(keychain --eval --quiet ~/.ssh/id_ed25519)
+export SSH_AUTH_SOCK="${XDG_RUNTIME_DIR}/keyring/ssh"
 
 # Load custom .dotfiles bash scripts
 for file in $HOME/.dotfiles/.bash/*.sh; do
