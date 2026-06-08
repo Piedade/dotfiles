@@ -5,6 +5,7 @@ early-exit = true
 initial-tool = "arrow"
 # floating-hack = false
 fullscreen = "current-screen"
+# annotation-size-factor = 0.5
 
 [color-palette]
 palette = ["#e31523", "#FF9100", "#00E676", "#29B6F6", "#E040FB", "#FFFFFF", "#000000"]

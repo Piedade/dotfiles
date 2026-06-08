@@ -14,10 +14,26 @@
 chosen=$(printf '%s\n' "Shutdown" "Reboot" "Logout" "Cancel" | \
     fuzzel --dmenu --prompt "Power: ")
 
+close_chrome() {
+    # Find main Chrome processes (exclude renderer/gpu/zygote with --type=)
+    local mains
+    mains=$(pgrep -af "/opt/google/chrome/chrome" | grep -v -- "--type=" | cut -d" " -f1)
+    [ -z "$mains" ] && return
+    # SIGTERM lets Chrome save its session state cleanly (no restore dialog next boot)
+    kill -TERM $mains 2>/dev/null
+    # Wait up to 15s for Chrome to exit before proceeding with shutdown
+    for i in $(seq 1 30); do
+        pgrep -x chrome >/dev/null 2>&1 || return
+        sleep 0.5
+    done
+    # Force kill if Chrome didn't exit in time
+    pkill -KILL -x chrome 2>/dev/null
+}
+
 case "$chosen" in
-    "Logout")   swaymsg exit ;;
-    "Shutdown") systemctl poweroff ;;
-    "Reboot")   systemctl reboot ;;
+    "Logout")   close_chrome; swaymsg exit ;;
+    "Shutdown") close_chrome; systemctl poweroff ;;
+    "Reboot")   close_chrome; systemctl reboot ;;
     *)          exit 0 ;;
 esac
 

@@ -30,8 +30,21 @@ sudo su - postgres -c "createuser ${SUDO_USER:-$USER} --superuser" 2>/dev/null |
 #   libffi-dev liblzma-dev git
 
 # cd /usr/src
-# sudo wget https://www.python.org/ftp/python/3.11.14/Python-3.11.14.tgz
-# sudo tar xvf Python-3.11.14.tgz
-# cd Python-3.11.14
+# sudo wget https://www.python.org/ftp/python/3.11.15/Python-3.11.15.tgz
+# sudo tar xvf Python-3.11.15.tgz
+# cd Python-3.11.15
+# sudo ./configure --enable-optimizations
+# sudo make altinstall
+
+######
+# # Python 3.7 para o odoo v12
+# sudo apt update
+# sudo apt install build-essential zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev libsqlite3-dev wget libbz2-dev
+
+# # Baixar e compilar o Python 3.7.17
+# cd /usr/src
+# sudo wget https://www.python.org/ftp/python/3.7.17/Python-3.7.17.tgz
+# sudo tar xvf Python-3.7.17.tgz
+# cd Python-3.7.17
 # sudo ./configure --enable-optimizations
 # sudo make altinstall
