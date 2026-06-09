@@ -2,8 +2,6 @@
 # create_email.sh
 # Script para criar emails via WHM/cPanel com fzf local + SSH remoto
 
-SERVER="root@server"  # <--- muda para o teu servidor
-
 # ─────────────── FZF HELPERS ───────────────
 
 # Escolher conta via fzf (FZF local, lista do servidor via SSH)

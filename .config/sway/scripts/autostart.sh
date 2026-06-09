@@ -2,6 +2,8 @@
 
 # Autostart applications (exec_always — restarts on sway reload)
 
+rm -f "${XDG_RUNTIME_DIR}/autostart-done"
+
 ## systemd / D-Bus environment for portals
 export XDG_CURRENT_DESKTOP=sway
 systemctl --user import-environment DISPLAY WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP
@@ -46,3 +48,5 @@ ssh-add -l 2>/dev/null | grep -q "id_ed25519" || ssh-add ~/.ssh/id_ed25519
 ## Clipboard history watcher
 pkill -x "wl-paste"; pidwait -x "wl-paste" 2>/dev/null
 wl-paste --watch cliphist store &
+
+touch "${XDG_RUNTIME_DIR}/autostart-done"

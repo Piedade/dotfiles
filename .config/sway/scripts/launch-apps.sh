@@ -1,6 +1,8 @@
 #!/bin/bash
 
-sleep 2
+until [ -f "${XDG_RUNTIME_DIR}/autostart-done" ]; do sleep 0.1; done
+
+export SSH_AUTH_SOCK="${XDG_RUNTIME_DIR}/keyring/ssh"
 
 win_count() {
     swaymsg -t get_tree | jq "

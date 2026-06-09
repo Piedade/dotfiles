@@ -66,26 +66,20 @@ server() {
 
     local ACCOUNT="$1"
 
-    # Authenticating SSH key
-    ssh "$ACCOUNT@server" "true" || { echo_error "SSH authentication failed"; return 1; }
-
     # Check shell access
     check_shell_access "$ACCOUNT" 1
     case $? in
-        0)
-            connect_server "$ACCOUNT"
-            ;;
+        0) ;;
         1)
-            # User exists but no shell → ask if should activate
             read -rp "Do you want to activate shell access for '$ACCOUNT'? [y/N]: " answer
             case "$answer" in
                 [Yy]* )
                     echo "Activating shell access..."
-                    add_shell_access "$ACCOUNT" || { echo_error "Failed to activate shell"; return; }
-                    connect_server "$ACCOUNT"
+                    add_shell_access "$ACCOUNT" || { echo_error "Failed to activate shell"; return 1; }
                     ;;
                 * )
                     echo "Shell access not changed."
+                    return 0
                     ;;
             esac
             ;;
@@ -98,6 +92,23 @@ server() {
             return 1
             ;;
     esac
+
+    # Authenticating SSH key
+    if ! ssh -o BatchMode=yes -o ConnectTimeout=5 "$ACCOUNT@server" "true" 2>/dev/null; then
+        read -rp "SSH key not authorized for '$ACCOUNT'. Copy key to server? [y/N]: " answer
+        case "$answer" in
+            [Yy]*)
+                setup_ssh_key "$ACCOUNT" || { echo_error "Failed to copy SSH key"; return 1; }
+                ssh "$ACCOUNT@server" "true" || { echo_error "SSH authentication failed"; return 1; }
+                ;;
+            *)
+                echo_error "SSH authentication failed"
+                return 1
+                ;;
+        esac
+    fi
+
+    connect_server "$ACCOUNT"
 
 }
 

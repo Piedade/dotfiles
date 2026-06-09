@@ -1,27 +1,5 @@
 #!/bin/bash
 
-setup_ssh_key() {
-    local account=$1
-    local key_name=${2:-"Piedade"}
-    local pub_key_file=~/.ssh/id_ed25519.pub
-
-    [ ! -f "$pub_key_file" ] && { echo_error "~/.ssh/id_ed25519.pub not found"; return 1; }
-
-    echo_info "Setting up SSH key for $account..."
-    ssh "$SERVER" "
-        mkdir -p /home/$account/.ssh &&
-        chown $account:$account /home/$account/.ssh &&
-        chmod 700 /home/$account/.ssh
-    "
-    ssh "$SERVER" "cat > /home/$account/.ssh/${key_name}.pub" < "$pub_key_file"
-    ssh "$SERVER" "
-        grep -qxF \"\$(cat /home/$account/.ssh/${key_name}.pub)\" /home/$account/.ssh/authorized_keys 2>/dev/null ||
-            cat /home/$account/.ssh/${key_name}.pub >> /home/$account/.ssh/authorized_keys &&
-        chown $account:$account /home/$account/.ssh/${key_name}.pub /home/$account/.ssh/authorized_keys 2>/dev/null &&
-        chmod 644 /home/$account/.ssh/${key_name}.pub &&
-        chmod 600 /home/$account/.ssh/authorized_keys
-    "
-}
 
 create_wordpress() {
     local ACCOUNT=$1
@@ -111,23 +89,23 @@ create_wordpress() {
     local WP_BIN="/opt/alt/php84/usr/bin/php -d memory_limit=-1 /usr/local/bin/wp"
 
     echo_info "Setting PHP version to 8.4..."
-    run_remote "selectorctl --interpreter=php --set-user-current=8.4"
+    run_remote "$ACCOUNT" "selectorctl --interpreter=php --set-user-current=8.4"
 
 
     echo_info "Creating database and user..."
-    # run_remote "uapi Mysql list_users"
-    run_remote "uapi Mysql create_database name='${ACCOUNT}_${DB_NAME}'"
-    run_remote "uapi Mysql create_user name='${ACCOUNT}_${DB_NAME}' password='${DB_PASS}'"
-    run_remote "uapi Mysql set_privileges_on_database user='${ACCOUNT}_${DB_NAME}' database='${ACCOUNT}_${DB_NAME}' privileges='ALL PRIVILEGES'"
+    # run_remote "$ACCOUNT" "uapi Mysql list_users"
+    run_remote "$ACCOUNT" "uapi Mysql create_database name='${ACCOUNT}_${DB_NAME}'"
+    run_remote "$ACCOUNT" "uapi Mysql create_user name='${ACCOUNT}_${DB_NAME}' password='${DB_PASS}'"
+    run_remote "$ACCOUNT" "uapi Mysql set_privileges_on_database user='${ACCOUNT}_${DB_NAME}' database='${ACCOUNT}_${DB_NAME}' privileges='ALL PRIVILEGES'"
 
 
     echo_info "Creating email..."
-    run_remote "uapi Email add_pop email='noreply@${DOMAIN}' password='${EMAIL_PASS}'"
-    run_remote "uapi Email suspend_incoming email='noreply@${DOMAIN}'"
+    run_remote "$ACCOUNT" "uapi Email add_pop email='noreply@${DOMAIN}' password='${EMAIL_PASS}'"
+    run_remote "$ACCOUNT" "uapi Email suspend_incoming email='noreply@${DOMAIN}'"
 
 
     echo_info "Disable Nginx cache..."
-    run_remote "uapi NginxCaching disable_cache"
+    run_remote "$ACCOUNT" "uapi NginxCaching disable_cache"
 
 
     echo_info "Creating .htaccess..."
@@ -206,50 +184,50 @@ HTACCESS_CONTENT+="
 </IfModule>
 # END cPanel-generated php ini directives, do not edit"
 
-    run_remote "cat > ~/$ROOT_DIR/.htaccess <<EOL
+    run_remote "$ACCOUNT" "cat > ~/$ROOT_DIR/.htaccess <<EOL
 $HTACCESS_CONTENT
 EOL"
 
     echo_info "Installing WordPress..."
-    run_remote "cd ~/$ROOT_DIR && $WP_BIN core download --locale='pt_PT'"
-    run_remote "cd ~/$ROOT_DIR && $WP_BIN config create --dbname='${ACCOUNT}_${DB_NAME}' --dbuser='${ACCOUNT}_${DB_NAME}' --dbpass='${DB_PASS}'"
-    run_remote "cd ~/$ROOT_DIR && $WP_BIN core install --url='https://${DOMAIN}' --title='${ACCOUNT}' --admin_user='redpost' --admin_password='${WP_ADMIN_PASS}' --admin_email='webmaster@redpost.pt' --skip-email"
+    run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN core download --locale='pt_PT'"
+    run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN config create --dbname='${ACCOUNT}_${DB_NAME}' --dbuser='${ACCOUNT}_${DB_NAME}' --dbpass='${DB_PASS}'"
+    run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN core install --url='https://${DOMAIN}' --title='${ACCOUNT}' --admin_user='redpost' --admin_password='${WP_ADMIN_PASS}' --admin_email='webmaster@redpost.pt' --skip-email"
 
     echo_info "Deleting default post..."
-    run_remote "cd ~/$ROOT_DIR && $WP_BIN post delete 1 --force"
+    run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN post delete 1 --force"
 
     echo_info "Applying security settings..."
-    run_remote "cd ~/$ROOT_DIR && $WP_BIN config shuffle-salts"
-    run_remote "cd ~/$ROOT_DIR && $WP_BIN config set DISALLOW_FILE_EDIT true --raw"
-    run_remote "cd ~/$ROOT_DIR && $WP_BIN config set WP_MEMORY_LIMIT 256M"
+    run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN config shuffle-salts"
+    run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN config set DISALLOW_FILE_EDIT true --raw"
+    run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN config set WP_MEMORY_LIMIT 256M"
 
 
     echo_info "Disabling plugins..."
-    run_remote "cd ~/$ROOT_DIR && $WP_BIN plugin install disable-xml-rpc disable-json-api simple-smtp elementor --activate"
+    run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN plugin install disable-xml-rpc disable-json-api simple-smtp elementor --activate"
 
 
     echo_info "Mail config..."
-    run_remote "cd ~/$ROOT_DIR && $WP_BIN config set SMTP_HOST 'localhost'"
-    run_remote "cd ~/$ROOT_DIR && $WP_BIN config set SMTP_AUTH 1 --raw"
-    run_remote "cd ~/$ROOT_DIR && $WP_BIN config set SMTP_USER 'noreply@${DOMAIN}'"
-    run_remote "cd ~/$ROOT_DIR && $WP_BIN config set SMTP_PASS '${EMAIL_PASS}'"
-    run_remote "cd ~/$ROOT_DIR && $WP_BIN config set SMTP_FROM 'noreply@${DOMAIN}'"
-    run_remote "cd ~/$ROOT_DIR && $WP_BIN config set SMTP_FROMNAME '${ACCOUNT}'"
+    run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN config set SMTP_HOST 'localhost'"
+    run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN config set SMTP_AUTH 1 --raw"
+    run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN config set SMTP_USER 'noreply@${DOMAIN}'"
+    run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN config set SMTP_PASS '${EMAIL_PASS}'"
+    run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN config set SMTP_FROM 'noreply@${DOMAIN}'"
+    run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN config set SMTP_FROMNAME '${ACCOUNT}'"
 
 
     echo_info "Cleaning default plugins/themes..."
-    run_remote "cd ~/$ROOT_DIR && $WP_BIN plugin delete hello akismet"
-    run_remote "cd ~/$ROOT_DIR && $WP_BIN theme install hello-elementor --activate"
-    run_remote "cd ~/$ROOT_DIR && $WP_BIN theme delete twentytwentytwo twentytwentythree twentytwentyfour twentytwentyfive"
+    run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN plugin delete hello akismet"
+    run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN theme install hello-elementor --activate"
+    run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN theme delete twentytwentytwo twentytwentythree twentytwentyfour twentytwentyfive"
 
 
     echo_info "Setting permissions..."
-    run_remote "cd ~/$ROOT_DIR && find . -type d -exec chmod 755 {} \;"
-    run_remote "cd ~/$ROOT_DIR && find . -type f -exec chmod 644 {} \;"
-    run_remote "cd ~/$ROOT_DIR && chmod 400 wp-config.php"
+    run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && find . -type d -exec chmod 755 {} \;"
+    run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && find . -type f -exec chmod 644 {} \;"
+    run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && chmod 400 wp-config.php"
 
     echo_info "Testing email..."
-    run_remote "
+    run_remote "$ACCOUNT" "
         cd ~/$ROOT_DIR && $WP_BIN eval \"
             if (wp_mail('webmaster@redpost.pt', 'Email Test from ${ACCOUNT}', 'This is a test email from your new WordPress site for https://${DOMAIN} (${ACCOUNT}).')) {
                 echo 'Email sent successfully';
