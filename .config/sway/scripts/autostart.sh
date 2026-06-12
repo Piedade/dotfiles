@@ -43,7 +43,7 @@ systemctl --user disable --now ssh-agent.socket 2>/dev/null
 eval $(gnome-keyring-daemon --start --components=pkcs11,secrets,ssh)
 export SSH_AUTH_SOCK
 systemctl --user import-environment SSH_AUTH_SOCK
-ssh-add -l 2>/dev/null | grep -q "id_ed25519" || ssh-add ~/.ssh/id_ed25519
+ssh-add -l 2>/dev/null | grep -q "id_ed25519" || ssh-add ~/.ssh/id_ed25519 &
 
 ## Clipboard history watcher
 pkill -x "wl-paste"; pidwait -x "wl-paste" 2>/dev/null

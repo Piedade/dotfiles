@@ -150,3 +150,45 @@ crop_svg(){
         fi
     fi
 }
+
+upscale(){
+    local model="${1:-realesrgan-x4plus}"
+    local MODELS_DIR="$HOME/.local/share/realesrgan/models"
+    local original_folder="_original"
+
+    if ! command -v realesrgan-ncnn-vulkan &>/dev/null; then
+        echo_error "realesrgan-ncnn-vulkan not installed. Run ~/.dotfiles/scripts/realesrgan.sh first."
+        return 1
+    fi
+
+    shopt -s nullglob
+    local images=(*.jpg *.jpeg *.png *.webp)
+    shopt -u nullglob
+
+    if [[ ${#images[@]} -eq 0 ]]; then
+        echo_error "No images found in current directory."
+        return 1
+    fi
+
+    mkdir -p "$original_folder"
+
+    echo_info "Upscaling ${#images[@]} image(s) with model: $model"
+
+    for image in "${images[@]}"; do
+        local basename=$(basename -- "$image")
+        local filename="${basename%%.*}"
+        local extension="${basename##*.}"
+
+        mv "$image" "$original_folder/"
+
+        echo "Upscaling $image..."
+        realesrgan-ncnn-vulkan \
+            -i "$original_folder/$image" \
+            -o "$image" \
+            -m "$MODELS_DIR" \
+            -n "$model" \
+            -g 1
+    done
+
+    echo_success "Upscaling completed! Originals moved to $original_folder/"
+}
