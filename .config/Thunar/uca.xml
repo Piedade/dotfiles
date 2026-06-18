@@ -40,4 +40,15 @@
 	<text-files/>
 	<video-files/>
 </action>
+<action>
+	<icon>package-x-generic</icon>
+	<name>Extract Here</name>
+	<submenu></submenu>
+	<unique-id>1750000000000000-1</unique-id>
+	<command>tar -xzvf %f -C %d</command>
+	<description>Extract tar.gz archive</description>
+	<range></range>
+	<patterns>*.tar.gz</patterns>
+	<other-files/>
+</action>
 </actions>

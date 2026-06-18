@@ -31,7 +31,7 @@
 /* Notification Window */
 .notification {
     background: @bg;
-    border: 1px solid @disabled;
+    border: 1px solid #000000;
     border-radius: 4px;
     margin: 8px;
     padding: 0;
@@ -45,12 +45,16 @@
 .close-button {
     background: transparent;
     color: @fg;
-    border-radius: 4px;
-    padding: 4px;
-    margin: 4px;
+    border-radius: 8px;
+    padding: 8px;
+    margin: 12px;
+    font-size: 16px;
+    min-width: 22px;
+    min-height: 22px;
 }
 
 .close-button:hover {
+    background: @disabled;
     color: #ffffff;
 }
 
@@ -70,7 +74,7 @@
 .notification-default-action .notification-content .time {
     color: @fg;
     font-size: 11px;
-    margin-top: 4px;
+    margin-top: 32px;
 }
 
 .notification-default-action .notification-content .image {

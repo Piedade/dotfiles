@@ -50,8 +50,8 @@ launch 3 alacritty
 # launch 7 google-chrome --profile-directory="Profile 1"
 launch 7 google-chrome --profile-directory="Profile 1"
 
-launch 8 tabbed google-chrome --profile-directory=Default --app-id=kjbdgfilnfhdoflbpgamdcdgpehopbep
-launch 8 tabbed google-chrome --profile-directory=Default --app-id=hnpfjngllnobngcgfapefoaidbinmjnm
+launch 8 tabbed google-chrome --profile-directory="Profile 1" --app-id=kjbdgfilnfhdoflbpgamdcdgpehopbep
+launch 8 tabbed google-chrome --profile-directory="Profile 1" --app-id=hnpfjngllnobngcgfapefoaidbinmjnm
 
 # lets go back to work
 swaymsg workspace 1

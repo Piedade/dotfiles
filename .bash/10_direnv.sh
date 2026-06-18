@@ -119,12 +119,15 @@ export -f setup_direnv
 create_envrc() {
     local dir="$PWD"
     local env_file="$dir/.envrc"
+    local php_ver="${1:-$(php -v 2>/dev/null | grep -oP '(?<=PHP )\d+\.\d+' | head -1)}"
+    local node_ver="${2:-}"
+    local composer_ver="${3:-}"
 
         if [[ ! -f "$env_file" ]]; then
 cat > "$env_file" << EOF
-PHP=$(php -v 2>/dev/null | grep -oP '(?<=PHP )\d+\.\d+' | head -1)
-NODE=
-COMPOSER=
+PHP=$php_ver
+NODE=$node_ver
+COMPOSER=$composer_ver
 
 setup_direnv \\
     --php "\$PHP" \\
