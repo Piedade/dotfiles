@@ -60,11 +60,6 @@ add_shell_access() {
     ssh "$SERVER" "chsh -s /bin/bash $account"
 }
 
-# Gerar password aleatória
-gen_pass() {
-    openssl rand -base64 12
-}
-
 # ─────────────── MAIN FUNCTION ───────────────
 create_email() {
     local ACCOUNT=$1

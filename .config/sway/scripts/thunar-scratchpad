@@ -35,6 +35,12 @@ done
 VISIBLE_OTHER_COUNT=$(echo "$VISIBLE_OTHER_IDS" | wc -w)
 
 if [ "$TOTAL" -eq 0 ]; then
+    # Kill any stale Thunar daemon with no sway windows — otherwise the new
+    # instance activates the existing one, which can cause the scratchpad move to fail
+    if pgrep -x thunar > /dev/null 2>&1; then
+        pkill -x thunar
+        sleep 0.2
+    fi
     thunar &
     for _ in $(seq 1 40); do
         swaymsg -t get_tree | jq -e '[.. | objects | select(.app_id? == "thunar")] | length > 0' > /dev/null 2>&1 && break

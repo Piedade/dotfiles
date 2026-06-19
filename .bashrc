@@ -56,8 +56,9 @@ if [[ $iatest -gt 0 ]]; then bind "set completion-ignore-case on"; fi
 if [[ $iatest -gt 0 ]]; then bind "set show-all-if-ambiguous On"; fi
 
 # Set the default editor and terminal
-export EDITOR=code
-export VISUAL=code
+export EDITOR=vim
+# VISUAL="code --wait"
+export VISUAL=vim
 export TERMINAL=alacritty
 # alias vim='nvim'
 

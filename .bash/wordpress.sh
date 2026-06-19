@@ -19,11 +19,15 @@ create_wordpress() {
         read -rp "Domain [$_default_domain]: " DOMAIN
         [ -z "$DOMAIN" ] && DOMAIN="$_default_domain"
 
-        read -rp "Root directory [public_html]: " ROOT_DIR
-        [ -z "$ROOT_DIR" ] && ROOT_DIR="public_html"
+        local _default_root_dir="public_html"
+        [ "$DOMAIN" != "$_default_domain" ] && _default_root_dir="$DOMAIN"
+        read -rp "Root directory [$_default_root_dir]: " ROOT_DIR
+        [ -z "$ROOT_DIR" ] && ROOT_DIR="$_default_root_dir"
 
-        read -rp "Database name [site]: " DB_NAME
-        [ -z "$DB_NAME" ] && DB_NAME="site"
+        local _default_db_name="site"
+        [ "$DOMAIN" != "$_default_domain" ] && _default_db_name="${DOMAIN%%.*}"
+        read -rp "Database name [$_default_db_name]: " DB_NAME
+        [ -z "$DB_NAME" ] && DB_NAME="$_default_db_name"
 
         read -rp "Enable MultiPHP? [y/N]: " _multi
         case "$_multi" in
@@ -37,8 +41,12 @@ create_wordpress() {
         fi
 
         [ -z "$DOMAIN" ] && DOMAIN="$ACCOUNT.dev.red.com.pt"
-        [ -z "$ROOT_DIR" ] && ROOT_DIR="public_html"
-        [ -z "$DB_NAME" ] && DB_NAME="site"
+        if [ -z "$ROOT_DIR" ]; then
+            [ "$DOMAIN" = "$ACCOUNT.dev.red.com.pt" ] && ROOT_DIR="public_html" || ROOT_DIR="$DOMAIN"
+        fi
+        if [ -z "$DB_NAME" ]; then
+            [ "$DOMAIN" = "$ACCOUNT.dev.red.com.pt" ] && DB_NAME="site" || DB_NAME="${DOMAIN%%.*}"
+        fi
     fi
 
     # Confirmation to the user that the variables are correct
@@ -238,7 +246,7 @@ EOL"
     "
 
     echo
-    echo "🌍 Site: https://$DOMAIN/wp-admin/admin.php?page=elementor"
+    echo "🌍 Site: https://$DOMAIN/wp-admin/admin.php?page=elementor-license"
     echo "👤 Admin: redpost"
     echo "🔑 Admin Password: $WP_ADMIN_PASS"
 

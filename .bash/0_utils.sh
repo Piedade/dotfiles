@@ -41,7 +41,7 @@ check_permission() {
 }
 
 gen_pass() {
-  openssl rand -base64 18 | tr -dc 'A-Za-z0-9!@#$%^&*()_+=' | head -c 20
+  openssl rand -base64 32 | tr -dc 'A-Za-z0-9_~-' | head -c 20
 }
 
 run_remote() {
