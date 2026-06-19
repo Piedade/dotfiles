@@ -29,6 +29,9 @@ create_wordpress() {
         read -rp "Database name [$_default_db_name]: " DB_NAME
         [ -z "$DB_NAME" ] && DB_NAME="$_default_db_name"
 
+        read -rp "Site title [$ACCOUNT]: " SITE_TITLE
+        [ -z "$SITE_TITLE" ] && SITE_TITLE="$ACCOUNT"
+
         read -rp "Enable MultiPHP? [y/N]: " _multi
         case "$_multi" in
             [Yy]*) ENABLE_MULTI_PHP="yes" ;;
@@ -47,6 +50,7 @@ create_wordpress() {
         if [ -z "$DB_NAME" ]; then
             [ "$DOMAIN" = "$ACCOUNT.dev.red.com.pt" ] && DB_NAME="site" || DB_NAME="${DOMAIN%%.*}"
         fi
+        [ -z "$SITE_TITLE" ] && SITE_TITLE="$ACCOUNT"
     fi
 
     # Confirmation to the user that the variables are correct
@@ -199,7 +203,7 @@ EOL"
     echo_info "Installing WordPress..."
     run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN core download --locale='pt_PT'"
     run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN config create --dbname='${ACCOUNT}_${DB_NAME}' --dbuser='${ACCOUNT}_${DB_NAME}' --dbpass='${DB_PASS}'"
-    run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN core install --url='https://${DOMAIN}' --title='${ACCOUNT}' --admin_user='redpost' --admin_password='${WP_ADMIN_PASS}' --admin_email='webmaster@redpost.pt' --skip-email"
+    run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN core install --url='https://${DOMAIN}' --title='${SITE_TITLE}' --admin_user='redpost' --admin_password='${WP_ADMIN_PASS}' --admin_email='webmaster@redpost.pt' --skip-email"
 
     echo_info "Deleting default post..."
     run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN post delete 1 --force"
