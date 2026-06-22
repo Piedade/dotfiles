@@ -37,16 +37,24 @@ VISIBLE_OTHER_COUNT=$(echo "$VISIBLE_OTHER_IDS" | wc -w)
 if [ "$TOTAL" -eq 0 ]; then
     # Kill any stale Thunar daemon with no sway windows — otherwise the new
     # instance activates the existing one, which can cause the scratchpad move to fail
-    if pgrep -x thunar > /dev/null 2>&1; then
-        pkill -x thunar
+    if pgrep -ix thunar > /dev/null 2>&1; then
+        pkill -ix thunar
         sleep 0.2
     fi
-    thunar &
-    for _ in $(seq 1 40); do
-        swaymsg -t get_tree | jq -e '[.. | objects | select(.app_id? == "thunar")] | length > 0' > /dev/null 2>&1 && break
+    thunar --window &
+    NEW_ID=""
+    for _ in $(seq 1 60); do
+        NEW_ID=$(swaymsg -t get_tree | jq -r '[.. | objects | select(.app_id? == "thunar")] | first | .id // empty' 2>/dev/null)
+        [ -n "$NEW_ID" ] && break
         sleep 0.05
     done
-    swaymsg "[app_id=thunar] move scratchpad, scratchpad show"
+    sleep 0.1
+    if [ -n "$NEW_ID" ]; then
+        swaymsg "[con_id=$NEW_ID] move scratchpad"
+        swaymsg "[con_id=$NEW_ID] scratchpad show"
+    else
+        swaymsg "[app_id=thunar] move scratchpad, scratchpad show"
+    fi
 elif [ "$VISIBLE_OTHER_COUNT" -gt 0 ]; then
     # Visible on another workspace → move to current and focus
     for id in $VISIBLE_OTHER_IDS; do
