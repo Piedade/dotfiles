@@ -36,7 +36,9 @@ window#waybar > box {
 #custom-mic,
 #custom-notification,
 #cpu,
-#memory {
+#memory,
+#custom-vpn,
+#tray {
     padding: 4px 6px 2px;
     background-color: transparent;
     color: @fg;
@@ -53,6 +55,7 @@ window#waybar > box {
 #custom-vol:hover,
 #custom-mic:hover,
 #custom-notification:hover,
+#custom-vpn:hover,
 #cpu:hover,
 #memory:hover {
     background-color: @bg-alt;
@@ -104,6 +107,11 @@ window#waybar > box {
 
 #custom-mic.muted {
     color: @disabled;
+}
+
+#custom-vpn.disconnected {
+    color: @disabled;
+    /* text-decoration: line-through; */
 }
 
 #custom-network {
