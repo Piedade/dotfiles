@@ -47,4 +47,6 @@ link_file ".config/swaylock" "$GITPATH" "$USER_HOME"
 
 # link_file ".vscode" "$GITPATH" "$USER_HOME"
 
+link_file "bin" "$GITPATH" "$USER_HOME/.local"
+
 echo_success "Linked config done!"

@@ -1,0 +1,98 @@
+#!/bin/bash
+
+YES=0
+POSITIONAL=()
+for arg in "$@"; do
+    case "$arg" in
+        --yes|-y) YES=1 ;;
+        *) POSITIONAL+=("$arg") ;;
+    esac
+done
+
+HOST_ANTIGO="${POSITIONAL[0]}"
+DOMINIO="${POSITIONAL[1]}"
+CONTA_EMAIL="${POSITIONAL[2]}"
+HOST_NOVO="${POSITIONAL[3]:-servidor.dplay.tv}"
+
+if [ ${#POSITIONAL[@]} -eq 0 ]; then
+    read -rp "Host antigo (origem): " HOST_ANTIGO
+    if [ -z "$HOST_ANTIGO" ]; then echo "Erro: host antigo é obrigatório."; exit 1; fi
+
+    read -rp "Host novo (destino) [$HOST_NOVO]: " _host_novo
+    [ -n "$_host_novo" ] && HOST_NOVO="$_host_novo"
+
+    read -rp "Domínio: " DOMINIO
+    if [ -z "$DOMINIO" ]; then echo "Erro: domínio é obrigatório."; exit 1; fi
+
+    read -rp "Conta de email: " CONTA_EMAIL
+    if [ -z "$CONTA_EMAIL" ]; then echo "Erro: conta de email é obrigatória."; exit 1; fi
+else
+    if [ -z "$HOST_ANTIGO" ] || [ -z "$DOMINIO" ] || [ -z "$CONTA_EMAIL" ]; then
+        echo "Uso: $0 <host_antigo> <dominio> <conta_email> [host_novo] [--yes]"
+        exit 1
+    fi
+fi
+
+EMAIL_COMPLETO="$CONTA_EMAIL@$DOMINIO"
+BASE_DIR="$HOME/Downloads/.email-imapsync"
+LOG_DIR="$BASE_DIR/$DOMINIO/log"
+mkdir -p "$LOG_DIR"
+LOG_FILE="$LOG_DIR/imapsync_${CONTA_EMAIL}.log"
+PASS_FILE="$BASE_DIR/$DOMINIO/pass_${CONTA_EMAIL}.txt"
+
+if [ ! -f "$PASS_FILE" ]; then
+    msg="❌ [$(date '+%Y-%m-%d %H:%M:%S')] Ficheiro de password não encontrado: $PASS_FILE"
+    echo "$msg" | tee -a "$LOG_FILE"
+    echo "   Cria-o com:" | tee -a "$LOG_FILE"
+    echo "   mkdir -p $(dirname "$PASS_FILE") && echo 'a_password' > $PASS_FILE" | tee -a "$LOG_FILE"
+    exit 1
+fi
+
+echo ""
+echo "  Conta:      $EMAIL_COMPLETO"
+echo "  Origem:     $HOST_ANTIGO:993"
+echo "  Destino:    $HOST_NOVO:993"
+echo "  Password:   $PASS_FILE"
+echo "  Log:        $LOG_FILE"
+echo ""
+
+if [ "$YES" -eq 0 ]; then
+    read -rp "Continuar? [y/N]: " answer
+    case "$answer" in
+        [Yy]*) ;;
+        *) echo "Cancelado."; exit 0 ;;
+    esac
+fi
+
+DATA_ATUAL=$(date "+%Y-%m-%d %H:%M:%S")
+echo "=== [$DATA_ATUAL] SYNCING: $EMAIL_COMPLETO ===" | tee -a "$LOG_FILE"
+
+QUOTA_LIMITE=85
+
+imapsync \
+    --host1 "$HOST_ANTIGO" --port1 993 --ssl1 \
+    --user1 "$EMAIL_COMPLETO" --passfile1 "$PASS_FILE" \
+    --host2 "$HOST_NOVO" --port2 993 --ssl2 \
+    --user2 "$EMAIL_COMPLETO" --passfile2 "$PASS_FILE" \
+    --noresyncflags \
+    --nolog 2>&1 | tee -a "$LOG_FILE"
+STATUS=${PIPESTATUS[0]}
+
+QUOTA_USADA=$(grep -o 'Quota current storage.*% full' "$LOG_FILE" | tail -1 | grep -o '[0-9]*\.[0-9]*%' | tr -d '%' | cut -d'.' -f1)
+if [ -n "$QUOTA_USADA" ] && [ "$QUOTA_USADA" -ge "$QUOTA_LIMITE" ]; then
+    echo "⚠️  [$(date '+%Y-%m-%d %H:%M:%S')] AVISO: Quota em $HOST_NOVO está a ${QUOTA_USADA}% (limite de aviso: ${QUOTA_LIMITE}%)" | tee -a "$LOG_FILE"
+fi
+
+DATA_FIM=$(date "+%Y-%m-%d %H:%M:%S")
+if [ $STATUS -eq 0 ]; then
+    msg="=== [$DATA_FIM] TERMINADA COM SUCESSO: $EMAIL_COMPLETO ==="
+elif [ $STATUS -eq 161 ]; then
+    msg="❌ [$DATA_FIM] ERRO: Password incorreta para $EMAIL_COMPLETO em $HOST_ANTIGO (host1)"
+elif [ $STATUS -eq 162 ]; then
+    msg="❌ [$DATA_FIM] ERRO: Password incorreta para $EMAIL_COMPLETO em $HOST_NOVO (host2)"
+else
+    msg="❌ [$DATA_FIM] ERRO: Falha no imapsync para $EMAIL_COMPLETO (exit code: $STATUS)"
+fi
+echo "$msg" | tee -a "$LOG_FILE"
+
+echo "------------------------------------------------------------------" | tee -a "$LOG_FILE"
