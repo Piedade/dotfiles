@@ -1,7 +1,7 @@
 #!/bin/bash
 if ip link show type wireguard 2>/dev/null | grep -q .; then
-    wg-quick down red
+    systemctl stop wg-quick@red
 else
-    wg-quick up red
+    systemctl start wg-quick@red
 fi
 pkill -SIGRTMIN+3 waybar
