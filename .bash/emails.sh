@@ -34,6 +34,14 @@ select_domain() {
     echo "$domain"
 }
 
+# Escolher domínio via fzf (lista todos os domínios do servidor, sem precisar da conta)
+select_domain_global() {
+    local domain
+    domain=$(ssh "$SERVER" "awk -F': ' '{print \$1}' /etc/userdomains" | fzf --prompt="Select domain: ")
+    [[ -z "$domain" ]] && return 1
+    echo "$domain"
+}
+
 # ─────────────── CHECK SHELL ACCESS ───────────────
 # Retorna:
 # 0 = normal shell
@@ -62,24 +70,31 @@ add_shell_access() {
 
 # ─────────────── MAIN FUNCTION ───────────────
 create_email() {
-    local ACCOUNT=$1
-    local EMAIL=$2
+    local PREFIX=$1
+    local DOMAIN=$2
 
-    # Se não passou ACCOUNT → fzf local
-    if [[ -z "$ACCOUNT" ]]; then
-        ACCOUNT=$(select_account) || { echo "Operation cancelled"; return 1; }
+    # Se não passou PREFIX → perguntar (a menos que já seja um email completo)
+    if [[ -z "$PREFIX" ]]; then
+        read -rp "Enter new email prefix (ex: info, geral, support): " PREFIX
+        [[ -z "$PREFIX" ]] && { echo "Operation cancelled"; return 1; }
     fi
 
-    # Se não passou EMAIL → fzf local
-    if [[ -z "$EMAIL" ]]; then
-        DOMAIN=$(select_domain "$ACCOUNT") || { echo "Operation cancelled"; return 1; }
-
-        # Perguntar prefixo do email
-        read -rp "Enter new email prefix (ex: info, geral, support): " prefix
-        [[ -z "$prefix" ]] && { echo "Operation cancelled"; return 1; }
-
-        EMAIL="$prefix@$DOMAIN"
+    # Se o PREFIX já vier com domínio (ex: info@exemplo.com), usa-o tal como está
+    local EMAIL
+    if [[ "$PREFIX" == *@* ]]; then
+        EMAIL="$PREFIX"
+        DOMAIN="${EMAIL#*@}"
+    else
+        # Se não passou DOMAIN → fzf local (por último)
+        if [[ -z "$DOMAIN" ]]; then
+            DOMAIN=$(select_domain_global) || { echo "Operation cancelled"; return 1; }
+        fi
+        EMAIL="$PREFIX@$DOMAIN"
     fi
+
+    # Descobrir a conta dona do domínio
+    local ACCOUNT
+    ACCOUNT=$(whm_account_by_domain "$DOMAIN") || { echo "Domain not found: $DOMAIN"; return 1; }
 
     # Confirmação
     echo
@@ -112,23 +127,30 @@ create_email() {
     # Criar email
     local EMAIL_PASS
     EMAIL_PASS=$(gen_pass)
-    local DOMAIN="${EMAIL#*@}"
 
     echo "Creating email..."
-    ssh "$SERVER" "uapi --user=$ACCOUNT Email add_pop email='$EMAIL' password='$EMAIL_PASS'" \
-        && echo "Email created successfully." \
-        || { echo "Failed to create email"; return 1; }
+    local RESULT
+    RESULT=$(ssh "$SERVER" "uapi --user=$ACCOUNT Email add_pop email='$EMAIL' password='$EMAIL_PASS'")
+
+    if ! echo "$RESULT" | grep -q "status: 1"; then
+        local ERROR_MSG
+        ERROR_MSG=$(echo "$RESULT" | grep -A1 "errors:" | tail -n1 | sed -e 's/^\s*-\s*//' -e "s/^['\"]//" -e "s/['\"]$//")
+        echo_error "Failed to create email: ${ERROR_MSG:-unknown error}"
+        return 1
+    fi
+
+    echo_success "Email created successfully."
 
     # Mostrar credenciais
     echo
-    echo "Segue as credênciais de acesso, pode aceder:"
+    echo "Segue as credênciais de acesso, pode aceder via:"
     echo
-    echo "Via web:"
+    echo "Web:"
     echo "http://$DOMAIN/webmail"
     echo "Email: $EMAIL"
     echo "Palavra-passe: $EMAIL_PASS"
     echo
-    echo "Via cliente de email (ex: Outlook ou Thunderbird):"
+    echo "Cliente de email (ex: Outlook ou Thunderbird):"
     echo "Utilizador: $EMAIL"
     echo "Palavra-passe: $EMAIL_PASS"
     echo
@@ -145,10 +167,10 @@ create_email() {
 # ─────────────── AUTO-COMPLETE OPCIONAL ───────────────
 _create_email_autocomplete() {
     local cur="${COMP_WORDS[COMP_CWORD]}"
-    local users
-    users=$(ssh "$SERVER" "cut -d: -f1 /etc/trueuserowners")
-    if [[ $COMP_CWORD -eq 1 ]]; then
-        COMPREPLY=( $(compgen -W "$users" -- "$cur") )
+    local domains
+    domains=$(ssh "$SERVER" "awk -F': ' '{print \$1}' /etc/userdomains")
+    if [[ $COMP_CWORD -eq 2 ]]; then
+        COMPREPLY=( $(compgen -W "$domains" -- "$cur") )
     fi
 }
 complete -F _create_email_autocomplete create_email

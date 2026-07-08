@@ -3,36 +3,41 @@
 TREE=$(swaymsg -t get_tree)
 CURRENT_WS_ID=$(swaymsg -t get_workspaces | jq -r '.[] | select(.focused) | .id')
 
-# Single parse: build three ID lists using set arithmetic
-# hidden     = under __i3_scratch
-# scratchpad = scratchpad_state != none (hidden + visible on screen)
-# all        = every thunar window
-IDS=$(echo "$TREE" | jq '{
-  hidden:     [.. | objects | select(.name? == "__i3_scratch") | .. | objects | select(.app_id? == "thunar") | .id],
-  scratchpad: [.. | objects | select(.app_id? == "thunar" and (.scratchpad_state? // "none") != "none") | .id],
-  all:        [.. | objects | select(.app_id? == "thunar") | .id]
-}' 2>/dev/null)
+# Parse with Python — jq hits a depth limit on large sway trees
+IDS=$(echo "$TREE" | python3 -c '
+import json, sys
+sys.setrecursionlimit(10000)
 
-HIDDEN_IDS=$(echo  "$IDS" | jq -r '.hidden[]'                 2>/dev/null)
-VISIBLE_IDS=$(echo "$IDS" | jq -r '(.scratchpad - .hidden)[]' 2>/dev/null)
-REGULAR_IDS=$(echo "$IDS" | jq -r '(.all - .scratchpad)[]'    2>/dev/null)
+def find(node, app_id, scratch=False, ws_id=None, on_ws=False):
+    h, vc, vo = [], [], []
+    if node.get("name") == "__i3_scratch":
+        scratch = True
+    if ws_id is not None and node.get("id") == ws_id:
+        on_ws = True
+    app = node.get("app_id") or (node.get("window_properties") or {}).get("class", "") or ""
+    if app.lower() == app_id:
+        nid = node.get("id")
+        if nid is not None:
+            (h if scratch else vc if on_ws else vo).append(nid)
+    for child in node.get("nodes", []) + node.get("floating_nodes", []):
+        ch, cvc, cvo = find(child, app_id, scratch, ws_id, on_ws)
+        h += ch; vc += cvc; vo += cvo
+    return h, vc, vo
 
-VISIBLE_COUNT=$(echo "$VISIBLE_IDS" | wc -w)
-HIDDEN_COUNT=$(echo  "$HIDDEN_IDS"  | wc -w)
-REGULAR_COUNT=$(echo "$REGULAR_IDS" | wc -w)
-TOTAL=$((VISIBLE_COUNT + HIDDEN_COUNT + REGULAR_COUNT))
+ws_id = int(sys.argv[1]) if len(sys.argv) > 1 and sys.argv[1].strip() else None
+tree = json.load(sys.stdin)
+hidden, vis_cur, vis_other = find(tree, "thunar", ws_id=ws_id)
+print(json.dumps({"hidden": hidden, "vis_cur": vis_cur, "vis_other": vis_other}))
+' "$CURRENT_WS_ID" 2>/dev/null)
 
-# For each visible window, check if it's on the current workspace
-VISIBLE_OTHER_IDS=""
-for id in $VISIBLE_IDS; do
-    ON_CURRENT=$(echo "$TREE" | jq --argjson wsid "$CURRENT_WS_ID" --argjson id "$id" '
-        [.. | objects | select(.id? == $wsid) | .. | objects | select(.id? == $id)] | length
-    ' 2>/dev/null)
-    if [ "$ON_CURRENT" -eq 0 ]; then
-        VISIBLE_OTHER_IDS="$VISIBLE_OTHER_IDS $id"
-    fi
-done
-VISIBLE_OTHER_COUNT=$(echo "$VISIBLE_OTHER_IDS" | wc -w)
+HIDDEN_IDS=$(echo    "$IDS" | jq -r '.hidden[]'   2>/dev/null)
+VIS_CUR_IDS=$(echo   "$IDS" | jq -r '.vis_cur[]'  2>/dev/null)
+VIS_OTHER_IDS=$(echo "$IDS" | jq -r '.vis_other[]' 2>/dev/null)
+
+HIDDEN_COUNT=$(echo    "$IDS" | jq '.hidden   | length' 2>/dev/null || echo 0)
+VIS_CUR_COUNT=$(echo   "$IDS" | jq '.vis_cur  | length' 2>/dev/null || echo 0)
+VIS_OTHER_COUNT=$(echo "$IDS" | jq '.vis_other | length' 2>/dev/null || echo 0)
+TOTAL=$((HIDDEN_COUNT + VIS_CUR_COUNT + VIS_OTHER_COUNT))
 
 if [ "$TOTAL" -eq 0 ]; then
     # Kill any stale Thunar daemon with no sway windows — otherwise the new
@@ -44,7 +49,19 @@ if [ "$TOTAL" -eq 0 ]; then
     thunar --window &
     NEW_ID=""
     for _ in $(seq 1 60); do
-        NEW_ID=$(swaymsg -t get_tree | jq -r '[.. | objects | select(.app_id? == "thunar")] | first | .id // empty' 2>/dev/null)
+        NEW_ID=$(swaymsg -t get_tree | python3 -c '
+import json, sys
+sys.setrecursionlimit(10000)
+def first(n, a):
+    app = n.get("app_id") or (n.get("window_properties") or {}).get("class", "") or ""
+    if app.lower() == a: return n.get("id")
+    for c in n.get("nodes", []) + n.get("floating_nodes", []):
+        r = first(c, a)
+        if r is not None: return r
+    return None
+r = first(json.load(sys.stdin), "thunar")
+if r is not None: print(r)
+' 2>/dev/null)
         [ -n "$NEW_ID" ] && break
         sleep 0.05
     done
@@ -55,22 +72,20 @@ if [ "$TOTAL" -eq 0 ]; then
     else
         swaymsg "[app_id=thunar] move scratchpad, scratchpad show"
     fi
-elif [ "$VISIBLE_OTHER_COUNT" -gt 0 ]; then
+elif [ "$VIS_OTHER_COUNT" -gt 0 ]; then
     # Visible on another workspace → move to current and focus
-    for id in $VISIBLE_OTHER_IDS; do
+    for id in $VIS_OTHER_IDS; do
         swaymsg "[con_id=$id] move to workspace current"
         swaymsg "[con_id=$id] focus"
     done
-elif [ "$VISIBLE_COUNT" -gt 0 ]; then
+elif [ "$VIS_CUR_COUNT" -gt 0 ]; then
     # Visible on current workspace → hide
-    for id in $VISIBLE_IDS $REGULAR_IDS; do
+    for id in $VIS_CUR_IDS; do
         swaymsg "[con_id=$id] move scratchpad"
     done
 else
-    for id in $REGULAR_IDS; do
-        swaymsg "[con_id=$id] move scratchpad"
-    done
-    for id in $HIDDEN_IDS $REGULAR_IDS; do
+    # Hidden in scratchpad → show
+    for id in $HIDDEN_IDS; do
         swaymsg "[con_id=$id] scratchpad show"
     done
 fi

@@ -8,13 +8,12 @@ create_wordpress() {
     local DB_NAME=$4
     local ENABLE_MULTI_PHP=$5
 
-    if [ $# -eq 0 ]; then
-        read -rp "Account: " ACCOUNT
-        if [ -z "$ACCOUNT" ]; then
-            echo_error "Account is required."
-            return 1
-        fi
+    # Se não passou ACCOUNT → fzf local
+    if [ -z "$ACCOUNT" ]; then
+        ACCOUNT=$(select_account) || { echo_error "Account is required."; return 1; }
+    fi
 
+    if [ $# -eq 0 ]; then
         local _default_domain="$ACCOUNT.dev.red.com.pt"
         read -rp "Domain [$_default_domain]: " DOMAIN
         [ -z "$DOMAIN" ] && DOMAIN="$_default_domain"
@@ -26,6 +25,7 @@ create_wordpress() {
 
         local _default_db_name="site"
         [ "$DOMAIN" != "$_default_domain" ] && _default_db_name="${DOMAIN%%.*}"
+        _default_db_name="${_default_db_name//-/_}"
         read -rp "Database name [$_default_db_name]: " DB_NAME
         [ -z "$DB_NAME" ] && DB_NAME="$_default_db_name"
 
@@ -38,11 +38,6 @@ create_wordpress() {
             *) ENABLE_MULTI_PHP="" ;;
         esac
     else
-        if [ -z "$ACCOUNT" ]; then
-            echo_error "Usage: create_wordpress <account> [domain] [root_dir] [db_name] [enable_multi_php]"
-            return 1
-        fi
-
         [ -z "$DOMAIN" ] && DOMAIN="$ACCOUNT.dev.red.com.pt"
         if [ -z "$ROOT_DIR" ]; then
             [ "$DOMAIN" = "$ACCOUNT.dev.red.com.pt" ] && ROOT_DIR="public_html" || ROOT_DIR="$DOMAIN"
@@ -53,9 +48,34 @@ create_wordpress() {
         [ -z "$SITE_TITLE" ] && SITE_TITLE="$ACCOUNT"
     fi
 
+    # Validate DB_NAME: replace hyphens and enforce 16-char limit
+    if [[ "$DB_NAME" == *-* ]]; then
+        local _db_name_clean="${DB_NAME//-/_}"
+        echo_error "DB_NAME '$DB_NAME' contains hyphens. Converting to '$_db_name_clean'."
+        DB_NAME="$_db_name_clean"
+    fi
+    if [ ${#DB_NAME} -gt 16 ]; then
+        local _db_name_truncated="${DB_NAME:0:16}"
+        echo_error "DB_NAME '$DB_NAME' exceeds 16 characters. Truncating to '$_db_name_truncated'."
+        DB_NAME="$_db_name_truncated"
+    fi
+
+    # Check domain ownership so the confirmation shows what will happen to it
+    local DOMAIN_OWNER
+    DOMAIN_OWNER=$(whm_account_by_domain "$DOMAIN")
+    local DOMAIN_STATUS
+    if [ -z "$DOMAIN_OWNER" ]; then
+        DOMAIN_STATUS="will be created"
+    elif [ "$DOMAIN_OWNER" != "$ACCOUNT" ]; then
+        echo_error "Domain $DOMAIN already belongs to another account ($DOMAIN_OWNER). Aborting."
+        return 1
+    else
+        DOMAIN_STATUS="already exists for this account"
+    fi
+
     # Confirmation to the user that the variables are correct
     echo_info "Account: $ACCOUNT"
-    echo_info "Domain: $DOMAIN"
+    echo_info "Domain: $DOMAIN ($DOMAIN_STATUS)"
     echo_info "Root: ~/$ROOT_DIR"
     echo_info "Database: $DB_NAME"
     if [ -n "$ENABLE_MULTI_PHP" ]; then
@@ -94,6 +114,12 @@ create_wordpress() {
     esac
 
     setup_ssh_key "$ACCOUNT"
+
+    if [ -z "$DOMAIN_OWNER" ]; then
+        echo_info "Creating $DOMAIN as addon domain..."
+        local SUBDOMAIN="${DOMAIN%%.*}"
+        run_remote "$ACCOUNT" "uapi AddonDomain addaddondomain dir='$ROOT_DIR' newdomain='$DOMAIN' subdomain='$SUBDOMAIN'"
+    fi
 
     local DB_PASS=$(gen_pass)
     local WP_ADMIN_PASS=$(gen_pass)
@@ -175,7 +201,7 @@ HTACCESS_CONTENT+="
    php_value max_execution_time 30
    php_value max_input_time 60
    php_value max_input_vars 1000
-   php_value memory_limit 256M
+   php_value memory_limit 512M
    php_value post_max_size 32M
    php_value session.gc_maxlifetime 1440
    php_value session.save_path \"/var/cpanel/php/sessions/ea-php84\"
@@ -187,7 +213,7 @@ HTACCESS_CONTENT+="
    php_value max_execution_time 30
    php_value max_input_time 60
    php_value max_input_vars 1000
-   php_value memory_limit 256M
+   php_value memory_limit 512M
    php_value post_max_size 32M
    php_value session.gc_maxlifetime 1440
    php_value session.save_path \"/var/cpanel/php/sessions/ea-php84\"
@@ -211,7 +237,7 @@ EOL"
     echo_info "Applying security settings..."
     run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN config shuffle-salts"
     run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN config set DISALLOW_FILE_EDIT true --raw"
-    run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN config set WP_MEMORY_LIMIT 256M"
+    run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN config set WP_MEMORY_LIMIT 512M"
 
 
     echo_info "Disabling plugins..."
@@ -250,7 +276,7 @@ EOL"
     "
 
     echo
-    echo "🌍 Site: https://$DOMAIN/wp-admin/admin.php?page=elementor-license"
+    echo "🌍 Site: https://$DOMAIN/wp-admin/admin.php?page=elementor-connect-account"
     echo "👤 Admin: redpost"
     echo "🔑 Admin Password: $WP_ADMIN_PASS"
 

@@ -18,3 +18,5 @@ tmp/**/*
 .direnv/
 .htaccess
 install.log
+
+**/.claude/settings.local.json
