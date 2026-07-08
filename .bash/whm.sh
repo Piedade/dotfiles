@@ -24,7 +24,16 @@ get_domain_account() {
     fi
 
     local ACCOUNT
-    ACCOUNT=$(whm_account_by_domain "$DOMAIN") || { echo_error "Domain not found: $DOMAIN"; return 1; }
+    ACCOUNT=$(whm_account_by_domain "$DOMAIN") || {
+        echo_error "domain not found."
+        local NS
+        NS=$(dig NS "$DOMAIN" +short)
+        if [ -n "$NS" ]; then
+            echo_info "NS for $DOMAIN:"
+            echo "$NS"
+        fi
+        return 1
+    }
 
     echo_success "$DOMAIN -> $ACCOUNT"
 }

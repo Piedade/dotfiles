@@ -13,18 +13,21 @@ create_wordpress() {
         ACCOUNT=$(select_account) || { echo_error "Account is required."; return 1; }
     fi
 
+    local _main_domain
+    _main_domain=$(select_domain "$ACCOUNT") || _main_domain=""
+
     if [ $# -eq 0 ]; then
         local _default_domain="$ACCOUNT.dev.red.com.pt"
         read -rp "Domain [$_default_domain]: " DOMAIN
         [ -z "$DOMAIN" ] && DOMAIN="$_default_domain"
 
         local _default_root_dir="public_html"
-        [ "$DOMAIN" != "$_default_domain" ] && _default_root_dir="$DOMAIN"
+        [ "$DOMAIN" != "$_default_domain" ] && [ "$DOMAIN" != "$_main_domain" ] && _default_root_dir="$DOMAIN"
         read -rp "Root directory [$_default_root_dir]: " ROOT_DIR
         [ -z "$ROOT_DIR" ] && ROOT_DIR="$_default_root_dir"
 
         local _default_db_name="site"
-        [ "$DOMAIN" != "$_default_domain" ] && _default_db_name="${DOMAIN%%.*}"
+        [ "$DOMAIN" != "$_default_domain" ] && [ "$DOMAIN" != "$_main_domain" ] && _default_db_name="${DOMAIN%%.*}"
         _default_db_name="${_default_db_name//-/_}"
         read -rp "Database name [$_default_db_name]: " DB_NAME
         [ -z "$DB_NAME" ] && DB_NAME="$_default_db_name"
@@ -40,10 +43,18 @@ create_wordpress() {
     else
         [ -z "$DOMAIN" ] && DOMAIN="$ACCOUNT.dev.red.com.pt"
         if [ -z "$ROOT_DIR" ]; then
-            [ "$DOMAIN" = "$ACCOUNT.dev.red.com.pt" ] && ROOT_DIR="public_html" || ROOT_DIR="$DOMAIN"
+            if [ "$DOMAIN" = "$ACCOUNT.dev.red.com.pt" ] || [ "$DOMAIN" = "$_main_domain" ]; then
+                ROOT_DIR="public_html"
+            else
+                ROOT_DIR="$DOMAIN"
+            fi
         fi
         if [ -z "$DB_NAME" ]; then
-            [ "$DOMAIN" = "$ACCOUNT.dev.red.com.pt" ] && DB_NAME="site" || DB_NAME="${DOMAIN%%.*}"
+            if [ "$DOMAIN" = "$ACCOUNT.dev.red.com.pt" ] || [ "$DOMAIN" = "$_main_domain" ]; then
+                DB_NAME="site"
+            else
+                DB_NAME="${DOMAIN%%.*}"
+            fi
         fi
         [ -z "$SITE_TITLE" ] && SITE_TITLE="$ACCOUNT"
     fi
