@@ -75,6 +75,7 @@ imapsync \
     --host2 "$HOST_NOVO" --port2 993 --ssl2 \
     --user2 "$EMAIL_COMPLETO" --passfile2 "$PASS_FILE" \
     --noresyncflags \
+    --addheader \
     --nolog 2>&1 | tee -a "$LOG_FILE"
 STATUS=${PIPESTATUS[0]}
 

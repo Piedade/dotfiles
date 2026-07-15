@@ -1,10 +1,14 @@
 #!/bin/bash
 
 change_cpanel_password() {
-    local ACCOUNT=$1
+    local ACCOUNT="$1"
 
     if [ -z "$ACCOUNT" ]; then
-        echo_error "Usage: change_cpanel_password <account>"
+        ACCOUNT=$(select_account) || { echo_error "Usage: change_cpanel_password <account>"; return 1; }
+    fi
+
+    if [[ ! "$ACCOUNT" =~ ^[a-zA-Z0-9_-]+$ ]]; then
+        echo_error "Invalid account name: '$ACCOUNT'"
         return 1
     fi
 
@@ -45,3 +49,14 @@ change_cpanel_password() {
     echo "Cumprimentos,"
     echo
 }
+
+# ─────────────── AUTO-COMPLETE OPCIONAL ───────────────
+_change_cpanel_password_autocomplete() {
+    local cur="${COMP_WORDS[COMP_CWORD]}"
+    local accounts
+    if [[ $COMP_CWORD -eq 1 ]]; then
+        accounts=$(ssh "$SERVER" "cut -d: -f1 /etc/trueuserowners" 2>/dev/null)
+        COMPREPLY=( $(compgen -W "$accounts" -- "$cur") )
+    fi
+}
+complete -F _change_cpanel_password_autocomplete change_cpanel_password
