@@ -127,9 +127,26 @@ create_wordpress() {
     setup_ssh_key "$ACCOUNT"
 
     if [ -z "$DOMAIN_OWNER" ]; then
-        echo_info "Creating $DOMAIN as addon domain..."
+        # Este servidor não tem o módulo AddonDomain (nem em uapi nem em cpapi2).
+        # Uma addon domain é, por baixo, um subdomínio interno com docroot próprio +
+        # o domínio real "estacionado" (parked) nesse vhost — feito ao nível do WHM (root).
+        if [ -z "$_main_domain" ]; then
+            echo_error "Não consegui determinar o domínio principal de '$ACCOUNT' para criar '$DOMAIN'."
+            return 1
+        fi
+
         local SUBDOMAIN="${DOMAIN%%.*}"
-        run_remote "$ACCOUNT" "uapi AddonDomain addaddondomain dir='$ROOT_DIR' newdomain='$DOMAIN' subdomain='$SUBDOMAIN'"
+        local INTERNAL_SUBDOMAIN="${SUBDOMAIN}.${_main_domain}"
+
+        echo_info "Creating internal subdomain $INTERNAL_SUBDOMAIN..."
+        ssh "$SERVER" "whmapi1 create_subdomain domain='${INTERNAL_SUBDOMAIN}' document_root='${ROOT_DIR}'" \
+            || { echo_error "Falha a criar o subdomínio interno para '$DOMAIN'."; return 1; }
+
+        if [ "$DOMAIN" != "$INTERNAL_SUBDOMAIN" ]; then
+            echo_info "Creating $DOMAIN as addon domain (parked em $INTERNAL_SUBDOMAIN)..."
+            ssh "$SERVER" "whmapi1 create_parked_domain_for_user domain='${DOMAIN}' username='${ACCOUNT}' web_vhost_domain='${INTERNAL_SUBDOMAIN}'" \
+                || { echo_error "Falha a associar o domínio '$DOMAIN'."; return 1; }
+        fi
     fi
 
     local DB_PASS=$(gen_pass)
