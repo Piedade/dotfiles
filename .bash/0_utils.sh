@@ -73,21 +73,32 @@ setup_ssh_key() {
 
     [ ! -f "$pub_key_file" ] && { echo_error "~/.ssh/id_ed25519.pub not found"; return 1; }
 
-    echo_info "Setting up SSH key for $account..."
+    echo_info "Checking SSH key ($key_name) for $account..."
     ssh "$SERVER" "
         mkdir -p /home/$account/.ssh &&
         chown $account:$account /home/$account/.ssh &&
         chmod 700 /home/$account/.ssh
     "
     ssh "$SERVER" "cat > /home/$account/.ssh/${key_name}.pub" < "$pub_key_file"
-    ssh "$SERVER" "
-        grep -qxF \"\$(cat /home/$account/.ssh/${key_name}.pub)\" /home/$account/.ssh/authorized_keys 2>/dev/null ||
-            cat /home/$account/.ssh/${key_name}.pub >> /home/$account/.ssh/authorized_keys &&
-        chown $account:$account /home/$account/.ssh/${key_name}.pub /home/$account/.ssh/authorized_keys 2>/dev/null &&
-        chmod 644 /home/$account/.ssh/${key_name}.pub &&
+
+    local KEY_STATUS
+    KEY_STATUS=$(ssh "$SERVER" "
+        if grep -qxF \"\$(cat /home/$account/.ssh/${key_name}.pub)\" /home/$account/.ssh/authorized_keys 2>/dev/null; then
+            echo already_present
+        else
+            cat /home/$account/.ssh/${key_name}.pub >> /home/$account/.ssh/authorized_keys
+            echo added
+        fi
+        chown $account:$account /home/$account/.ssh/${key_name}.pub /home/$account/.ssh/authorized_keys 2>/dev/null
+        chmod 644 /home/$account/.ssh/${key_name}.pub
         chmod 600 /home/$account/.ssh/authorized_keys
-    "
-    echo_success "SSH key configured for $account."
+    ")
+
+    if [ "$KEY_STATUS" = "already_present" ]; then
+        echo_success "Authorized!"
+    else
+        echo_success "SSH key ($key_name) added to $account's authorized_keys."
+    fi
 }
 
 # select_email() {

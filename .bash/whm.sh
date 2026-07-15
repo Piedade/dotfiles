@@ -15,6 +15,21 @@ whm_account_by_domain() {
     echo "$ACCOUNT"
 }
 
+# Devolve o documentroot (caminho absoluto) de um domínio, ou falha se não existir.
+# Uso interno por outros scripts (ex: staging.sh) que precisem saber a pasta
+# real do domínio em vez de adivinhar (public_html vs. nome do domínio).
+whm_docroot_by_domain() {
+    local DOMAIN=$1
+    local DOCROOT
+    DOCROOT=$(ssh "$SERVER" "whmapi1 domainuserdata domain=${DOMAIN}" | grep "documentroot:" | head -n1 | awk '{print $2}')
+
+    if [ -z "$DOCROOT" ] || [ "$DOCROOT" = "~" ]; then
+        return 1
+    fi
+
+    echo "$DOCROOT"
+}
+
 get_domain_account() {
     local DOMAIN=$1
 

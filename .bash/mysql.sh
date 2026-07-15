@@ -12,10 +12,10 @@ get_database(){
     fi
 
     # echo -e "${BLUE}Detecting PrestaShop prefix...$RESET"
-    DETECTED_TABLE=$(ssh root@server "mysql -N -e \"SELECT TABLE_NAME FROM information_schema.tables WHERE table_schema='${DATABASE_NAME}' AND TABLE_NAME LIKE '%_configuration' LIMIT 1\" 2>/dev/null")
+    DETECTED_TABLE=$(ssh root@server "mysql -N -e \"SELECT TABLE_NAME FROM information_schema.tables WHERE table_schema='${DATABASE_NAME}' AND TABLE_NAME LIKE '%_shop_url' ORDER BY LENGTH(TABLE_NAME) ASC LIMIT 1\" 2>/dev/null")
 
     if [ -n "$DETECTED_TABLE" ]; then
-        DATABASE_PREFIX="${DETECTED_TABLE%_configuration}"
+        DATABASE_PREFIX="${DETECTED_TABLE%_shop_url}"
         echo -e "${BLUE_PRESTASHOP}󱇕 PrestaShop detected$RESET"
     else
         DATABASE_PREFIX="false"

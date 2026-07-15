@@ -129,6 +129,23 @@ create_prestashop() {
 
     setup_ssh_key "$ACCOUNT"
 
+    # Abort early rather than silently overwriting an existing site (unzip -o would clobber
+    # matching files) or generating a fresh password that won't match an existing DB user's
+    # real one — that mismatch only surfaces later as an opaque DB-connection failure.
+    if remote_file_exists "$ACCOUNT" "$ROOT_DIR/app/config/parameters.php" \
+        || remote_file_exists "$ACCOUNT" "$ROOT_DIR/config/settings.inc.php"; then
+        echo_error "~/$ROOT_DIR already has an installed PrestaShop (parameters.php/settings.inc.php found). Aborting."
+        return 1
+    fi
+    if mysql_database_exists "$ACCOUNT" "${ACCOUNT}_${DB_NAME}"; then
+        echo_error "Database ${ACCOUNT}_${DB_NAME} already exists. Aborting."
+        return 1
+    fi
+    if mysql_user_exists "$ACCOUNT" "${ACCOUNT}_${DB_NAME}"; then
+        echo_error "MySQL user ${ACCOUNT}_${DB_NAME} already exists. Aborting."
+        return 1
+    fi
+
     if [ -z "$DOMAIN_OWNER" ]; then
         # Este servidor não tem o módulo AddonDomain (nem em uapi nem em cpapi2).
         # Uma addon domain é, por baixo, um subdomínio interno com docroot próprio +
@@ -160,8 +177,17 @@ create_prestashop() {
     local PS_COUNTRY="pt"
     local PHP_BIN="/opt/alt/php84/usr/bin/php -d memory_limit=-1"
 
-    echo_info "Setting PHP version to 8.4..."
-    run_remote "$ACCOUNT" "selectorctl --interpreter=php --set-user-current=8.4"
+    if [ "$ENABLE_MULTI_PHP" = "yes" ] || [ "$ENABLE_MULTI_PHP" = "true" ]; then
+        echo_info "MultiPHP enabled: skipping account-wide default (this domain forces 8.4 via .htaccess)."
+    else
+        echo_info "Setting PHP version to 8.4..."
+        run_remote "$ACCOUNT" "selectorctl --interpreter=php --set-user-current=8.4"
+    fi
+
+    echo_info "Checking required PHP extensions..."
+    check_php_extensions "$ACCOUNT" "/opt/alt/php84/usr/bin/php" \
+        curl dom fileinfo gd iconv intl json mbstring openssl simplexml zip \
+        || return 1
 
     echo_info "Creating database and user..."
     run_remote "$ACCOUNT" "uapi Mysql create_database name='${ACCOUNT}_${DB_NAME}'"
@@ -265,9 +291,9 @@ create_prestashop() {
         run_remote "$ACCOUNT" "cat >> ~/$ROOT_DIR/.htaccess <<EOL
 
 # php -- BEGIN cPanel-generated handler, do not edit
-# Set the \"ea-php84\" package as the default \"PHP\" programming language.
+# Set the “alt-php84” package as the default “PHP” programming language.
 <IfModule mime_module>
-  AddHandler application/x-httpd-ea-php84___lsphp .php .php8 .phtml
+  AddHandler application/x-httpd-alt-php84___lsphp .php .php8 .phtml
 </IfModule>
 # php -- END cPanel-generated handler, do not edit
 EOL"
