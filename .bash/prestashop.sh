@@ -455,7 +455,455 @@ PHPEOF
     echo "Pass: $EMAIL_PASS"
 }
 
+# Detecta o binário de PHP CLI correto para um site local (este PC de dev tem várias
+# versões lado a lado — php5.6 a php8.4 — e o CLI genérico 'php' corre sempre a mais
+# recente, que pode nem arrancar uma loja antiga). O único sinal fiável é a versão
+# configurada no socket php-fpm do vhost Apache do próprio domínio.
+# Uso: detect_ps_php_bin <site_dir>
+detect_ps_php_bin() {
+    local SITE_DIR="$1"
+    local DOMAIN
+    DOMAIN=$(basename "$SITE_DIR")
 
+    local FPM_VERSION
+    FPM_VERSION=$(grep -ohP '(?<=php)[0-9]+\.[0-9]+(?=-fpm\.sock)' /etc/apache2/sites-available/"${DOMAIN}"*.conf 2>/dev/null | head -n1)
+
+    if [ -n "$FPM_VERSION" ] && [ -x "/usr/bin/php${FPM_VERSION}" ]; then
+        echo "/usr/bin/php${FPM_VERSION}"
+        return 0
+    fi
+
+    echo "php"
+    return 1
+}
+
+# Detecta a versão instalada do PrestaShop. A fonte mais fiável é a própria BD
+# (PS_VERSION_DB) — é o que o instalador/autoupgrade usa para decidir se há update a
+# fazer, e ao contrário do código fonte não muda de sítio entre versões do core (já vi
+# 3 sítios diferentes: literal em app/AppKernel.php no 1.6/1.7, reexportado de
+# src/Core/Version.php a partir do 8.x...). Os greps a ficheiros ficam só como fallback
+# para quando a BD não está acessível.
+# Uso: detect_ps_version <site_dir>
+detect_ps_version() {
+    local SITE_DIR="$1"
+    local VERSION
+
+    local PARAMS_FILE="$SITE_DIR/app/config/parameters.php"
+    if [ -f "$PARAMS_FILE" ]; then
+        local DB_NAME DB_USER DB_PASS DB_HOST DB_PREFIX
+        DB_NAME=$(grep -oP "(?<='database_name' => ')[^']+" "$PARAMS_FILE" 2>/dev/null)
+        DB_USER=$(grep -oP "(?<='database_user' => ')[^']+" "$PARAMS_FILE" 2>/dev/null)
+        DB_PASS=$(grep -oP "(?<='database_password' => ')[^']*" "$PARAMS_FILE" 2>/dev/null)
+        DB_HOST=$(grep -oP "(?<='database_host' => ')[^']+" "$PARAMS_FILE" 2>/dev/null)
+        DB_PREFIX=$(grep -oP "(?<='database_prefix' => ')[^']*" "$PARAMS_FILE" 2>/dev/null)
+        [ -z "$DB_HOST" ] && DB_HOST="127.0.0.1"
+
+        if [ -n "$DB_NAME" ]; then
+            VERSION=$(MYSQL_PWD="$DB_PASS" mysql -h"$DB_HOST" -u"${DB_USER:-root}" -N -B \
+                -e "SELECT value FROM ${DB_PREFIX}configuration WHERE name='PS_VERSION_DB'" \
+                "$DB_NAME" 2>/dev/null)
+            [ -n "$VERSION" ] && { echo "$VERSION"; return 0; }
+        fi
+    fi
+
+    VERSION=$(grep -oP "(?<=const VERSION = ')[^']+" "$SITE_DIR/src/Core/Version.php" 2>/dev/null | head -n1)
+    [ -n "$VERSION" ] && { echo "$VERSION"; return 0; }
+
+    VERSION=$(grep -oP "(?<=const VERSION = ')[^']+" "$SITE_DIR/app/AppKernel.php" 2>/dev/null | head -n1)
+    [ -n "$VERSION" ] && { echo "$VERSION"; return 0; }
+
+    VERSION=$(grep -oP "(?<=define\('_PS_VERSION_', ')[^']+" "$SITE_DIR/config/settings.inc.php" 2>/dev/null | head -n1)
+    [ -n "$VERSION" ] && { echo "$VERSION"; return 0; }
+
+    return 1
+}
+
+# Atualiza uma instalação LOCAL do PrestaShop (ex: /var/www/quintanimal.test) para a versão
+# mais recente disponível, usando o módulo oficial "Update Assistant" (autoupgrade)
+# descarregado sempre da última release do GitHub, e o CLI documentado em
+# https://devdocs.prestashop-project.org/1.7/basics/keeping-up-to-date/update/update-from-the-cli/
+#
+# Corre 100% local, sem SSH — pensado para os sites de dev em /var/www/*.test, nunca para
+# produção (essa continua a ser feita manualmente/via backoffice, com todo o cuidado que
+# um site em produção merece).
+#
+# Uso: update_prestashop [--no-backup] [site_ou_dominio] [admin_dir] [channel]
+# channel: online_recommended (default, caminho seguro passo-a-passo) | online | local
+# --no-backup salta o backup:create (mais rápido para iterar em dev, mas sem rede de
+# segurança — não uses isto num site que não possas simplesmente recriar/reclonar).
+update_prestashop() {
+    local SKIP_BACKUP=0
+    local POSITIONAL=()
+    local arg
+    for arg in "$@"; do
+        case "$arg" in
+            --no-backup) SKIP_BACKUP=1 ;;
+            *) POSITIONAL+=("$arg") ;;
+        esac
+    done
+    set -- "${POSITIONAL[@]}"
+
+    local SITE=$1
+    local ADMIN_DIR=$2
+    local CHANNEL=${3:-online_recommended}
+
+    if [ -z "$SITE" ]; then
+        SITE=$(find /var/www -mindepth 1 -maxdepth 1 -type d 2>/dev/null | while read -r d; do
+            [ -f "$d/config/config.inc.php" ] && basename "$d"
+        done | fzf --prompt="Select PrestaShop site: ")
+        [ -z "$SITE" ] && { echo_error "Site is required."; return 1; }
+    fi
+
+    local SITE_DIR="$SITE"
+    [[ "$SITE_DIR" != /* ]] && SITE_DIR="/var/www/$SITE"
+    local DOMAIN
+    DOMAIN=$(basename "$SITE_DIR")
+
+    if [ ! -d "$SITE_DIR" ]; then
+        echo_error "Directory '$SITE_DIR' does not exist."
+        return 1
+    fi
+    if [ ! -f "$SITE_DIR/config/config.inc.php" ]; then
+        echo_error "'$SITE_DIR' doesn't look like a PrestaShop install (no config/config.inc.php)."
+        return 1
+    fi
+
+    # A pasta do admin é sempre renomeada (slug aleatório do instalador, ou manual tipo
+    # "cms") — não há forma fiável de a adivinhar em todas as versões, por isso escolhe-se
+    # via fzf. Pré-preenche a pesquisa com a pasta que já tiver um autoupgrade/ lá dentro
+    # (deixado por uma tentativa anterior via backoffice), quando existir.
+    if [ -z "$ADMIN_DIR" ]; then
+        local GUESS
+        GUESS=$(find "$SITE_DIR" -mindepth 2 -maxdepth 2 -type d -name autoupgrade 2>/dev/null \
+            | head -n1 | xargs -r dirname | xargs -r basename)
+
+        ADMIN_DIR=$(find "$SITE_DIR" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' 2>/dev/null \
+            | grep -vE '^(modules|themes|js|css|img|cache|var|vendor|config|controllers|classes|src|translations|tools|tests|docs|webservice|upload|download|mails|localization|override|pdf|bin|app|\.git|\.direnv)$' \
+            | fzf --prompt="Select admin directory (inside $DOMAIN): " --query="$GUESS")
+        [ -z "$ADMIN_DIR" ] && { echo_error "Admin directory is required."; return 1; }
+    fi
+    if [ ! -d "$SITE_DIR/$ADMIN_DIR" ]; then
+        echo_error "'$SITE_DIR/$ADMIN_DIR' does not exist."
+        return 1
+    fi
+
+    local PHP_BASE
+    PHP_BASE=$(detect_ps_php_bin "$SITE_DIR")
+    if [ "$PHP_BASE" = "php" ]; then
+        echo_error "Não consegui determinar a versão de PHP do vhost de $DOMAIN; a usar '$PHP_BASE' (pode falhar)."
+    fi
+    local PHP_BIN=("$PHP_BASE" -d memory_limit=-1 -d max_execution_time=0)
+
+    local CURRENT_VERSION
+    CURRENT_VERSION=$(detect_ps_version "$SITE_DIR")
+    [ -z "$CURRENT_VERSION" ] && CURRENT_VERSION="(desconhecida)"
+
+    echo_info "Site: $DOMAIN ($SITE_DIR)"
+    echo_info "Admin dir: $ADMIN_DIR"
+    echo_info "PHP: ${PHP_BIN[0]}"
+    echo_info "Versão atual: $CURRENT_VERSION"
+    echo_info "Canal: $CHANNEL"
+    if [ "$SKIP_BACKUP" = "1" ]; then
+        echo_error "⚠️  --no-backup: vai atualizar SEM criar backup primeiro."
+    fi
+
+    read -rp "Continuar? [y/N]: " answer
+    case "$answer" in
+        [Yy]*) ;;
+        *) echo_error "Operação cancelada."; return 1 ;;
+    esac
+
+    # --- Descarrega sempre a última release do módulo Update Assistant do GitHub. A versão
+    # que vem de fábrica com lojas antigas (ex: 4.10.0, de 2021) só tem o script antigo
+    # cli-upgrade.php; a versão atual expõe bin/console com os comandos update:check-*/
+    # update:start documentados no devdocs. Cache por versão, como o create_prestashop já
+    # faz aos releases do core.
+    local CACHE_DIR="$HOME/.cache/prestashop-autoupgrade"
+    mkdir -p "$CACHE_DIR"
+
+    echo_info "🔎 A verificar a última versão do módulo Update Assistant..."
+    local AU_VERSION
+    AU_VERSION=$(curl -fsSL https://api.github.com/repos/PrestaShop/autoupgrade/releases/latest | jq -r '.tag_name')
+    if [ -z "$AU_VERSION" ] || [ "$AU_VERSION" = "null" ]; then
+        echo_error "Falha ao obter a versão do módulo autoupgrade no GitHub."
+        return 1
+    fi
+    echo_info "Última versão do Update Assistant: $AU_VERSION"
+
+    local AU_ZIP="$CACHE_DIR/autoupgrade-${AU_VERSION}.zip"
+    if [ -f "$AU_ZIP" ]; then
+        echo_info "📦 A reutilizar módulo autoupgrade ${AU_VERSION} em cache."
+    else
+        echo_info "⬇️  A descarregar módulo autoupgrade ${AU_VERSION}..."
+        curl -fsSL -o "$AU_ZIP" "https://github.com/PrestaShop/autoupgrade/releases/download/${AU_VERSION}/autoupgrade-${AU_VERSION}.zip" \
+            || { echo_error "Download falhou."; rm -f "$AU_ZIP"; return 1; }
+    fi
+
+    # Nunca apagar o módulo instalado — só arquivar de lado. Se a versão nova do
+    # autoupgrade se comportar mal numa loja tão antiga, dá para voltar atrás.
+    if [ -d "$SITE_DIR/modules/autoupgrade" ]; then
+        local BACKUP_DIR="$SITE_DIR/modules/autoupgrade.bak-$(date +%Y%m%d%H%M%S)"
+        echo_info "A arquivar módulo autoupgrade existente em $(basename "$BACKUP_DIR")..."
+        mv "$SITE_DIR/modules/autoupgrade" "$BACKUP_DIR"
+    fi
+
+    echo_info "📁 A extrair módulo autoupgrade ${AU_VERSION} para modules/..."
+    unzip -q -o "$AU_ZIP" -d "$SITE_DIR/modules" || { echo_error "unzip falhou."; return 1; }
+
+    local CONSOLE="$SITE_DIR/modules/autoupgrade/bin/console"
+    if [ ! -f "$CONSOLE" ]; then
+        echo_error "bin/console não encontrado depois de extrair o módulo."
+        return 1
+    fi
+
+    echo_info "🔎 A verificar novas versões disponíveis..."
+    "${PHP_BIN[@]}" "$CONSOLE" update:check-new-version "$ADMIN_DIR"
+
+    echo_info "🧪 A verificar requisitos para o canal '$CHANNEL'..."
+    "${PHP_BIN[@]}" "$CONSOLE" update:check-requirements "$ADMIN_DIR" --channel="$CHANNEL" \
+        || { echo_error "Requisitos não cumpridos. A abortar sem tocar no site."; return 1; }
+
+    echo_info "🧩 A verificar compatibilidade dos módulos instalados..."
+    # Capturado (em vez de passthrough direto) só para poder distinguir "não há nada para
+    # atualizar neste canal" (falha esperada, nada de errado) de uma incompatibilidade real
+    # de módulos — o comando devolve o mesmo exit code != 0 nos dois casos.
+    local MODULES_CHECK_OUTPUT MODULES_CHECK_STATUS
+    MODULES_CHECK_OUTPUT=$("${PHP_BIN[@]}" "$CONSOLE" update:check-modules "$ADMIN_DIR" --channel="$CHANNEL" 2>&1)
+    MODULES_CHECK_STATUS=$?
+    echo "$MODULES_CHECK_OUTPUT"
+
+    # 'online_recommended' só avança um passo seguro dentro da mesma major — um salto de
+    # major (ex: 8.x -> 9.x) só aparece no canal 'online'. Se não houver nada no caminho
+    # seguro, oferece verificar o 'online' antes de desistir, em vez de simplesmente dizer
+    # "já estás atualizado" quando na verdade só falta mudar de canal.
+    if [ $MODULES_CHECK_STATUS -ne 0 ] && [ "$CHANNEL" = "online_recommended" ] \
+        && grep -qi "already running a PrestaShop version" <<< "$MODULES_CHECK_OUTPUT"; then
+        echo_info "ℹ️  Sem atualização no caminho seguro ('online_recommended') para a versão atual."
+        read -rp "Verificar se há uma versão mais recente no canal 'online' (pode incluir saltos major)? [y/N]: " CHECK_ONLINE
+        case "$CHECK_ONLINE" in
+            [Yy]*)
+                CHANNEL="online"
+                echo_info "🧪 A verificar requisitos para o canal '$CHANNEL'..."
+                "${PHP_BIN[@]}" "$CONSOLE" update:check-requirements "$ADMIN_DIR" --channel="$CHANNEL" \
+                    || { echo_error "Requisitos não cumpridos para o canal 'online'. A abortar."; return 1; }
+
+                echo_info "🧩 A verificar compatibilidade dos módulos instalados (canal 'online')..."
+                MODULES_CHECK_OUTPUT=$("${PHP_BIN[@]}" "$CONSOLE" update:check-modules "$ADMIN_DIR" --channel="$CHANNEL" 2>&1)
+                MODULES_CHECK_STATUS=$?
+                echo "$MODULES_CHECK_OUTPUT"
+                ;;
+        esac
+    fi
+
+    if [ $MODULES_CHECK_STATUS -ne 0 ]; then
+        if grep -qi "already running a PrestaShop version" <<< "$MODULES_CHECK_OUTPUT"; then
+            echo_success "✅ Já estás na versão mais recente disponível para o canal '$CHANNEL' (versão atual: $CURRENT_VERSION). Nada a atualizar."
+            return 0
+        fi
+        echo_error "Alguns módulos podem não ser compatíveis — revê a lista acima antes de continuar."
+    fi
+
+    if [ "$SKIP_BACKUP" = "1" ]; then
+        read -rp "Prosseguir com a atualização real, SEM backup? [y/N]: " answer
+    else
+        read -rp "Prosseguir com backup + atualização real? [y/N]: " answer
+    fi
+    case "$answer" in
+        [Yy]*) ;;
+        *) echo_error "Operação cancelada antes de tocar no site."; return 1 ;;
+    esac
+
+    if [ "$SKIP_BACKUP" = "1" ]; then
+        echo_error "⚠️  A saltar o backup (--no-backup)."
+    else
+        echo_info "💾 A criar backup (ficheiros + base de dados) via Update Assistant..."
+        "${PHP_BIN[@]}" "$CONSOLE" backup:create "$ADMIN_DIR" --include-images=1 \
+            || { echo_error "Backup falhou. A abortar sem atualizar."; return 1; }
+    fi
+
+    # O módulo autoupgrade tem defaults agressivos quando estas opções não são passadas
+    # (PS_CONST_DEFAULT_VALUE em UpgradeConfiguration.php): desativa módulos não-nativos,
+    # desinstala (com perda de configuração) módulos marcados incompatíveis, e regenera
+    # templates de email — os três a 'true' por omissão. Aqui força-se sempre o lado seguro;
+    # quem quiser o comportamento agressivo do módulo tem de o pedir explicitamente à parte.
+    echo_info "🚀 A atualizar (canal: $CHANNEL)..."
+    if "${PHP_BIN[@]}" "$CONSOLE" update:start "$ADMIN_DIR" --channel="$CHANNEL" \
+        --disable-non-native-modules=0 \
+        --uninstall-incompatible-modules=0 \
+        --regenerate-email-templates=0; then
+        echo_success "✅ Atualização concluída."
+    else
+        echo_error "❌ Atualização falhou (ou parou a meio, em modo --chain). Logs em: $SITE_DIR/$ADMIN_DIR/autoupgrade/logs/"
+        if [ "$SKIP_BACKUP" = "1" ]; then
+            echo_error "Correu com --no-backup — não há backup para restaurar."
+        else
+            echo_error "Podes restaurar o backup com: ${PHP_BIN[*]} $CONSOLE backup:restore $ADMIN_DIR --backup=<nome> (ver backup:list)"
+        fi
+        return 1
+    fi
+
+    local NEW_VERSION
+    NEW_VERSION=$(detect_ps_version "$SITE_DIR")
+    echo_info "Versão: $CURRENT_VERSION -> ${NEW_VERSION:-desconhecida}"
+    if [ "$CHANNEL" = "online_recommended" ] && [ -n "$NEW_VERSION" ] && [ "$NEW_VERSION" != "$CURRENT_VERSION" ]; then
+        echo_info "ℹ️  'online_recommended' avança um passo seguro de cada vez — corre update_prestashop outra vez para continuar a subir, se ainda não estiveres na última versão."
+    fi
+
+    # O próprio Update Assistant recomenda desinstalar/remover o módulo depois de concluído
+    # (superfície de ataque desnecessária deixada exposta). Reaproveita uninstall_ps_modules —
+    # passa-lhe a admin dir já resolvida acima: o módulo autoupgrade precisa da constante
+    # _PS_ADMIN_DIR_ (path da admin) para o próprio uninstall() correr sem warnings/erros.
+    read -rp "Desinstalar o módulo autoupgrade agora (recomendado)? [Y/n]: " answer
+    case "$answer" in
+        [Nn]*) ;;
+        *) uninstall_ps_modules "$SITE_DIR" "--admin-dir=$ADMIN_DIR" autoupgrade ;;
+    esac
+
+    read -rp "Outros módulos a desinstalar (nomes separados por espaço, Enter para nenhum): " EXTRA_MODULES
+    if [ -n "$EXTRA_MODULES" ]; then
+        # shellcheck disable=SC2086
+        uninstall_ps_modules "$SITE_DIR" "--admin-dir=$ADMIN_DIR" $EXTRA_MODULES
+    fi
+}
+
+# Desinstala módulos concretos de uma instalação PrestaShop local via CLI, sem precisar de
+# login no backoffice — generaliza o padrão já usado manualmente em uninstall_welcome.php:
+# gera um script PHP temporário no root do site (só assim tem acesso ao autoload/bootstrap
+# do PrestaShop), corre-o com a versão de PHP correta do site, e apaga-o logo a seguir
+# (nunca fica lixo no repo do site).
+#
+# --admin-dir=DIR é opcional mas recomendado: alguns módulos (ex: autoupgrade) chamam
+# _PS_ADMIN_DIR_ dentro do próprio uninstall() — sem essa constante definida (o que só o
+# bootstrap do admin/index.php faz normalmente) dá warning/erro consoante a versão de PHP.
+# Omite-a para módulos simples que não precisem (ex: 'welcome').
+#
+# Uso: uninstall_ps_modules <site_ou_dominio> [--admin-dir=DIR] <module1> [module2 ...]
+uninstall_ps_modules() {
+    local SITE=$1
+    shift
+    local ADMIN_DIR=""
+    local MODULES=()
+    local arg
+    for arg in "$@"; do
+        case "$arg" in
+            --admin-dir=*) ADMIN_DIR="${arg#--admin-dir=}" ;;
+            *) MODULES+=("$arg") ;;
+        esac
+    done
+
+    if [ -z "$SITE" ] || [ ${#MODULES[@]} -eq 0 ]; then
+        echo_error "Usage: uninstall_ps_modules <site> [--admin-dir=DIR] <module1> [module2 ...]"
+        return 1
+    fi
+
+    local SITE_DIR="$SITE"
+    [[ "$SITE_DIR" != /* ]] && SITE_DIR="/var/www/$SITE"
+
+    if [ ! -f "$SITE_DIR/config/config.inc.php" ]; then
+        echo_error "'$SITE_DIR/config/config.inc.php' not found — is this a PrestaShop site?"
+        return 1
+    fi
+
+    if [ -n "$ADMIN_DIR" ] && [ ! -d "$SITE_DIR/$ADMIN_DIR" ]; then
+        echo_error "'$SITE_DIR/$ADMIN_DIR' does not exist."
+        return 1
+    fi
+
+    local mod
+    for mod in "${MODULES[@]}"; do
+        if [[ ! "$mod" =~ ^[A-Za-z0-9_]+$ ]]; then
+            echo_error "Invalid module name: '$mod'"
+            return 1
+        fi
+    done
+
+    local PHP_BASE
+    PHP_BASE=$(detect_ps_php_bin "$SITE_DIR")
+    local PHP_BIN=("$PHP_BASE" -d memory_limit=-1)
+
+    echo_info "Site: $SITE_DIR"
+    echo_info "Modules to uninstall: ${MODULES[*]}"
+    read -rp "Continue? [y/N]: " answer
+    case "$answer" in
+        [Yy]*) ;;
+        *) echo_error "Operation cancelled."; return 1 ;;
+    esac
+
+    local SCRIPT_FILE
+    SCRIPT_FILE=$(mktemp "$SITE_DIR/_uninstall_modules_XXXXXX.php")
+
+    {
+        echo "<?php"
+        if [ -n "$ADMIN_DIR" ]; then
+            # Tem de ser definida ANTES do require de config.inc.php — config/defines.inc.php
+            # só define _PS_BO_ALL_THEMES_DIR_ (e outras) se _PS_ADMIN_DIR_ já existir nessa
+            # altura, exatamente como o admin/index.php faz antes de incluir o bootstrap.
+            echo "define('_PS_ADMIN_DIR_', '${SITE_DIR}/${ADMIN_DIR}');"
+        fi
+        echo "require '${SITE_DIR}/config/config.inc.php';"
+        cat <<'PHPEOF'
+
+function uninstallModule($name, $onBoardingStub = false)
+{
+    $module = Module::getInstanceByName($name);
+
+    if (!$module) {
+        fwrite(STDERR, "Module '$name' not found.\n");
+        return true; // nothing to remove
+    }
+
+    if (!Module::isInstalled($name)) {
+        echo "Module '$name' is already not installed.\n";
+        return true;
+    }
+
+    if ($onBoardingStub) {
+        // Running from CLI bootstrap (config.inc.php) means the Symfony container is
+        // never initialized, so Welcome::$onBoarding stays null (see its constructor)
+        // and Welcome::uninstall() crashes calling methods on it. Stub it out since
+        // we're removing the module entirely anyway.
+        $stub = new class {
+            public function setCurrentStep($step) {}
+            public function setShutDown($state) {}
+        };
+        $reflection = new ReflectionProperty($module, 'onBoarding');
+        $reflection->setAccessible(true);
+        $reflection->setValue($module, $stub);
+    }
+
+    if ($module->uninstall()) {
+        echo "Module '$name' uninstalled successfully.\n";
+        return true;
+    }
+
+    fwrite(STDERR, "Failed to uninstall module '$name'.\n");
+    foreach ($module->getErrors() as $error) {
+        fwrite(STDERR, $error . "\n");
+    }
+    return false;
+}
+
+$results = [];
+PHPEOF
+        for mod in "${MODULES[@]}"; do
+            local stub="false"
+            [ "$mod" = "welcome" ] && stub="true"
+            echo "\$results[] = uninstallModule('${mod}', ${stub});"
+        done
+        echo 'exit(in_array(false, $results, true) ? 1 : 0);'
+    } > "$SCRIPT_FILE"
+
+    "${PHP_BIN[@]}" "$SCRIPT_FILE"
+    local STATUS=$?
+    rm -f "$SCRIPT_FILE"
+
+    if [ $STATUS -eq 0 ]; then
+        echo_success "Modules processed successfully."
+    else
+        echo_error "One or more modules failed to uninstall (see output above)."
+    fi
+    return $STATUS
+}
 
 generate_secrets() {
     COMPOSER_FILE="composer.lock"
