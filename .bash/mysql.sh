@@ -1,6 +1,7 @@
 #!/bin/bash
 
 get_database(){
+    local DATABASE_NAME
     if [ -z "$1" ]; then
         DATABASE_NAME=$(ssh root@server "mysql -N -e 'SHOW DATABASES' 2>/dev/null" | grep -Ev '^(information_schema|mysql|performance_schema|sys)$' | fzf --prompt="Select database: ")
         if [ -z "$DATABASE_NAME" ]; then
@@ -12,8 +13,10 @@ get_database(){
     fi
 
     # echo -e "${BLUE}Detecting PrestaShop prefix...$RESET"
+    local DETECTED_TABLE
     DETECTED_TABLE=$(ssh root@server "mysql -N -e \"SELECT TABLE_NAME FROM information_schema.tables WHERE table_schema='${DATABASE_NAME}' AND TABLE_NAME LIKE '%_shop_url' ORDER BY LENGTH(TABLE_NAME) ASC LIMIT 1\" 2>/dev/null")
 
+    local DATABASE_PREFIX
     if [ -n "$DETECTED_TABLE" ]; then
         DATABASE_PREFIX="${DETECTED_TABLE%_shop_url}"
         echo -e "${BLUE_PRESTASHOP}󱇕 PrestaShop detected$RESET"
@@ -26,6 +29,7 @@ get_database(){
     if [ "$DATABASE_PREFIX" != "false" ]; then
         echo -e "${WHITE}Prefix:$RESET $BOLD${DATABASE_PREFIX}$RESET"
     fi
+    local confirm
     read -r -p "Continue? [y/N] " confirm
     if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
         echo -e "${RED}Aborted.$RESET"
@@ -33,8 +37,9 @@ get_database(){
     fi
 
     # Authenticating SSH key...
-    ssh root@server "true" || { echo_error "SSH authentication failed"; exit 1; }
+    ssh root@server "true" || { echo_error "SSH authentication failed"; return 1; }
 
+    local DATABASE_PATH
     if [ -z "$2" ]; then
         DATABASE_PATH="$HOME/Downloads/$DATABASE_NAME.sql"
         echo -e "$BOLD${YELLOW}Downloading...$RESET"
@@ -57,6 +62,7 @@ get_database(){
 
     if ! tail -n 5 "$DATABASE_PATH" | grep -q -- "-- Dump completed on"; then
         echo -e "${RED}Dump seems incomplete/corrupted: no 'Dump completed on' marker at the end of '$DATABASE_PATH'.$RESET"
+        local force_confirm
         read -r -p "Continue anyway? [y/N] " force_confirm
         if [[ ! "$force_confirm" =~ ^[Yy]$ ]]; then
             echo -e "${RED}Aborted.$RESET"
@@ -67,6 +73,7 @@ get_database(){
     # Todos os comandos que apagam/alteram dados abaixo correm SEMPRE contra o
     # mysql local (127.0.0.1), nunca contra o servidor de produção. O SSH ao
     # servidor remoto só é usado para SHOW DATABASES e mysqldump (leitura).
+    local LOCAL_MYSQL
     LOCAL_MYSQL=(mysql -h 127.0.0.1 --protocol=TCP)
 
     echo -e "$BOLD${MAGENTA}Importing...$RESET"
@@ -80,6 +87,7 @@ EOF
     # gunzip -c $DATABASE_PATH | pv -s $UNCOMPRESSED_SIZE | mysql ${DATABASE_NAME}
 
     # without compression
+    local FILE_SIZE
     FILE_SIZE=$(stat -c %s "$DATABASE_PATH")
     pv -s "$FILE_SIZE" "$DATABASE_PATH" | "${LOCAL_MYSQL[@]}" ${DATABASE_NAME}
 
@@ -105,18 +113,56 @@ DELETE FROM ${DATABASE_PREFIX}_module WHERE name = 'cdc_googletagmanager';
 DELETE FROM ${DATABASE_PREFIX}_module WHERE name = 'klarnapayment';
 DELETE FROM ${DATABASE_PREFIX}_module WHERE name like '%recaptcha%';
 EOF
+        local file
         file=`"${LOCAL_MYSQL[@]}" -se "SELECT count(*) as count FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='${DATABASE_NAME}' AND TABLE_NAME='${DATABASE_PREFIX}_moloni'" | cut -d \t -f 2`
-        if [ $file == "1" ];
+        if [ "$file" == "1" ];
         then
             "${LOCAL_MYSQL[@]}" ${DATABASE_NAME} -se "TRUNCATE TABLE ${DATABASE_PREFIX}_moloni;";
         fi
 
+        local domains
         domains=( $("${LOCAL_MYSQL[@]}" ${DATABASE_NAME} -se "SELECT domain FROM ${DATABASE_PREFIX}_shop_url") )
+        local i domain
         for i in "${domains[@]}"; do
             # domain=$( echo "$i" | perl -pe 's/\.[^.]{2,3}(?:\.[^.]{2,3})?$/.test/s' )
             domain=$( echo "$i" | perl -pe 's/\.[^.]{2,3}(\.red\-agency|\.red\.com)?(\.[^.]{2,3})?$/.test/s' )
             "${LOCAL_MYSQL[@]}" ${DATABASE_NAME} -se "UPDATE ${DATABASE_PREFIX}_shop_url set domain=\"${domain}\", domain_ssl=\"${domain}\" where domain=\"$i\";"
         done
+    fi
+
+    # WordPress: o prefixo das tabelas nem sempre é "wp_" (é comum trocar por segurança),
+    # por isso deteta-se o prefixo real a partir da tabela "*options" mais curta que tenha
+    # também uma tabela "*users" correspondente (confirma que é mesmo WordPress e não outra
+    # app qualquer com uma tabela "options"), tal como o prefixo do PrestaShop é detetado
+    # acima a partir de "*_shop_url". Aponta depois siteurl/home para .test (mesma
+    # conversão de domínio do PrestaShop), preservando esquema e path.
+    local WP_OPTIONS_TABLE
+    WP_OPTIONS_TABLE=$("${LOCAL_MYSQL[@]}" -N -B -e "SELECT TABLE_NAME FROM information_schema.tables WHERE TABLE_SCHEMA='${DATABASE_NAME}' AND TABLE_NAME LIKE '%options' ORDER BY LENGTH(TABLE_NAME) ASC LIMIT 1" 2>/dev/null)
+    if [ -n "$WP_OPTIONS_TABLE" ]; then
+        local WP_PREFIX="${WP_OPTIONS_TABLE%options}"
+        local WP_USERS_EXISTS
+        WP_USERS_EXISTS=$("${LOCAL_MYSQL[@]}" -N -B -e "SELECT COUNT(*) FROM information_schema.tables WHERE TABLE_SCHEMA='${DATABASE_NAME}' AND TABLE_NAME='${WP_PREFIX}users'" 2>/dev/null)
+        if [ "$WP_USERS_EXISTS" = "1" ]; then
+            echo -e "${BLUE}WordPress detected (prefix: ${WP_PREFIX})$RESET"
+            local urls
+            urls=( $("${LOCAL_MYSQL[@]}" ${DATABASE_NAME} -se "SELECT DISTINCT option_value FROM ${WP_OPTIONS_TABLE} WHERE option_name IN ('siteurl','home')") )
+            local url scheme rest host path newhost newurl
+            for url in "${urls[@]}"; do
+                # Sem "://" o valor já vem malformado (não deveria acontecer num WP normal) —
+                # sem isto, scheme ficava com a string toda e o rebuild abaixo dava um
+                # disparate tipo "quintanimal.pt://quintanimal.test". Mais vale não tocar.
+                if [[ "$url" != *"://"* ]]; then
+                    continue
+                fi
+                scheme="${url%%://*}"
+                rest="${url#*://}"
+                host="${rest%%/*}"
+                path="${rest#$host}"
+                newhost=$( echo "$host" | perl -pe 's/\.[^.]{2,3}(\.red\-agency|\.red\.com)?(\.[^.]{2,3})?$/.test/s' )
+                newurl="${scheme}://${newhost}${path}"
+                "${LOCAL_MYSQL[@]}" ${DATABASE_NAME} -se "UPDATE ${WP_OPTIONS_TABLE} SET option_value=\"${newurl}\" WHERE option_name IN ('siteurl','home') AND option_value=\"${url}\";"
+            done
+        fi
     fi
 
     echo -e "$BOLD${GREEN}Done!$RESET"

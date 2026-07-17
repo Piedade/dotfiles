@@ -19,14 +19,11 @@ create_domain() {
     if [ ! -d "$WEB_ROOT" ]; then
         echo_info "Directory '$WEB_ROOT' does not exist. Creating it now..."
 
-        sudo mkdir -p "$WEB_ROOT"
-        sudo chown -R $USER:$USER "$WEB_ROOT"
-
-        if [ $? -eq 0 ]; then
+        if sudo mkdir -p "$WEB_ROOT" && sudo chown -R "$USER:$USER" "$WEB_ROOT"; then
             echo_success "Directory '$WEB_ROOT' created successfully."
         else
             echo_error "Error: Failed to create directory '$WEB_ROOT'." >&2
-            exit 1 # Exit with an error code
+            return 1
         fi
     else
         echo_error "Directory '$WEB_ROOT' already exists."
