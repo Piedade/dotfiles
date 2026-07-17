@@ -29,7 +29,7 @@ launch() {
 
     local before
     before=$(win_count "$ws")
-    "$@" > /dev/null 2>&1 &
+    "$@" >> /tmp/launch-apps.log 2>&1 &
 
     local i=0
     while [ $i -lt 50 ]; do
@@ -52,6 +52,7 @@ launch 7 google-chrome --profile-directory="Profile 1"
 
 launch 8 tabbed google-chrome --profile-directory="Profile 1" --app-id=kjbdgfilnfhdoflbpgamdcdgpehopbep
 launch 8 tabbed google-chrome --profile-directory="Profile 1" --app-id=hnpfjngllnobngcgfapefoaidbinmjnm
+launch 8 tabbed obsidian
 
 # lets go back to work
 swaymsg workspace 1

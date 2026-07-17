@@ -18,7 +18,7 @@ clone_to_staging() {
     local DB_NAME=$3
 
     if [ -z "$DOMAIN" ]; then
-        DOMAIN=$(select_domain_global) || { echo_error "Domain is required."; return 1; }
+        DOMAIN=$(select_domain_global '^staging\.') || { echo_error "Domain is required."; return 1; }
     fi
 
     if [[ "$DOMAIN" == staging.* ]]; then
@@ -179,6 +179,59 @@ clone_to_staging() {
         fi
     "
 
+    # --- Ribbon "Versão de demonstração" para distinguir staging de produção ---
+    # auto_append_file em vez de tocar nos templates da app: o rsync --delete acima faria
+    # -delete + repor esses ficheiros a partir da produção em cada refresh, apagando o ribbon.
+    # Ficheiro estático (sem tags PHP) e a diretiva no .htaccess (excluído do rsync, persiste
+    # entre refreshes) — por isso a diretiva só é acrescentada se ainda não lá estiver.
+    # auto_append_file corre em TODO pedido PHP, incluindo endpoints AJAX/API que devolvem
+    # JSON (ex: instalação de módulos) — sem este check, o ribbon era anexado a seguir ao
+    # JSON e partia o parse no browser. Content-Type não chega: alguns endpoints AJAX
+    # devolvem JSON com um Content-Type: text/html incorreto (ex: autoupgrade), o que já
+    # partiu o parse mesmo com o check de Content-Type. Sec-Fetch-Dest é o sinal real: só
+    # o browser o define, e só como "document" numa navegação de topo real — nunca em
+    # XHR/fetch, e o servidor/app não o consegue falsificar.
+    local RIBBON_FILE="_staging_ribbon.php"
+    ssh "${ACCOUNT}@server" "cat > ~/${STAGING_ROOT_DIR}/${RIBBON_FILE}" <<'PHPEOF'
+<?php
+if (($_SERVER['HTTP_SEC_FETCH_DEST'] ?? '') === 'document'):
+?>
+<div class="staging-ribbon">Versão de demonstração</div>
+<style>
+.staging-ribbon {
+    width: 22rem;
+    padding: 16px;
+    position: fixed;
+    text-align: center;
+    color: #ffffff;
+    z-index: 999999999999;
+    top: 4rem;
+    right: -5.5rem;
+    transform: rotate(45deg);
+    background-color: #ff0044;
+    text-transform: uppercase;
+    font-size: 1rem;
+    pointer-events: none;
+}
+</style>
+<?php endif; ?>
+PHPEOF
+
+    if ! ssh "${ACCOUNT}@server" "grep -q 'BEGIN staging ribbon' ~/${STAGING_ROOT_DIR}/.htaccess 2>/dev/null"; then
+        echo_info "A adicionar ribbon de staging ao .htaccess..."
+        ssh "${ACCOUNT}@server" "cat >> ~/${STAGING_ROOT_DIR}/.htaccess" <<EOL
+
+# BEGIN staging ribbon
+<IfModule php8_module>
+   php_value auto_append_file "/home/${ACCOUNT}/${STAGING_ROOT_DIR}/${RIBBON_FILE}"
+</IfModule>
+<IfModule lsapi_module>
+   php_value auto_append_file "/home/${ACCOUNT}/${STAGING_ROOT_DIR}/${RIBBON_FILE}"
+</IfModule>
+# END staging ribbon
+EOL
+    fi
+
     # --- Base de dados: assert final antes de qualquer DROP ---
     if [ "$STAGING_DB_NAME" = "$DB_NAME" ]; then
         echo_error "SAFETY: ia fazer DROP na mesma BD de produção. A abortar sem tocar em nada."
@@ -220,7 +273,7 @@ uapi Mysql set_privileges_on_database user='${STAGING_DB_USER}' database='${STAG
     echo "$ACCT_SCRIPT" | ssh "${ACCOUNT}@server" "bash -s" \
         || { echo_error "Falha a criar a BD/utilizador de staging."; return 1; }
 
-    ssh "$SERVER" "mysqldump --single-transaction --quick '${DB_NAME}' | mysql '${STAGING_DB_NAME}'" \
+    ssh -t "$SERVER" "mysqldump --single-transaction --quick '${DB_NAME}' | dd status=progress | mysql '${STAGING_DB_NAME}'" \
         || { echo_error "Falha a duplicar os dados da base de dados."; return 1; }
 
     if [ "$CREATE_NEW_USER" = "1" ]; then

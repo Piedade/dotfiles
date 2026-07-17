@@ -45,7 +45,7 @@
 	<name>Extract Here</name>
 	<submenu></submenu>
 	<unique-id>1750000000000000-1</unique-id>
-	<command>tar -xzvf %f -C %d</command>
+	<command>x-terminal-emulator -e bash -c "pv '%f' | tar -xzf - -C '%d' &amp;&amp; notify-send 'Extração concluída' '%f'; read -p 'Pressione Enter para fechar...'"</command>
 	<description>Extract tar.gz archive</description>
 	<range></range>
 	<patterns>*.tar.gz</patterns>
