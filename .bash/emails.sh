@@ -35,9 +35,15 @@ select_domain() {
 }
 
 # Escolher domínio via fzf (lista todos os domínios do servidor, sem precisar da conta)
+# $1 (opcional): regex (ERE, grep -E) para excluir domínios da lista, ex: '^staging\.'
 select_domain_global() {
+    local exclude_pattern="$1"
+    local list
+    list=$(ssh "$SERVER" "awk -F': ' '{print \$1}' /etc/userdomains")
+    [ -n "$exclude_pattern" ] && list=$(echo "$list" | grep -vE "$exclude_pattern")
+
     local domain
-    domain=$(ssh "$SERVER" "awk -F': ' '{print \$1}' /etc/userdomains" | fzf --prompt="Select domain: ")
+    domain=$(echo "$list" | fzf --prompt="Select domain: ")
     [[ -z "$domain" ]] && return 1
     echo "$domain"
 }

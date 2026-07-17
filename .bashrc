@@ -362,10 +362,26 @@ function whatsmyip () {
 
 # View Apache logs
 apachelog() {
+    local logdir pattern
     if [ -f /etc/httpd/conf/httpd.conf ]; then
-        cd /var/log/httpd && ls -xAh && multitail --no-repeat -c -s 2 /var/log/httpd/*_log
+        logdir=/var/log/httpd
+        pattern="*_log"
     else
-        cd /var/log/apache2 && ls -xAh && multitail --no-repeat -c -s 2 /var/log/apache2/*.log
+        logdir=/var/log/apache2
+        pattern="*.log"
+    fi
+
+    cd "$logdir" || return
+
+    local -a all selected
+    all=( $pattern )
+    mapfile -t selected < <(printf '%s\n' "${all[@]}" | fzf --multi --prompt="apache logs> " --header="Tab: selecionar vários | Enter: confirmar | Esc: todos")
+    [ "${#selected[@]}" -eq 0 ] && selected=("${all[@]}")
+
+    if [ "${#selected[@]}" -eq 1 ]; then
+        tail -f "${selected[0]}"
+    else
+        multitail --no-repeat -c -s 2 "${selected[@]}"
     fi
 }
 
