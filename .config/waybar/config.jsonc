@@ -13,6 +13,7 @@
         // "custom/sep",
         // "custom/network",
         "custom/vpn",
+        "custom/idle",
         "custom/mic",
         "custom/vol",
         // "pulseaudio",
@@ -207,6 +208,15 @@
         "on-click": "~/.config/waybar/scripts/vpn-toggle.sh",
         "interval": 10,
         "signal": 3,
+        "tooltip": true,
+    },
+
+    "custom/idle": {
+        "exec": "~/.config/waybar/scripts/idle-status.sh",
+        "return-type": "json",
+        "on-click": "~/.config/sway/scripts/idle-toggle",
+        "interval": 10,
+        "signal": 4,
         "tooltip": true,
     },
 

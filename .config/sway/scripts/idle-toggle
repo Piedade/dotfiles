@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# Pausa/retoma o swayidle (bloqueio de ecrã, dpms off e suspensão automática,
+# ver exec swayidle em sway/config) suspendendo o próprio processo com
+# SIGSTOP/SIGCONT. Enquanto está em STOP, nenhum dos timeouts dispara —
+# não há necessidade de matar/relançar o swayidle nem duplicar a config.
+
+pid=$(pgrep -x swayidle)
+if [ -z "$pid" ]; then
+    notify-send "Idle" "swayidle não está a correr."
+    exit 1
+fi
+
+if [[ "$(ps -o stat= -p "$pid")" == T* ]]; then
+    kill -CONT "$pid"
+    notify-send "Idle" "▶ Bloqueio/suspensão automática retomados"
+else
+    kill -STOP "$pid"
+    notify-send "Idle" "⏸ Bloqueio/suspensão automática em pausa"
+fi
+
+pkill -SIGRTMIN+4 waybar 2>/dev/null

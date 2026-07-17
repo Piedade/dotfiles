@@ -38,6 +38,7 @@ window#waybar > box {
 #cpu,
 #memory,
 #custom-vpn,
+#custom-idle,
 #tray {
     padding: 4px 6px 2px;
     background-color: transparent;
@@ -56,6 +57,7 @@ window#waybar > box {
 #custom-mic:hover,
 #custom-notification:hover,
 #custom-vpn:hover,
+#custom-idle:hover,
 #cpu:hover,
 #memory:hover {
     background-color: @bg-alt;
@@ -112,6 +114,14 @@ window#waybar > box {
 #custom-vpn.disconnected {
     color: @disabled;
     /* text-decoration: line-through; */
+}
+
+#custom-idle.active {
+    color: @disabled;
+}
+
+#custom-idle.paused {
+    color: @alert;
 }
 
 #custom-network {
