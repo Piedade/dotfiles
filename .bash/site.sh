@@ -122,15 +122,16 @@ get_site_files() {
     # nos refreshes seguintes (senão perdíamos sempre a ligação à BD local). .git
     # também fica de fora — nunca faria sentido apagar o histórico local (commits
     # não enviados) só porque a produção não tem repositório.
-    # Pastas de cache/logs e as pastas de media pesadas também ficam de fora — não
-    # fazem falta para desenvolver localmente e só desperdiçam tempo/espaço a copiar:
-    # img/p (só as imagens de produto — o resto de img/, tipo categorias/logo/tema,
-    # sincroniza normalmente) e upload são do PrestaShop, wp-content/uploads é do
-    # WordPress, storage/*/bootstrap-cache são do Laravel.
+    # Pastas de cache/logs também ficam de fora — não fazem falta para desenvolver
+    # localmente e só desperdiçam tempo/espaço a copiar: img/p (só as imagens de
+    # produto — o resto de img/, tipo categorias/logo/tema, sincroniza normalmente)
+    # é do PrestaShop, storage/framework/*+bootstrap/cache são do Laravel. upload/,
+    # wp-content/uploads/ e storage/app/public/ (uploads do Laravel) sincronizam
+    # normalmente (não costumam ser muitos ficheiros).
     local RSYNC_EXCLUDES="--exclude=/wp-config.php --exclude=/config/settings.inc.php --exclude=/app/config/parameters.php --exclude=/app/config/parameters.yml --exclude=/.htaccess --exclude=/.env --exclude=/.git/"
     RSYNC_EXCLUDES="$RSYNC_EXCLUDES --exclude=/cache/ --exclude=/var/cache/ --exclude=/var/logs/ --exclude=/wp-content/cache/"
-    RSYNC_EXCLUDES="$RSYNC_EXCLUDES --exclude=/img/p/ --exclude=/upload/ --exclude=/wp-content/uploads/"
-    RSYNC_EXCLUDES="$RSYNC_EXCLUDES --exclude=/storage/framework/cache/ --exclude=/storage/framework/sessions/ --exclude=/storage/framework/views/ --exclude=/storage/logs/ --exclude=/storage/app/public/ --exclude=/bootstrap/cache/"
+    RSYNC_EXCLUDES="$RSYNC_EXCLUDES --exclude=/img/p/"
+    RSYNC_EXCLUDES="$RSYNC_EXCLUDES --exclude=/storage/framework/cache/ --exclude=/storage/framework/sessions/ --exclude=/storage/framework/views/ --exclude=/storage/logs/ --exclude=/bootstrap/cache/"
 
     echo_info "A calcular alterações de ficheiros (dry-run)..."
     local DRY_OUTPUT

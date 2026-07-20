@@ -33,7 +33,7 @@ get_database(){
     if [ -z "$1" ]; then
         DATABASE_NAME=$(ssh root@server "mysql -N -e 'SHOW DATABASES' 2>/dev/null" | grep -Ev '^(information_schema|mysql|performance_schema|sys)$' | fzf --prompt="Select database: ")
         if [ -z "$DATABASE_NAME" ]; then
-            echo -e "${RED}No database provided$RESET"
+            echo_error "No database provided"
             return 1
         fi
     else
@@ -49,12 +49,12 @@ get_database(){
     # e, no caso do WordPress, confirma-se com uma tabela "*users" correspondente
     # (evita apanhar por engano uma tabela de outra app qualquer chamada "options").
     local PS_SHOP_URL_TABLE
-    PS_SHOP_URL_TABLE=$(ssh root@server "mysql -N -e \"SELECT TABLE_NAME FROM information_schema.tables WHERE table_schema='${DATABASE_NAME}' AND TABLE_NAME LIKE '%_shop_url' ORDER BY LENGTH(TABLE_NAME) ASC LIMIT 1\" 2>/dev/null")
+    PS_SHOP_URL_TABLE=$(ssh root@server "mysql -N -e \"SELECT TABLE_NAME FROM information_schema.tables WHERE table_schema='${DATABASE_NAME}' AND TABLE_NAME LIKE '%\\\\_shop\\\\_url' ORDER BY LENGTH(TABLE_NAME) ASC LIMIT 1\" 2>/dev/null")
 
     local PS_PREFIX=""
     if [ -n "$PS_SHOP_URL_TABLE" ]; then
         PS_PREFIX="${PS_SHOP_URL_TABLE%_shop_url}"
-        echo -e "${BLUE_PRESTASHOP}󱇕 PrestaShop detected (prefix: ${PS_PREFIX})$RESET"
+        echo_prestashop "PrestaShop detected (prefix: ${PS_PREFIX})"
     fi
 
     local WP_OPTIONS_TABLE
@@ -66,19 +66,19 @@ get_database(){
         WP_PREFIX="${WP_OPTIONS_TABLE%options}"
         WP_USERS_EXISTS=$(ssh root@server "mysql -N -e \"SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='${DATABASE_NAME}' AND TABLE_NAME='${WP_PREFIX}users'\" 2>/dev/null")
         if [ "$WP_USERS_EXISTS" = "1" ]; then
-            echo -e "${BLUE}WordPress detected (prefix: ${WP_PREFIX})$RESET"
+            echo_wordpress "WordPress detected (prefix: ${WP_PREFIX})"
         fi
     fi
 
     echo -e "${WHITE}Database:$RESET $BOLD${DATABASE_NAME}$RESET"
     if [ "$SKIP_DEV" = "1" ]; then
-        echo -e "${YELLOW}--skip-dev: a ignorar as configurações para desenvolvimento/teste$RESET"
+        echo_info "--skip-dev: a ignorar as configurações para desenvolvimento/teste"
     fi
 
     local confirm
     read -r -p "Continue? [y/N] " confirm
     if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
-        echo -e "${RED}Aborted.$RESET"
+        echo_error "Aborted."
         return 1
     fi
 
@@ -88,7 +88,7 @@ get_database(){
     local DATABASE_PATH
     if [ -z "$2" ]; then
         DATABASE_PATH="$HOME/Downloads/$DATABASE_NAME.sql"
-        echo -e "$BOLD${YELLOW}Downloading...$RESET"
+        echo_info "Downloading..."
 
         # # Remote compress
         # ssh root@server "mysqldump --single-transaction --quick --ignore-table=${DATABASE_NAME}.${PS_PREFIX}_layered_category $DATABASE_NAME | gzip -c" | pv > $DATABASE_PATH
@@ -96,22 +96,28 @@ get_database(){
         # Without compression
         # ssh root@server mysqldump --single-transaction --quick --ignore-table=${DATABASE_NAME}.${PS_PREFIX}_layered_category $DATABASE_NAME | pv > $DATABASE_PATH
         ssh root@server mysqldump --single-transaction --quick $DATABASE_NAME | pv > $DATABASE_PATH
+        # PIPESTATUS[0] = exit code do ssh/mysqldump remoto (o do pipe seria só o do `pv`,
+        # que "sucede" mesmo que o mysqldump falhe a meio e produza um dump vazio/truncado).
+        if [ "${PIPESTATUS[0]}" -ne 0 ]; then
+            echo_error "mysqldump remoto falhou."
+            return 1
+        fi
     else
         DATABASE_PATH="$2"
-        echo -e "${GREEN}Getting already downloaded file: $DATABASE_PATH"
+        echo_success "Getting already downloaded file: $DATABASE_PATH"
     fi
 
     if [ ! -s "$DATABASE_PATH" ]; then
-        echo -e "${RED}Dump file '$DATABASE_PATH' is missing or empty.$RESET"
+        echo_error "Dump file '$DATABASE_PATH' is missing or empty."
         return 1
     fi
 
     if ! tail -n 5 "$DATABASE_PATH" | grep -q -- "-- Dump completed on"; then
-        echo -e "${RED}Dump seems incomplete/corrupted: no 'Dump completed on' marker at the end of '$DATABASE_PATH'.$RESET"
+        echo_error "Dump seems incomplete/corrupted: no 'Dump completed on' marker at the end of '$DATABASE_PATH'."
         local force_confirm
         read -r -p "Continue anyway? [y/N] " force_confirm
         if [[ ! "$force_confirm" =~ ^[Yy]$ ]]; then
-            echo -e "${RED}Aborted.$RESET"
+            echo_error "Aborted."
             return 1
         fi
     fi
@@ -138,6 +144,9 @@ EOF
     FILE_SIZE=$(stat -c %s "$DATABASE_PATH")
     pv -s "$FILE_SIZE" "$DATABASE_PATH" | "${LOCAL_MYSQL[@]}" ${DATABASE_NAME}
 
+    # Regex partilhada entre PrestaShop e WordPress para converter o domínio real em .test
+    local DOMAIN_TO_TEST_REGEX='s/\.[^.]{2,3}(\.red\-agency|\.red\.com)?(\.[^.]{2,3})?$/.test/s'
+
     if [ -n "$PS_PREFIX" ]; then
         if [ "$SKIP_DEV" != "1" ]; then
 "${LOCAL_MYSQL[@]}" <<EOF
@@ -162,7 +171,7 @@ DELETE FROM ${PS_PREFIX}_module WHERE name = 'klarnapayment';
 DELETE FROM ${PS_PREFIX}_module WHERE name like '%recaptcha%';
 EOF
             local file
-            file=`"${LOCAL_MYSQL[@]}" -se "SELECT count(*) as count FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='${DATABASE_NAME}' AND TABLE_NAME='${PS_PREFIX}_moloni'" | cut -d \t -f 2`
+            file=$("${LOCAL_MYSQL[@]}" -se "SELECT count(*) as count FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='${DATABASE_NAME}' AND TABLE_NAME='${PS_PREFIX}_moloni'" | cut -d \t -f 2)
             if [ "$file" == "1" ];
             then
                 "${LOCAL_MYSQL[@]}" ${DATABASE_NAME} -se "TRUNCATE TABLE ${PS_PREFIX}_moloni;";
@@ -174,7 +183,7 @@ EOF
         local i domain
         for i in "${domains[@]}"; do
             # domain=$( echo "$i" | perl -pe 's/\.[^.]{2,3}(?:\.[^.]{2,3})?$/.test/s' )
-            domain=$( echo "$i" | perl -pe 's/\.[^.]{2,3}(\.red\-agency|\.red\.com)?(\.[^.]{2,3})?$/.test/s' )
+            domain=$( echo "$i" | perl -pe "$DOMAIN_TO_TEST_REGEX" )
             "${LOCAL_MYSQL[@]}" ${DATABASE_NAME} -se "UPDATE ${PS_PREFIX}_shop_url set domain=\"${domain}\", domain_ssl=\"${domain}\" where domain=\"$i\";"
         done
     fi
@@ -196,13 +205,13 @@ EOF
             rest="${url#*://}"
             host="${rest%%/*}"
             path="${rest#$host}"
-            newhost=$( echo "$host" | perl -pe 's/\.[^.]{2,3}(\.red\-agency|\.red\.com)?(\.[^.]{2,3})?$/.test/s' )
+            newhost=$( echo "$host" | perl -pe "$DOMAIN_TO_TEST_REGEX" )
             newurl="${scheme}://${newhost}${path}"
             "${LOCAL_MYSQL[@]}" ${DATABASE_NAME} -se "UPDATE ${WP_OPTIONS_TABLE} SET option_value=\"${newurl}\" WHERE option_name IN ('siteurl','home') AND option_value=\"${url}\";"
         done
     fi
 
-    echo -e "$BOLD${GREEN}Done!$RESET"
+    echo_success "Done!"
 }
 
 # ─────────────── AUTO-COMPLETE OPCIONAL ───────────────
