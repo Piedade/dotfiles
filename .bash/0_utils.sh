@@ -23,6 +23,24 @@ echo_info() {
 }
 export -f echo_info
 
+echo_prestashop() {
+    local message="${1:-Success}"
+    echo -e "${BLUE_PRESTASHOP}󱇕 ${message}${RESET}"
+}
+export -f echo_prestashop
+
+echo_laravel() {
+    local message="${1:-Success}"
+    echo -e "${ORANGE_LARAVEL} ${message}${RESET}"
+}
+export -f echo_laravel
+
+echo_wordpress() {
+    local message="${1:-Success}"
+    echo -e "${BLUE} ${message}${RESET}"
+}
+export -f echo_wordpress
+
 SERVER="root@server"
 
 # Function to check and display file or directory permissions

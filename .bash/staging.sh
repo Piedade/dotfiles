@@ -69,7 +69,8 @@ clone_to_staging() {
         DB_NAME=$(ssh "${ACCOUNT}@server" "
             grep -oP \"(?<=define\\('DB_NAME', ')[^']+\" ~/${ROOT_DIR}/wp-config.php 2>/dev/null ||
             grep -oP \"(?<=define\\('_DB_NAME_', ')[^']+\" ~/${ROOT_DIR}/config/settings.inc.php 2>/dev/null ||
-            grep -oP \"(?<='database_name' => ')[^']+\" ~/${ROOT_DIR}/app/config/parameters.php 2>/dev/null
+            grep -oP \"(?<='database_name' => ')[^']+\" ~/${ROOT_DIR}/app/config/parameters.php 2>/dev/null ||
+            grep -oP \"(?<=^DB_DATABASE=).+\" ~/${ROOT_DIR}/.env 2>/dev/null
         " 2>/dev/null | head -n1)
 
         if [ -n "$DB_NAME" ]; then
@@ -151,7 +152,7 @@ clone_to_staging() {
     # ser pisados pela cópia de produção nos refreshes seguintes (senão perdíamos sempre a
     # ligação à BD de staging, ou quaisquer regras próprias do .htaccess de staging).
     # Pastas de cache/logs que só desperdiçam tempo e espaço a copiar (regeneram-se sozinhas)
-    local RSYNC_EXCLUDES="--exclude=/wp-config.php --exclude=/config/settings.inc.php --exclude=/app/config/parameters.php --exclude=/.htaccess"
+    local RSYNC_EXCLUDES="--exclude=/wp-config.php --exclude=/config/settings.inc.php --exclude=/app/config/parameters.php --exclude=/.env --exclude=/.htaccess"
     RSYNC_EXCLUDES="$RSYNC_EXCLUDES --exclude=/cache/ --exclude=/var/cache/ --exclude=/var/logs/ --exclude=/wp-content/cache/"
 
     echo_info "A calcular alterações de ficheiros (dry-run)..."
@@ -283,7 +284,7 @@ uapi Mysql set_privileges_on_database user='${STAGING_DB_USER}' database='${STAG
         local CFG_SCRIPT
         CFG_SCRIPT=$(cat <<EOF
 set -e
-for rel in "wp-config.php" "config/settings.inc.php" "app/config/parameters.php"; do
+for rel in "wp-config.php" "config/settings.inc.php" "app/config/parameters.php" ".env"; do
     src=~/${ROOT_DIR}/\$rel
     dst=~/${STAGING_ROOT_DIR}/\$rel
     if [ -f "\$src" ]; then
@@ -312,13 +313,20 @@ if [ -f "\$f" ]; then
     sed -i "s/'database_user' => '[^']*'/'database_user' => '${STAGING_DB_USER}'/" "\$f"
     sed -i "s/'database_password' => '[^']*'/'database_password' => '${STAGING_DB_PASS}'/" "\$f"
 fi
+
+f=~/${STAGING_ROOT_DIR}/.env
+if [ -f "\$f" ]; then
+    sed -i "s/^DB_DATABASE=.*/DB_DATABASE=${STAGING_DB_NAME}/" "\$f"
+    sed -i "s/^DB_USERNAME=.*/DB_USERNAME=${STAGING_DB_USER}/" "\$f"
+    sed -i "s/^DB_PASSWORD=.*/DB_PASSWORD=${STAGING_DB_PASS}/" "\$f"
+fi
 EOF
 )
         echo "$CFG_SCRIPT" | ssh "${ACCOUNT}@server" "bash -s" \
             || echo_error "Não consegui preparar a configuração de staging — verifica manualmente wp-config.php / settings.inc.php / parameters.php."
     else
         # Confia que o config já existente aponta para o utilizador/BD certos; só avisa se não encontrar nenhum.
-        if ! ssh "${ACCOUNT}@server" "test -f ~/${STAGING_ROOT_DIR}/wp-config.php -o -f ~/${STAGING_ROOT_DIR}/config/settings.inc.php -o -f ~/${STAGING_ROOT_DIR}/app/config/parameters.php"; then
+        if ! ssh "${ACCOUNT}@server" "test -f ~/${STAGING_ROOT_DIR}/wp-config.php -o -f ~/${STAGING_ROOT_DIR}/config/settings.inc.php -o -f ~/${STAGING_ROOT_DIR}/app/config/parameters.php -o -f ~/${STAGING_ROOT_DIR}/.env"; then
             echo_error "O utilizador '$STAGING_DB_USER' já existia mas não encontrei nenhum ficheiro de configuração em staging. Como a password não é recuperável, tens de configurar o ficheiro manualmente."
         fi
     fi
@@ -329,7 +337,7 @@ EOF
         && IS_PRESTASHOP=1
 
     if [ "$IS_PRESTASHOP" = "1" ]; then
-        echo_info "PrestaShop detetado: a atualizar URLs na BD de staging..."
+        echo_prestashop "PrestaShop detetado: a atualizar URLs na BD de staging..."
         local PS_PREFIX
         PS_PREFIX=$(cat <<EOF | ssh "$SERVER" "mysql -N -B '${STAGING_DB_NAME}'" 2>/dev/null
 SELECT TABLE_NAME FROM information_schema.tables WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME REGEXP '_shop_url\$' LIMIT 1;
@@ -353,6 +361,43 @@ EOF
                 && echo_success "URLs e definições de staging atualizadas (prefixo: ${PS_PREFIX})." \
                 || echo_error "Falha ao atualizar URLs do PrestaShop em staging."
         fi
+    fi
+
+    # --- WordPress: muda os URLs guardados na BD para o domínio de staging ---
+    local IS_WORDPRESS=0
+    ssh "${ACCOUNT}@server" "test -f ~/${STAGING_ROOT_DIR}/wp-config.php" \
+        && IS_WORDPRESS=1
+
+    if [ "$IS_WORDPRESS" = "1" ]; then
+        echo_wordpress "WordPress detetado: a atualizar URLs na BD de staging..."
+        local WP_BIN="/opt/alt/php84/usr/bin/php -d memory_limit=-1 /usr/local/bin/wp"
+        ssh "${ACCOUNT}@server" "
+            cd ~/${STAGING_ROOT_DIR} &&
+            $WP_BIN search-replace 'https://${DOMAIN}' 'https://${STAGING_DOMAIN}' --all-tables --precise --skip-columns=guid &&
+            $WP_BIN search-replace 'http://${DOMAIN}' 'https://${STAGING_DOMAIN}' --all-tables --precise --skip-columns=guid
+        " \
+            && echo_success "URLs de staging atualizados no WordPress." \
+            || echo_error "Falha ao atualizar URLs do WordPress em staging."
+    fi
+
+    # --- Laravel: aponta APP_URL para o domínio de staging ---
+    local IS_LARAVEL=0
+    ssh "${ACCOUNT}@server" "[ -f ~/${STAGING_ROOT_DIR}/artisan ] && [ -f ~/${STAGING_ROOT_DIR}/.env ]" \
+        && IS_LARAVEL=1
+
+    if [ "$IS_LARAVEL" = "1" ]; then
+        echo_laravel "Laravel detetado: a atualizar APP_URL em staging..."
+        ssh "${ACCOUNT}@server" "
+            f=~/${STAGING_ROOT_DIR}/.env
+            if grep -q '^APP_URL=' \"\$f\"; then
+                sed -i \"s#^APP_URL=.*#APP_URL=https://${STAGING_DOMAIN}#\" \"\$f\"
+            else
+                echo 'APP_URL=https://${STAGING_DOMAIN}' >> \"\$f\"
+            fi
+            cd ~/${STAGING_ROOT_DIR} && /opt/alt/php84/usr/bin/php artisan config:clear 2>/dev/null || true
+        " \
+            && echo_success "APP_URL de staging atualizado no Laravel." \
+            || echo_error "Falha ao atualizar APP_URL do Laravel em staging (verifica manualmente)."
     fi
 
     echo
