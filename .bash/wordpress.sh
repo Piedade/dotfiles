@@ -283,6 +283,9 @@ EOL"
     run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN config create --dbname='${ACCOUNT}_${DB_NAME}' --dbuser='${ACCOUNT}_${DB_NAME}' --dbpass='${DB_PASS}'"
     run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN core install --url='https://${DOMAIN}' --title='${SITE_TITLE}' --admin_user='redpost' --admin_password='${WP_ADMIN_PASS}' --admin_email='webmaster@redpost.pt' --skip-email"
 
+    echo_info "Setting permalink structure..."
+    run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN rewrite structure '/%postname%/' --hard"
+
     echo_info "Deleting default post..."
     run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN post delete 1 --force"
 
@@ -309,6 +312,7 @@ EOL"
     run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN plugin delete hello akismet"
     run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN theme install hello-elementor --activate"
     run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN theme delete twentytwentytwo twentytwentythree twentytwentyfour twentytwentyfive"
+    run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN config set WP_DEFAULT_THEME hello-elementor"
 
 
     echo_info "Setting permissions..."
