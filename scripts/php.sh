@@ -28,6 +28,7 @@ installPHP(){
         xdebug
         bcmath
         imagick
+        sqlite3
     )
 
     PACKAGES=(
