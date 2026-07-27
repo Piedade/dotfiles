@@ -1,10 +1,24 @@
 #!/bin/bash
 
+show_help() {
+    cat <<EOF
+Uso: $(basename "$0") [<host_antigo> <dominio> <conta_email> [host_novo]] [--yes] [--help]
+
+Apenas COPIA mensagens do servidor antigo para o novo. Não apaga emails em
+nenhum dos dois servidores.
+
+Opções:
+  -y, --yes     Não pedir confirmação antes de correr o imapsync
+  -h, --help    Mostra esta ajuda e sai
+EOF
+}
+
 YES=0
 POSITIONAL=()
 for arg in "$@"; do
     case "$arg" in
         --yes|-y) YES=1 ;;
+        --help|-h) show_help; exit 0 ;;
         *) POSITIONAL+=("$arg") ;;
     esac
 done
@@ -28,7 +42,7 @@ if [ ${#POSITIONAL[@]} -eq 0 ]; then
     if [ -z "$CONTA_EMAIL" ]; then echo "Erro: conta de email é obrigatória."; exit 1; fi
 else
     if [ -z "$HOST_ANTIGO" ] || [ -z "$DOMINIO" ] || [ -z "$CONTA_EMAIL" ]; then
-        echo "Uso: $0 <host_antigo> <dominio> <conta_email> [host_novo] [--yes]"
+        echo "Uso: $0 <host_antigo> <dominio> <conta_email> [host_novo] [--yes] (ou $0 --help)"
         exit 1
     fi
 fi
