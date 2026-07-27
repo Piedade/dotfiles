@@ -24,7 +24,7 @@ create_prestashop() {
         read -rp "Root directory [$_default_root_dir]: " ROOT_DIR
         [ -z "$ROOT_DIR" ] && ROOT_DIR="$_default_root_dir"
 
-        local _default_db_name="site"
+        local _default_db_name="shop"
         [ "$DOMAIN" != "$_default_domain" ] && [ "$DOMAIN" != "$_main_domain" ] && _default_db_name="${DOMAIN%%.*}"
         _default_db_name="${_default_db_name//-/_}"
         read -rp "Database name [$_default_db_name]: " DB_NAME
