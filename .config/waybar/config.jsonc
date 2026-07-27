@@ -19,6 +19,7 @@
         // "pulseaudio",
         "cpu",
         "memory",
+        "custom/mouse-battery",
         "clock",
         // "custom/sep",
         // "network",
@@ -106,7 +107,7 @@
 
     "cpu": {
         // "format": "<span color='#D29922'>CPU</span> {usage}%",
-        "format": "󰻠 {usage}%",
+        "format": "󰻠 {usage:>2}%",
         // "format-alt": "󰻠 {avg_frequency}GHz",
         "tooltip": true,
         "tooltip-format": "CPU Usage: {usage}%\nAverage Frequency: {avg_frequency}GHz\nLoad: {load}",
@@ -123,6 +124,13 @@
         "tooltip-format": "RAM: {used:0.1f}GB / {total:0.1f}GB ({percentage}%)\nSwap: {swapUsed:0.1f}GB / {swapTotal:0.1f}GB ({swapPercentage}%)\nAvailable: {avail:0.1f}GB",
         "interval": 2,
         "on-click": "alacritty -e htop -s PERCENT_MEM",
+    },
+
+    "custom/mouse-battery": {
+        "exec": "~/.config/waybar/scripts/mouse-battery-status.sh",
+        "return-type": "json",
+        "interval": 60,
+        "hide-empty-text": true,
     },
 
     "battery": {
