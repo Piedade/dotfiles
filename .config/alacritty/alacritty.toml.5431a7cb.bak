@@ -45,8 +45,3 @@ style = "Bold"
 [font.italic]
 family = "MesloLGS Nerd Font Mono"
 style = "Italic"
-
-[[keyboard.bindings]]
-key = "Return"
-mods = "Shift"
-chars = "\u001B\r"

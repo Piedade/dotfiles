@@ -6,6 +6,7 @@
 @define-color secondary #539bf5;
 @define-color disabled #2c2c2c;
 @define-color alert #D29922;
+@define-color critical #f85149;
 
 * {
     border: none;
@@ -39,6 +40,7 @@ window#waybar > box {
 #memory,
 #custom-vpn,
 #custom-idle,
+#custom-mouse-battery,
 #tray {
     padding: 4px 6px 2px;
     background-color: transparent;
@@ -118,6 +120,14 @@ window#waybar > box {
 
 #custom-idle.active {
     color: @disabled;
+}
+
+#custom-mouse-battery.warning {
+    color: @alert;
+}
+
+#custom-mouse-battery.critical {
+    color: @critical;
 }
 
 #custom-idle.paused {

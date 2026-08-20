@@ -184,6 +184,7 @@ EOF
         for i in "${domains[@]}"; do
             # domain=$( echo "$i" | perl -pe 's/\.[^.]{2,3}(?:\.[^.]{2,3})?$/.test/s' )
             domain=$( echo "$i" | perl -pe "$DOMAIN_TO_TEST_REGEX" )
+            domain="${domain#www.}"
             "${LOCAL_MYSQL[@]}" ${DATABASE_NAME} -se "UPDATE ${PS_PREFIX}_shop_url set domain=\"${domain}\", domain_ssl=\"${domain}\" where domain=\"$i\";"
         done
     fi
@@ -206,6 +207,7 @@ EOF
             host="${rest%%/*}"
             path="${rest#$host}"
             newhost=$( echo "$host" | perl -pe "$DOMAIN_TO_TEST_REGEX" )
+            newhost="${newhost#www.}"
             newurl="${scheme}://${newhost}${path}"
             "${LOCAL_MYSQL[@]}" ${DATABASE_NAME} -se "UPDATE ${WP_OPTIONS_TABLE} SET option_value=\"${newurl}\" WHERE option_name IN ('siteurl','home') AND option_value=\"${url}\";"
         done

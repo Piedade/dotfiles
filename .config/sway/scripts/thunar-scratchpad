@@ -48,13 +48,13 @@ if [ "$TOTAL" -eq 0 ]; then
     fi
     thunar --window &
     NEW_ID=""
-    for _ in $(seq 1 60); do
+    for _ in $(seq 1 30); do
+        sleep 0.1
         NEW_ID=$(swaymsg -t get_tree | python3 -c '
 import json, sys
 sys.setrecursionlimit(10000)
 def first(n, a):
-    app = n.get("app_id") or (n.get("window_properties") or {}).get("class", "") or ""
-    if app.lower() == a: return n.get("id")
+    if (n.get("app_id") or "").lower() == a: return n.get("id")
     for c in n.get("nodes", []) + n.get("floating_nodes", []):
         r = first(c, a)
         if r is not None: return r
@@ -63,14 +63,12 @@ r = first(json.load(sys.stdin), "thunar")
 if r is not None: print(r)
 ' 2>/dev/null)
         [ -n "$NEW_ID" ] && break
-        sleep 0.05
     done
-    sleep 0.1
     if [ -n "$NEW_ID" ]; then
         swaymsg "[con_id=$NEW_ID] move scratchpad"
         swaymsg "[con_id=$NEW_ID] scratchpad show"
     else
-        swaymsg "[app_id=thunar] move scratchpad, scratchpad show"
+        swaymsg "[app_id=Thunar] move scratchpad, scratchpad show"
     fi
 elif [ "$VIS_OTHER_COUNT" -gt 0 ]; then
     # Visible on another workspace → move to current and focus

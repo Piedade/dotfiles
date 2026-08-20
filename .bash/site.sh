@@ -10,7 +10,9 @@
 #
 # A pasta local é sempre /var/www/<dominio_local>. Se o vhost local ainda não
 # existir, cria-o automaticamente via create_domain (apache.sh: pasta em
-# /var/www, vhost Apache, certificado mkcert).
+# /var/www, vhost Apache, certificado mkcert), tentando usar a mesma versão de
+# PHP (MultiPHP) da produção — só se já estiver instalada localmente, senão
+# cai no default do create_domain.
 #
 # A base de dados NÃO é duplicada automaticamente — no final, o script mostra
 # o comando para o fazeres manualmente: get_database <bd_produção> (mysql.sh),
@@ -113,7 +115,33 @@ get_site_files() {
 
     if [ ! -d "$LOCAL_DIR" ]; then
         echo_info "Site local '$LOCAL_DOMAIN' não existe. A criar vhost com create_domain..."
-        create_domain "$LOCAL_DOMAIN" || { echo_error "Falha a criar o site local '$LOCAL_DOMAIN'."; return 1; }
+
+        # Tenta usar a mesma versão de PHP da produção no vhost local, para não
+        # arrancar sempre no default do create_domain (whm_resolve_php_version, em
+        # whm.sh, tenta primeiro o .htaccess do domínio e só depois o default da
+        # conta via MultiPHP Manager — ver comentário lá). Best-effort: só se aplica
+        # se já estiver instalada localmente — caso contrário fica-se pelo default
+        # (nunca vale a pena criar um vhost com um php-fpm que nem sequer existe na
+        # máquina).
+        local PROD_PHP_VERSION=""
+        local RESULT
+        RESULT=$(whm_resolve_php_version "$DOMAIN" "$ACCOUNT" "$ROOT_DIR")
+        if [ -n "$RESULT" ]; then
+            local CANDIDATE SOURCE RAW
+            IFS='|' read -r CANDIDATE SOURCE RAW <<< "$RESULT"
+            if dpkg -s "php${CANDIDATE}-fpm" &>/dev/null; then
+                PROD_PHP_VERSION="$CANDIDATE"
+                echo_info "PHP de produção: $RAW (via $SOURCE) -> a usar php${PROD_PHP_VERSION}-fpm localmente."
+            else
+                echo_info "PHP de produção ($RAW, via $SOURCE) não está instalado localmente — a usar o default do create_domain."
+            fi
+        fi
+
+        if [ -n "$PROD_PHP_VERSION" ]; then
+            create_domain "$LOCAL_DOMAIN" "$PROD_PHP_VERSION" || { echo_error "Falha a criar o site local '$LOCAL_DOMAIN'."; return 1; }
+        else
+            create_domain "$LOCAL_DOMAIN" || { echo_error "Falha a criar o site local '$LOCAL_DOMAIN'."; return 1; }
+        fi
     fi
 
     # --- Ficheiros: preview (dry-run) antes de qualquer alteração real ---
@@ -132,6 +160,14 @@ get_site_files() {
     RSYNC_EXCLUDES="$RSYNC_EXCLUDES --exclude=/cache/ --exclude=/var/cache/ --exclude=/var/logs/ --exclude=/wp-content/cache/"
     RSYNC_EXCLUDES="$RSYNC_EXCLUDES --exclude=/img/p/"
     RSYNC_EXCLUDES="$RSYNC_EXCLUDES --exclude=/storage/framework/cache/ --exclude=/storage/framework/sessions/ --exclude=/storage/framework/views/ --exclude=/storage/logs/ --exclude=/bootstrap/cache/"
+    # cgi-bin/ e .well-known são geridos pelo cPanel/host, não pela app — e lixo comum
+    # de zips/erros que não interessa levar para local: __MACOSX/ (sobra de zips feitos
+    # em macOS), error_log, .user.ini e php.ini (overrides de configuração PHP por
+    # pasta, tal como .htaccess, o PHP lê-os em qualquer subpasta) podem aparecer em
+    # qualquer subpasta, por isso sem a "/" inicial. O html de verificação do Google
+    # Search Console (googleXXXXXXXXXXXXXXXX.html) é sempre na raiz e específico de
+    # produção — não faz sentido para um domínio .test.
+    RSYNC_EXCLUDES="$RSYNC_EXCLUDES --exclude=/cgi-bin/ --exclude=/.well-known/ --exclude=__MACOSX/ --exclude=error_log --exclude=.user.ini --exclude=php.ini --exclude=/google*.html"
 
     echo_info "A calcular alterações de ficheiros (dry-run)..."
     local DRY_OUTPUT

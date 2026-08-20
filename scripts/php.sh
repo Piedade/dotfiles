@@ -29,6 +29,7 @@ installPHP(){
         bcmath
         imagick
         sqlite3
+        soap
     )
 
     PACKAGES=(

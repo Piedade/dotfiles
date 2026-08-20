@@ -95,12 +95,50 @@ check_php_extensions() {
         grep -qix "$ext" <<< "$LOADED" || MISSING+=("$ext")
     done
 
-    if [ ${#MISSING[@]} -gt 0 ]; then
-        echo_error "Missing PHP extensions for $ACCOUNT: ${MISSING[*]}"
-        echo_error "Install them via WHM EasyApache (e.g. ea-php84-php-${MISSING[0]}) before retrying."
+    if [ ${#MISSING[@]} -eq 0 ]; then
+        return 0
+    fi
+
+    echo_error "Missing PHP extensions for $ACCOUNT: ${MISSING[*]}"
+
+    # Deriva a versão dotted (ex.: 8.4) do binário, para usar no PHP Selector do
+    # CloudLinux via selectorctl --enable-user-extensions — o mesmo mecanismo por
+    # trás do Multi-PHP Manager/PHP Selector no cPanel (ativar extensão em modo UI
+    # dentro da conta), em vez de instalar pacotes ao nível do SO.
+    local PHP_VER_NUM PHP_VER_DOTTED
+    PHP_VER_NUM=$(grep -oP 'php\K[0-9]{2}' <<< "$PHP_BIN" | head -n1)
+    if [ -z "$PHP_VER_NUM" ]; then
+        echo_error "Enable them via the PHP Selector (Multi-PHP Manager) in cPanel before retrying."
+        return 1
+    fi
+    PHP_VER_DOTTED="${PHP_VER_NUM:0:1}.${PHP_VER_NUM:1:1}"
+
+    read -rp "Enable ${MISSING[*]} for $ACCOUNT via PHP Selector (PHP $PHP_VER_DOTTED) now? [Y/n]: " _install_ext
+    case "$_install_ext" in
+        [Nn]*)
+            echo_error "Enable them via the PHP Selector (Multi-PHP Manager) in cPanel before retrying."
+            return 1
+            ;;
+    esac
+
+    local MISSING_CSV
+    MISSING_CSV=$(IFS=,; echo "${MISSING[*]}")
+    echo_info "Enabling ${MISSING[*]} via PHP Selector..."
+    ssh root@server "selectorctl --interpreter=php --user='${ACCOUNT}' --version='${PHP_VER_DOTTED}' --enable-user-extensions='${MISSING_CSV}'" \
+        || { echo_error "Failed to enable ${MISSING[*]} via PHP Selector."; return 1; }
+
+    LOADED=$(ssh "${ACCOUNT}@server" "$PHP_BIN -m" 2>/dev/null)
+    local STILL_MISSING=()
+    for ext in "${MISSING[@]}"; do
+        grep -qix "$ext" <<< "$LOADED" || STILL_MISSING+=("$ext")
+    done
+
+    if [ ${#STILL_MISSING[@]} -gt 0 ]; then
+        echo_error "Still missing after enabling via PHP Selector: ${STILL_MISSING[*]}"
         return 1
     fi
 
+    echo_success "PHP extensions enabled for $ACCOUNT: ${MISSING[*]}"
     return 0
 }
 

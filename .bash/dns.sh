@@ -5,6 +5,8 @@ get_dns(){
         return 1
     else
         DOMAIN="$1"
+        DOMAIN="${DOMAIN#*://}"
+        DOMAIN="${DOMAIN%%/*}"
         echo_info "DNS Zone for ${DOMAIN}"
         echo
     fi

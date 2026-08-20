@@ -33,6 +33,27 @@ create_prestashop() {
         read -rp "Shop name [$ACCOUNT]: " SHOP_NAME
         [ -z "$SHOP_NAME" ] && SHOP_NAME="$ACCOUNT"
 
+        # Mostra a versão de PHP que a conta/domínio já usa, para ajudar a decidir
+        # se vale a pena forçar 8.4 via .htaccess (mesma lógica do create_wordpress —
+        # ver comentário em whm.sh). Best-effort: se o domínio ainda não tiver vhost
+        # (ex.: addon domain a ser criado agora), a consulta falha e segue sem info extra.
+        local RESULT
+        RESULT=$(whm_resolve_php_version "$DOMAIN" "$ACCOUNT" "$ROOT_DIR")
+        if [ -n "$RESULT" ]; then
+            local CANDIDATE SOURCE RAW
+            IFS='|' read -r CANDIDATE SOURCE RAW <<< "$RESULT"
+            echo_info "PHP atual do domínio: $RAW (via $SOURCE)"
+        else
+            # Domínio novo ainda sem vhost (caso mais comum aqui) — pergunta diretamente
+            # à conta via selectorctl (só indicativo: MultiPHP é opt-in por domínio,
+            # não garantidamente herdado — ver project_cpanel_deploy_scripts).
+            local ACCOUNT_PHP
+            ACCOUNT_PHP=$(whm_php_version_by_account "$ACCOUNT")
+            if [ -n "$ACCOUNT_PHP" ]; then
+                echo_info "PHP atual da conta: $ACCOUNT_PHP"
+            fi
+        fi
+
         read -rp "Enable MultiPHP? [y/N]: " _multi
         case "$_multi" in
             [Yy]*) ENABLE_MULTI_PHP="yes" ;;
@@ -198,8 +219,18 @@ create_prestashop() {
     run_remote "$ACCOUNT" "uapi Email add_pop email='noreply@${DOMAIN}' password='${EMAIL_PASS}'"
     run_remote "$ACCOUNT" "uapi Email suspend_incoming email='noreply@${DOMAIN}'"
 
-    echo_info "Disable Nginx cache..."
-    run_remote "$ACCOUNT" "uapi NginxCaching disable_cache"
+    # NginxCaching não tem uma função UAPI de "status" (só clear/disable/enable/
+    # reset_cache_config), mas o estado fica em /var/cpanel/userdata/<conta>/
+    # nginx-cache.json ({"enabled": true|false}) — se já estiver false, poupa a
+    # chamada UAPI (lenta) que iria de qualquer forma re-desativar algo já
+    # desativado. Usa ssh direto, não run_remote: um grep "não encontrado" é
+    # um resultado esperado aqui (ficheiro pode não existir), não uma falha real.
+    if ssh "${ACCOUNT}@server" "grep -q '\"enabled\"[[:space:]]*:[[:space:]]*false' /var/cpanel/userdata/${ACCOUNT}/nginx-cache.json 2>/dev/null"; then
+        echo_info "Nginx cache already disabled."
+    else
+        echo_info "Disable Nginx cache..."
+        run_remote "$ACCOUNT" "uapi NginxCaching disable_cache"
+    fi
 
     # --- Build the release locally: composer create-release needs composer/node/npm/make,
     # which a shared cPanel account won't have. Only the finished release ZIP travels over SSH.
@@ -436,9 +467,42 @@ $result = Mail::sendMailTest(
     $smtpEncryption
 );
 
-echo $result === true ? "OK\n" : ('FAIL: ' . $result . "\n");
+echo $result === true ? "Email sent successfully\n" : ('Error: ' . $result . "\n");
 PHPEOF
-    run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $PHP_BIN _test_mail.php '$MAIL_SERVER' 'webmaster@redpost.pt' 'noreply@${DOMAIN}' 'noreply@${DOMAIN}' '${EMAIL_PASS}' '$MAIL_PORT' '$MAIL_ENCRYPTION'; rm -f _test_mail.php"
+    # Colorizes the same way create_wordpress's run_remote_wp does ("Email sent successfully"
+    # green, "Error:" red) — same escape codes as echo_success/echo_error in 0_utils.sh. Just
+    # this one call, not a generic wrapper: PrestaShop doesn't have WP's Elementor-noise problem
+    # that run_remote_wp was actually built to solve, so a whole parallel wrapper isn't warranted.
+    ssh "${ACCOUNT}@server" /bin/bash <<-EOF | awk '{b="\033[1m";g="\033[32m";r="\033[31m";z="\033[0m";if($0~/Email sent successfully/){print b g $0 z}else if($0~/^Error:/){print b r $0 z}else{print}}'
+        cd ~/$ROOT_DIR && $PHP_BIN _test_mail.php '$MAIL_SERVER' 'webmaster@redpost.pt' 'noreply@${DOMAIN}' 'noreply@${DOMAIN}' '${EMAIL_PASS}' '$MAIL_PORT' '$MAIL_ENCRYPTION'; rm -f _test_mail.php
+EOF
+    local MAIL_TEST_STATUS=${PIPESTATUS[0]}
+    if [ $MAIL_TEST_STATUS -ne 0 ]; then
+        echo_error "Command failed: mail test (Exit status: $MAIL_TEST_STATUS)"
+        read -r
+        exit $MAIL_TEST_STATUS
+    fi
+
+    # Domínios fora dos padrões dev/staging (ver is_noindex_domain, em whm.sh) não
+    # apanham o header X-Robots-Tag noindex do Apache — por omissão ficariam
+    # publicamente visíveis/indexáveis assim que o DNS aponte para cá, mesmo que a
+    # loja ainda esteja a ser construída. Ativa o modo de manutenção nativo do
+    # PrestaShop (PS_SHOP_ENABLE=0): bloqueia visitantes com a página de manutenção,
+    # mas PS_MAINTENANCE_ALLOW_ADMINS já vem a 1 por omissão do instalador, por isso
+    # continua a dar para pré-visualizar com sessão de admin ativa (mesmo espírito do
+    # Elementor maintenance mode no create_wordpress).
+    if ! is_noindex_domain "$DOMAIN"; then
+        echo_info "'$DOMAIN' não é um domínio dev/staging — a ativar modo de manutenção..."
+        local MAINTENANCE_SQL
+        MAINTENANCE_SQL=$(cat <<EOF
+UPDATE ps_configuration SET value='0' WHERE name='PS_SHOP_ENABLE';
+UPDATE ps_configuration SET value='Site em construção.' WHERE name='PS_MAINTENANCE_TEXT';
+EOF
+)
+        echo "$MAINTENANCE_SQL" | ssh "${ACCOUNT}@server" "MYSQL_PWD='${DB_PASS}' mysql -u '${ACCOUNT}_${DB_NAME}' '${ACCOUNT}_${DB_NAME}'" \
+            && echo_info "Modo de manutenção ativado — desativa em Preferências > Manutenção quando a loja estiver pronta." \
+            || echo_error "Falha a ativar o modo de manutenção — verifica manualmente em Preferências > Manutenção."
+    fi
 
     echo
     echo_success "✅ PrestaShop $VERSION installed and ready at https://$DOMAIN"
@@ -518,7 +582,7 @@ detect_ps_version() {
     return 1
 }
 
-# Atualiza uma instalação LOCAL do PrestaShop (ex: /var/www/quintanimal.test) para a versão
+# Atualiza uma instalação LOCAL do PrestaShop (ex: /var/www/redpost.test) para a versão
 # mais recente disponível, usando o módulo oficial "Update Assistant" (autoupgrade)
 # descarregado sempre da última release do GitHub, e o CLI documentado em
 # https://devdocs.prestashop-project.org/1.7/basics/keeping-up-to-date/update/update-from-the-cli/

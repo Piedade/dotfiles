@@ -95,7 +95,7 @@
                 "today": "<span color='#539bf5'><b><u>{}</u></b></span>",
             },
         },
-        "on-click": "google-chrome --profile-directory=\"Profile 1\"",
+        "on-click": "google-chrome --profile-directory=\"Profile 1\" --app-id=kjbdgfilnfhdoflbpgamdcdgpehopbep",
     },
 
     "disk": {
@@ -112,7 +112,7 @@
         "tooltip": true,
         "tooltip-format": "CPU Usage: {usage}%\nAverage Frequency: {avg_frequency}GHz\nLoad: {load}",
         "interval": 2,
-        "on-click": "alacritty -e htop -s PERCENT_CPU",
+        "on-click": "alacritty -e ~/.config/waybar/scripts/btop-sort.sh cpu",
     },
 
     "memory": {
@@ -123,7 +123,7 @@
         "tooltip": true,
         "tooltip-format": "RAM: {used:0.1f}GB / {total:0.1f}GB ({percentage}%)\nSwap: {swapUsed:0.1f}GB / {swapTotal:0.1f}GB ({swapPercentage}%)\nAvailable: {avail:0.1f}GB",
         "interval": 2,
-        "on-click": "alacritty -e htop -s PERCENT_MEM",
+        "on-click": "alacritty -e ~/.config/waybar/scripts/btop-sort.sh mem",
     },
 
     "custom/mouse-battery": {

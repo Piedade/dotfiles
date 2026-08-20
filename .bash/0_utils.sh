@@ -65,11 +65,22 @@ gen_pass() {
 run_remote() {
   local ACCOUNT="$1"
   local CMD="$2"
-  ssh "$ACCOUNT@server" /bin/bash <<-EOF
+  # Filtra os blocos "PHP: <data> [notice/warning ...][ficheiro::linha] ... [array (
+  # ... )]" que alguns plugins (ex: Elementor no PHP 8.4) escrevem diretamente no
+  # shutdown, ignorando display_errors/error_reporting/error_log — não há flag do
+  # PHP que os cale, só filtrar a saída. Remove só esses blocos (por estado, do
+  # "PHP:" até à linha de fecho ")]"), sem tocar em mais nenhuma linha real.
+  # PIPESTATUS[0] preserva o exit status do ssh (não do awk) para o "set -e"-like
+  # check abaixo continuar a funcionar.
+  ssh "$ACCOUNT@server" /bin/bash <<-EOF | awk '
+      /^PHP:/ { skip=1 }
+      skip { if ($0 ~ /^\)\]?[ \t]*$/) skip=0; next }
+      { print }
+  '
 $CMD
 EOF
 
-  local STATUS=$?
+  local STATUS=${PIPESTATUS[0]}
   if [ $STATUS -ne 0 ]; then
         echo_error "Command failed: $CMD (Exit status: $STATUS)"
         read -r  # mantém terminal aberto

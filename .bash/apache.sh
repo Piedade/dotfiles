@@ -8,6 +8,11 @@ create_domain() {
         DOMAIN="$1"
     fi
 
+    # Versão de PHP-FPM a usar no vhost (formato com ponto, ex: 8.4). Opcional —
+    # quem chama pode passar a versão de produção detetada (ex: get_site_files, via
+    # whm_php_version_by_domain) para o vhost local arrancar já na mesma versão.
+    local PHP_VERSION="${2:-8.4}"
+
     # Ask for sudo to run the command
     sudo -v &>/dev/null
 
@@ -54,7 +59,7 @@ create_domain() {
     SSLCertificateKeyFile "/var/www/ssl/$DOMAIN-key.pem"
 
     <FilesMatch \.php$>
-        SetHandler "proxy:unix:/run/php/php8.4-fpm.sock|fcgi://localhost"
+        SetHandler "proxy:unix:/run/php/php${PHP_VERSION}-fpm.sock|fcgi://localhost"
     </FilesMatch>
 
     ErrorLog \${APACHE_LOG_DIR}/$DOMAIN-error.log
@@ -68,7 +73,7 @@ EOF
     sudo a2ensite "$DOMAIN.conf" > /dev/null
     sudo systemctl reload apache2 > /dev/null
 
-    echo_success "Virtual host for https://$DOMAIN has been created."
+    echo_success "Virtual host for https://$DOMAIN has been created (PHP ${PHP_VERSION})."
 }
 
 fix_permissions() {

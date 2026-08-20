@@ -28,7 +28,7 @@ set $config_dir ~/.config/sway
 exec swayidle -w \
     timeout 300   'pgrep swaylock || swaylock -f' \
     timeout 600   'swaymsg "output * dpms off"' \
-    resume       'swaymsg "output * dpms on"' \
+    resume       'swaymsg "output * dpms on"; ~/.config/sway/scripts/chrome-resume.sh &' \
     timeout 900   'systemctl suspend' \
     before-sleep 'pgrep swaylock || swaylock -f'
 
@@ -48,6 +48,9 @@ input type:keyboard {
     repeat_delay 300
     repeat_rate 50
 }
+
+# don't warp the mouse cursor when focus/workspace changes
+mouse_warping none
 
 ### Appearance
 #

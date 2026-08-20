@@ -41,17 +41,19 @@ launch() {
 
 launch 1 code
 
-launch 2 google-chrome --profile-directory=Default
+CHROME_FLAGS="--disable-features=TabHoverCardImages"
+
+launch 2 google-chrome --profile-directory=Default $CHROME_FLAGS
 
 launch 3 alacritty
 launch 3 alacritty
 launch 3 alacritty
 
 # launch 7 google-chrome --profile-directory="Profile 1"
-launch 7 google-chrome --profile-directory="Profile 1"
+launch 7 google-chrome --profile-directory="Profile 1" $CHROME_FLAGS
 
-launch 8 tabbed google-chrome --profile-directory="Profile 1" --app-id=kjbdgfilnfhdoflbpgamdcdgpehopbep
-launch 8 tabbed google-chrome --profile-directory="Profile 1" --app-id=hnpfjngllnobngcgfapefoaidbinmjnm
+launch 8 tabbed google-chrome --profile-directory="Profile 1" --app-id=kjbdgfilnfhdoflbpgamdcdgpehopbep $CHROME_FLAGS
+launch 8 tabbed google-chrome --profile-directory="Profile 1" --app-id=hnpfjngllnobngcgfapefoaidbinmjnm $CHROME_FLAGS
 launch 8 tabbed obsidian
 
 # lets go back to work

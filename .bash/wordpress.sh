@@ -1,5 +1,35 @@
 #!/bin/bash
 
+# Like run_remote() (0_utils.sh), but filters out the multi-line "PHP: <date>
+# [notice/warning X N][file::line] message ... [array ( ... )]" blocks that
+# Elementor writes directly on shutdown when running under PHP 8.4 (e.g.
+# atomic-global-styles.php), bypassing display_errors/error_reporting/error_log
+# — no PHP flag silences these (tested: neither worked). Kept local to this
+# file rather than in run_remote (0_utils.sh) so prestashop.sh/staging.sh/
+# site.sh, which don't have this noise, aren't affected.
+# The "PHP: " sometimes ends up glued to the end of a real output line (when
+# the preceding command, e.g. a wp eval echo, doesn't end in a newline — seen
+# as "Email sent successfullyPHP: ..."), so the match has to be by position
+# within the line (match()+RSTART), not just by line start (^PHP:). Preserves
+# whatever came before "PHP: " on that line, skips through to the closing
+# ")]" line, then resumes normal printing from there. Also colorizes specific
+# lines: "Email sent successfully" green, "Error:" red (same scheme as
+# echo_success/echo_error in 0_utils.sh). PIPESTATUS[0] keeps ssh's exit status
+# (not awk's) for the same fail-fast behavior as run_remote.
+run_remote_wp() {
+    local ACCOUNT="$1"
+    local CMD="$2"
+    ssh "$ACCOUNT@server" /bin/bash <<-EOF | awk 'function colorize(s,b,g,r,z){b="\033[1m";g="\033[32m";r="\033[31m";z="\033[0m";if(s~/Email sent successfully/)return b g s z;if(s~/^Error:/)return b r s z;return s} {if(!skip){if(match($0,/PHP: [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9] \[/)){pre=substr($0,1,RSTART-1);if(pre!="")print colorize(pre);skip=1;next}print colorize($0);next}if($0~/^\)\]?[ \t]*$/){skip=0};next}'
+$CMD
+EOF
+
+    local STATUS=${PIPESTATUS[0]}
+    if [ $STATUS -ne 0 ]; then
+        echo_error "Command failed: $CMD (Exit status: $STATUS)"
+        read -r  # mantém terminal aberto
+        exit $STATUS
+    fi
+}
 
 create_wordpress() {
     local ACCOUNT=$1
@@ -34,6 +64,32 @@ create_wordpress() {
 
         read -rp "Site title [$ACCOUNT]: " SITE_TITLE
         [ -z "$SITE_TITLE" ] && SITE_TITLE="$ACCOUNT"
+
+        # Mostra a versão de PHP que a conta/domínio já usa, para ajudar a decidir
+        # se vale a pena forçar 8.4 via .htaccess (mesma lógica do get_site_files(),
+        # em site.sh: whm_resolve_php_version tenta primeiro o .htaccess do domínio
+        # e só depois o default da conta via MultiPHP Manager — ver comentário em
+        # whm.sh). Best-effort: se o domínio ainda não tiver vhost (ex.: addon
+        # domain a ser criado agora), a consulta falha e segue sem info extra.
+        local RESULT
+        RESULT=$(whm_resolve_php_version "$DOMAIN" "$ACCOUNT" "$ROOT_DIR")
+        if [ -n "$RESULT" ]; then
+            local CANDIDATE SOURCE RAW
+            IFS='|' read -r CANDIDATE SOURCE RAW <<< "$RESULT"
+            echo_info "PHP atual do domínio: $RAW (via $SOURCE)"
+        else
+            # Domínio novo ainda sem vhost (caso mais comum aqui) — não há
+            # .htaccess nem entrada no MultiPHP Manager para ele ainda, por isso
+            # whm_resolve_php_version falha sempre. Pergunta diretamente à conta
+            # via selectorctl (ver nota em project_cpanel_deploy_scripts: MultiPHP
+            # é opt-in por domínio, não garantidamente herdado — isto é só
+            # indicativo, não o valor real que este domínio novo vai ter).
+            local ACCOUNT_PHP
+            ACCOUNT_PHP=$(whm_php_version_by_account "$ACCOUNT")
+            if [ -n "$ACCOUNT_PHP" ]; then
+                echo_info "PHP atual da conta: $ACCOUNT_PHP"
+            fi
+        fi
 
         read -rp "Enable MultiPHP? [y/N]: " _multi
         case "$_multi" in
@@ -174,7 +230,7 @@ create_wordpress() {
         echo_info "MultiPHP enabled: skipping account-wide default (this domain forces 8.4 via .htaccess)."
     else
         echo_info "Setting PHP version to 8.4..."
-        run_remote "$ACCOUNT" "selectorctl --interpreter=php --set-user-current=8.4"
+        run_remote_wp "$ACCOUNT" "selectorctl --interpreter=php --set-user-current=8.4"
     fi
 
     echo_info "Checking required PHP extensions..."
@@ -183,19 +239,29 @@ create_wordpress() {
         || return 1
 
     echo_info "Creating database and user..."
-    # run_remote "$ACCOUNT" "uapi Mysql list_users"
-    run_remote "$ACCOUNT" "uapi Mysql create_database name='${ACCOUNT}_${DB_NAME}'"
-    run_remote "$ACCOUNT" "uapi Mysql create_user name='${ACCOUNT}_${DB_NAME}' password='${DB_PASS}'"
-    run_remote "$ACCOUNT" "uapi Mysql set_privileges_on_database user='${ACCOUNT}_${DB_NAME}' database='${ACCOUNT}_${DB_NAME}' privileges='ALL PRIVILEGES'"
+    # run_remote_wp "$ACCOUNT" "uapi Mysql list_users"
+    run_remote_wp "$ACCOUNT" "uapi Mysql create_database name='${ACCOUNT}_${DB_NAME}'"
+    run_remote_wp "$ACCOUNT" "uapi Mysql create_user name='${ACCOUNT}_${DB_NAME}' password='${DB_PASS}'"
+    run_remote_wp "$ACCOUNT" "uapi Mysql set_privileges_on_database user='${ACCOUNT}_${DB_NAME}' database='${ACCOUNT}_${DB_NAME}' privileges='ALL PRIVILEGES'"
 
 
     echo_info "Creating email..."
-    run_remote "$ACCOUNT" "uapi Email add_pop email='noreply@${DOMAIN}' password='${EMAIL_PASS}'"
-    run_remote "$ACCOUNT" "uapi Email suspend_incoming email='noreply@${DOMAIN}'"
+    run_remote_wp "$ACCOUNT" "uapi Email add_pop email='noreply@${DOMAIN}' password='${EMAIL_PASS}'"
+    run_remote_wp "$ACCOUNT" "uapi Email suspend_incoming email='noreply@${DOMAIN}'"
 
 
-    echo_info "Disable Nginx cache..."
-    run_remote "$ACCOUNT" "uapi NginxCaching disable_cache"
+    # NginxCaching não tem uma função UAPI de "status" (só clear/disable/enable/
+    # reset_cache_config), mas o estado fica em /var/cpanel/userdata/<conta>/
+    # nginx-cache.json ({"enabled": true|false}) — se já estiver false, poupa a
+    # chamada UAPI (lenta) que iria de qualquer forma re-desativar algo já
+    # desativado. Usa ssh direto, não run_remote_wp: um grep "não encontrado" é
+    # um resultado esperado aqui (ficheiro pode não existir), não uma falha real.
+    if ssh "${ACCOUNT}@server" "grep -q '\"enabled\"[[:space:]]*:[[:space:]]*false' /var/cpanel/userdata/${ACCOUNT}/nginx-cache.json 2>/dev/null"; then
+        echo_info "Nginx cache already disabled."
+    else
+        echo_info "Disable Nginx cache..."
+        run_remote_wp "$ACCOUNT" "uapi NginxCaching disable_cache"
+    fi
 
 
     echo_info "Creating .htaccess..."
@@ -274,54 +340,103 @@ HTACCESS_CONTENT+="
 </IfModule>
 # END cPanel-generated php ini directives, do not edit"
 
-    run_remote "$ACCOUNT" "cat > ~/$ROOT_DIR/.htaccess <<EOL
+    run_remote_wp "$ACCOUNT" "cat > ~/$ROOT_DIR/.htaccess <<EOL
 $HTACCESS_CONTENT
 EOL"
 
     echo_info "Installing WordPress..."
-    run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN core download --locale='pt_PT'"
-    run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN config create --dbname='${ACCOUNT}_${DB_NAME}' --dbuser='${ACCOUNT}_${DB_NAME}' --dbpass='${DB_PASS}'"
-    run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN core install --url='https://${DOMAIN}' --title='${SITE_TITLE}' --admin_user='redpost' --admin_password='${WP_ADMIN_PASS}' --admin_email='webmaster@redpost.pt' --skip-email"
+    run_remote_wp "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN core download --locale='pt_PT'"
+    run_remote_wp "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN config create --dbname='${ACCOUNT}_${DB_NAME}' --dbuser='${ACCOUNT}_${DB_NAME}' --dbpass='${DB_PASS}'"
+    run_remote_wp "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN core install --url='https://${DOMAIN}' --title='${SITE_TITLE}' --admin_user='redpost' --admin_password='${WP_ADMIN_PASS}' --admin_email='webmaster@redpost.pt' --skip-email"
 
     echo_info "Setting permalink structure..."
-    run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN rewrite structure '/%postname%/' --hard"
+    run_remote_wp "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN rewrite structure '/%postname%/' --hard"
 
     echo_info "Deleting default post..."
-    run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN post delete 1 --force"
+    run_remote_wp "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN post delete 1 --force"
 
     echo_info "Applying security settings..."
-    run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN config shuffle-salts"
-    run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN config set DISALLOW_FILE_EDIT true --raw"
-    run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN config set WP_MEMORY_LIMIT 512M"
+    run_remote_wp "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN config shuffle-salts"
+    run_remote_wp "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN config set DISALLOW_FILE_EDIT true --raw"
+    run_remote_wp "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN config set WP_MEMORY_LIMIT 512M"
 
 
     echo_info "Disabling plugins..."
-    run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN plugin install disable-xml-rpc disable-json-api simple-smtp elementor --activate"
+    run_remote_wp "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN plugin install disable-xml-rpc disable-json-api simple-smtp elementor --activate"
 
 
     echo_info "Mail config..."
-    run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN config set SMTP_HOST 'localhost'"
-    run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN config set SMTP_AUTH 1 --raw"
-    run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN config set SMTP_USER 'noreply@${DOMAIN}'"
-    run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN config set SMTP_PASS '${EMAIL_PASS}'"
-    run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN config set SMTP_FROM 'noreply@${DOMAIN}'"
-    run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN config set SMTP_FROMNAME '${ACCOUNT}'"
+    run_remote_wp "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN config set SMTP_HOST 'localhost'"
+    run_remote_wp "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN config set SMTP_AUTH 1 --raw"
+    run_remote_wp "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN config set SMTP_USER 'noreply@${DOMAIN}'"
+    run_remote_wp "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN config set SMTP_PASS '${EMAIL_PASS}'"
+    run_remote_wp "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN config set SMTP_FROM 'noreply@${DOMAIN}'"
+    run_remote_wp "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN config set SMTP_FROMNAME '${ACCOUNT}'"
 
 
     echo_info "Cleaning default plugins/themes..."
-    run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN plugin delete hello akismet"
-    run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN theme install hello-elementor --activate"
-    run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN theme delete twentytwentytwo twentytwentythree twentytwentyfour twentytwentyfive"
-    run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN config set WP_DEFAULT_THEME hello-elementor"
+    run_remote_wp "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN plugin delete hello akismet"
+    run_remote_wp "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN theme install hello-elementor --activate"
+    run_remote_wp "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN theme delete twentytwentytwo twentytwentythree twentytwentyfour twentytwentyfive"
+    run_remote_wp "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN config set WP_DEFAULT_THEME hello-elementor"
+
+
+    # Domínios fora dos padrões dev/staging (ver is_noindex_domain, em whm.sh) não
+    # apanham o header X-Robots-Tag noindex do Apache — por omissão ficariam
+    # publicamente visíveis/indexáveis assim que o DNS aponte para cá, mesmo que o
+    # site ainda esteja a ser construído. Ativa o modo de manutenção do Elementor
+    # com uma página mínima "Em manutenção" (bloqueia visitantes, exceto admins
+    # logados); se o Elementor não estiver ativo por algum motivo, cai para
+    # blog_public=0 (só desencoraja indexação, não bloqueia o acesso).
+    # Nota: usa ssh direto em vez de run_remote — run_remote faz "exit" de toda a
+    # sessão em caso de falha (ver comentário mais acima sobre "wp core download"),
+    # o que não serve para um passo best-effort com fallback.
+    if ! is_noindex_domain "$DOMAIN"; then
+        echo_info "'$DOMAIN' não é um domínio dev/staging — a configurar visibilidade..."
+
+        if ssh "${ACCOUNT}@server" "cd ~/$ROOT_DIR && $WP_BIN plugin is-active elementor" &>/dev/null; then
+            # --porcelain só devia imprimir o ID, mas neste servidor os avisos de
+            # deprecation do PHP 8.4 (ex.: Elementor atomic-global-styles.php) vão
+            # para o stdout do CLI, não stderr — por isso filtra-se só a linha
+            # puramente numérica em vez de confiar na saída toda.
+            local PAGE_ID
+            PAGE_ID=$(ssh "${ACCOUNT}@server" "cd ~/$ROOT_DIR && $WP_BIN post create --post_type=elementor_library --post_title='Em manutenção' --post_status=publish --porcelain" 2>/dev/null | grep -E '^[0-9]+$' | head -n1)
+
+            if [[ "$PAGE_ID" =~ ^[0-9]+$ ]]; then
+                # Título "Em manutenção" só serve para identificar a página na lista
+                # do Elementor — conteúdo fica vazio de propósito (sem heading/texto).
+                ssh "${ACCOUNT}@server" "
+                    cd ~/$ROOT_DIR &&
+                    $WP_BIN post meta update '$PAGE_ID' _elementor_template_type page &&
+                    $WP_BIN post meta update '$PAGE_ID' _elementor_edit_mode builder &&
+                    $WP_BIN post meta update '$PAGE_ID' _elementor_data '[]' &&
+                    $WP_BIN option update elementor_maintenance_mode_template_id '$PAGE_ID' &&
+                    $WP_BIN option update elementor_maintenance_mode_mode maintenance
+                " &>/dev/null
+                if [ $? -eq 0 ]; then
+                    echo_info "Elementor maintenance mode ativado (página ID $PAGE_ID)."
+                else
+                    echo_error "Falha a configurar a página de manutenção do Elementor — a usar blog_public=0 como fallback."
+                    ssh "${ACCOUNT}@server" "cd ~/$ROOT_DIR && $WP_BIN option update blog_public 0" &>/dev/null
+                fi
+            else
+                echo_error "Falha a criar a página de manutenção do Elementor — a usar blog_public=0 como fallback."
+                ssh "${ACCOUNT}@server" "cd ~/$ROOT_DIR && $WP_BIN option update blog_public 0" &>/dev/null
+            fi
+        else
+            echo_info "Elementor não está ativo — a usar blog_public=0 como fallback."
+            ssh "${ACCOUNT}@server" "cd ~/$ROOT_DIR && $WP_BIN option update blog_public 0" &>/dev/null
+        fi
+    fi
 
 
     echo_info "Setting permissions..."
-    run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && find . -type d -exec chmod 755 {} \;"
-    run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && find . -type f -exec chmod 644 {} \;"
-    run_remote "$ACCOUNT" "cd ~/$ROOT_DIR && chmod 400 wp-config.php"
+    run_remote_wp "$ACCOUNT" "cd ~/$ROOT_DIR && find . -type d -exec chmod 755 {} \;"
+    run_remote_wp "$ACCOUNT" "cd ~/$ROOT_DIR && find . -type f -exec chmod 644 {} \;"
+    run_remote_wp "$ACCOUNT" "cd ~/$ROOT_DIR && chmod 400 wp-config.php"
 
     echo_info "Testing email..."
-    run_remote "$ACCOUNT" "
+    run_remote_wp "$ACCOUNT" "
         cd ~/$ROOT_DIR && $WP_BIN eval \"
             if (wp_mail('webmaster@redpost.pt', 'Email Test from ${ACCOUNT}', 'This is a test email from your new WordPress site for https://${DOMAIN} (${ACCOUNT}).')) {
                 echo 'Email sent successfully';
@@ -331,10 +446,12 @@ EOL"
         \"
     "
 
-    echo
     echo "🌍 Site: https://$DOMAIN/wp-admin/admin.php?page=elementor-connect-account"
-    echo "👤 Admin: redpost"
-    echo "🔑 Admin Password: $WP_ADMIN_PASS"
+    echo
+    echo "https://$DOMAIN"
+    echo "user: redpost"
+    echo "pass: $WP_ADMIN_PASS"
+    echo
 
     echo "🗄️ Database:"
     echo "User: ${ACCOUNT}_${DB_NAME}"
