@@ -595,6 +595,10 @@ detect_ps_version() {
 # channel: online_recommended (default, caminho seguro passo-a-passo) | online | local
 # --no-backup salta o backup:create (mais rápido para iterar em dev, mas sem rede de
 # segurança — não uses isto num site que não possas simplesmente recriar/reclonar).
+# Exit codes: 0 sucesso (inclui "já estás atualizado, nada a fazer"), 2 o
+# utilizador recusou um dos prompts [y/N] (não é uma falha real), 1 qualquer
+# outra falha. Distinção pensada para quem chama isto programaticamente e
+# precisa de tratar "cancelaste tu" de forma diferente de "algo correu mal".
 update_prestashop() {
     local SKIP_BACKUP=0
     local POSITIONAL=()
@@ -607,8 +611,8 @@ update_prestashop() {
     done
     set -- "${POSITIONAL[@]}"
 
-    local SITE=$1
-    local ADMIN_DIR=$2
+    local SITE=${1:-}
+    local ADMIN_DIR=${2:-}
     local CHANNEL=${3:-online_recommended}
 
     if [ -z "$SITE" ]; then
@@ -674,7 +678,7 @@ update_prestashop() {
     read -rp "Continuar? [y/N]: " answer
     case "$answer" in
         [Yy]*) ;;
-        *) echo_error "Operação cancelada."; return 1 ;;
+        *) echo_error "Operação cancelada."; return 2 ;;
     esac
 
     # --- Descarrega sempre a última release do módulo Update Assistant do GitHub. A versão
@@ -774,7 +778,7 @@ update_prestashop() {
     fi
     case "$answer" in
         [Yy]*) ;;
-        *) echo_error "Operação cancelada antes de tocar no site."; return 1 ;;
+        *) echo_error "Operação cancelada antes de tocar no site."; return 2 ;;
     esac
 
     if [ "$SKIP_BACKUP" = "1" ]; then

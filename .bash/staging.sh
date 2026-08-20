@@ -252,6 +252,26 @@ EOL
         STAGING_DB_PASS=$(gen_pass)
     fi
 
+    # O utilizador já existir não significa que o config já lá esteja (ex: primeira
+    # sincronização deste staging, apesar de um user de BD antigo com o mesmo nome
+    # calculado já existir). Sem config, "confiar" no user existente deixava o site
+    # sem qualquer ligação à BD. Nesse caso trata-se como se fosse novo: repõe-se a
+    # password do user existente (não há como recuperar a antiga) e semeia-se o config.
+    local CONFIG_EXISTS=0
+    ssh "${ACCOUNT}@server" "test -f ~/${STAGING_ROOT_DIR}/wp-config.php -o -f ~/${STAGING_ROOT_DIR}/config/settings.inc.php -o -f ~/${STAGING_ROOT_DIR}/app/config/parameters.php -o -f ~/${STAGING_ROOT_DIR}/.env" \
+        && CONFIG_EXISTS=1
+
+    local FIRST_RUN=0
+    local RESET_EXISTING_PASS=0
+    if [ "$CREATE_NEW_USER" = "1" ] || [ "$CONFIG_EXISTS" = "0" ]; then
+        FIRST_RUN=1
+    fi
+    if [ "$CREATE_NEW_USER" = "0" ] && [ "$CONFIG_EXISTS" = "0" ]; then
+        RESET_EXISTING_PASS=1
+        STAGING_DB_PASS=$(gen_pass)
+        echo_error "Utilizador '$STAGING_DB_USER' já existia mas não há config em staging — a repor a password (a antiga não é recuperável)."
+    fi
+
     echo_info "A duplicar base de dados ($DB_NAME -> $STAGING_DB_NAME)..."
     # A conta cPanel não tem .my.cnf com acesso MySQL direto (nem devia) — só o que
     # estritamente precisa de acesso direto ao mysql/mysqldump corre como root; a
@@ -266,6 +286,9 @@ uapi Mysql create_database name='${STAGING_DB_NAME}' >/dev/null 2>&1 || true"
     if [ "$CREATE_NEW_USER" = "1" ]; then
         ACCT_SCRIPT="$ACCT_SCRIPT
 uapi Mysql create_user name='${STAGING_DB_USER}' password='${STAGING_DB_PASS}' >/dev/null"
+    elif [ "$RESET_EXISTING_PASS" = "1" ]; then
+        ACCT_SCRIPT="$ACCT_SCRIPT
+uapi Mysql set_password user='${STAGING_DB_USER}' password='${STAGING_DB_PASS}' >/dev/null"
     fi
 
     ACCT_SCRIPT="$ACCT_SCRIPT
@@ -277,10 +300,11 @@ uapi Mysql set_privileges_on_database user='${STAGING_DB_USER}' database='${STAG
     ssh -t "$SERVER" "mysqldump --single-transaction --quick '${DB_NAME}' | dd status=progress | mysql '${STAGING_DB_NAME}'" \
         || { echo_error "Falha a duplicar os dados da base de dados."; return 1; }
 
-    if [ "$CREATE_NEW_USER" = "1" ]; then
-        # Primeira vez para este staging: semeia o config a partir da produção (o rsync
-        # ignorou-o de propósito) e aponta-o para a BD/utilizador novos.
-        echo_info "A preparar a configuração de staging (utilizador novo: $STAGING_DB_USER)..."
+    if [ "$FIRST_RUN" = "1" ]; then
+        # Primeira vez para este staging (ou config em falta apesar do user já existir):
+        # semeia o config a partir da produção (o rsync ignorou-o de propósito) e
+        # aponta-o para a BD/utilizador/password atuais.
+        echo_info "A preparar a configuração de staging (utilizador: $STAGING_DB_USER)..."
         local CFG_SCRIPT
         CFG_SCRIPT=$(cat <<EOF
 set -e
@@ -325,10 +349,8 @@ EOF
         echo "$CFG_SCRIPT" | ssh "${ACCOUNT}@server" "bash -s" \
             || echo_error "Não consegui preparar a configuração de staging — verifica manualmente wp-config.php / settings.inc.php / parameters.php."
     else
-        # Confia que o config já existente aponta para o utilizador/BD certos; só avisa se não encontrar nenhum.
-        if ! ssh "${ACCOUNT}@server" "test -f ~/${STAGING_ROOT_DIR}/wp-config.php -o -f ~/${STAGING_ROOT_DIR}/config/settings.inc.php -o -f ~/${STAGING_ROOT_DIR}/app/config/parameters.php -o -f ~/${STAGING_ROOT_DIR}/.env"; then
-            echo_error "O utilizador '$STAGING_DB_USER' já existia mas não encontrei nenhum ficheiro de configuração em staging. Como a password não é recuperável, tens de configurar o ficheiro manualmente."
-        fi
+        # Utilizador e config já existiam ambos: confia que o config já aponta para o sítio certo.
+        echo_info "Configuração de staging já existia — não foi tocada."
     fi
 
     # --- PrestaShop: muda os URLs guardados na BD para o domínio de staging ---
@@ -360,6 +382,49 @@ EOF
             echo "$SQL" | ssh "$SERVER" "mysql '${STAGING_DB_NAME}'" \
                 && echo_success "URLs e definições de staging atualizadas (prefixo: ${PS_PREFIX})." \
                 || echo_error "Falha ao atualizar URLs do PrestaShop em staging."
+        fi
+
+        # Regenera o .htaccess do PrestaShop (Tools::generateHtaccess(), o mesmo que "Gerar
+        # ficheiro .htaccess" no backoffice) com as regras de URL amigável para o domínio de
+        # staging. Só faz falta na primeira vez (ou quando o config tiver sido semeado de
+        # novo): o .htaccess está excluído do rsync, por isso persiste entre rebuilds — não
+        # há razão para o regenerar sempre que os dados da BD são recarregados da produção.
+        if [ "$FIRST_RUN" = "1" ]; then
+            local HTACCESS_RESULT
+            HTACCESS_RESULT=$(ssh "${ACCOUNT}@server" "
+                cd ~/${STAGING_ROOT_DIR} && php -r '
+                    require \"config/config.inc.php\";
+                    try {
+                        Tools::generateHtaccess();
+                        echo \"OK\";
+                    } catch (\Throwable \$e) {
+                        echo \"ERROR: \" . \$e->getMessage();
+                    }
+                '
+            " 2>&1)
+            if [ "$HTACCESS_RESULT" = "OK" ]; then
+                echo_success "PrestaShop regenerou o .htaccess para o domínio de staging."
+            else
+                echo_error "Falha a regenerar o .htaccess do PrestaShop: $HTACCESS_RESULT"
+            fi
+
+            # Marcadores "# ~~start~~"/"# ~~end~~" próprios do PrestaShop — o bloco do ribbon,
+            # acrescentado com >> no fim do ficheiro, fica fora disso e não devia ser afetado.
+            # A reposição a seguir é só uma rede de segurança.
+            if ! ssh "${ACCOUNT}@server" "grep -q 'BEGIN staging ribbon' ~/${STAGING_ROOT_DIR}/.htaccess 2>/dev/null"; then
+                echo_info "A repor o ribbon de staging no .htaccess..."
+                ssh "${ACCOUNT}@server" "cat >> ~/${STAGING_ROOT_DIR}/.htaccess" <<EOL
+
+# BEGIN staging ribbon
+<IfModule php8_module>
+   php_value auto_append_file "/home/${ACCOUNT}/${STAGING_ROOT_DIR}/${RIBBON_FILE}"
+</IfModule>
+<IfModule lsapi_module>
+   php_value auto_append_file "/home/${ACCOUNT}/${STAGING_ROOT_DIR}/${RIBBON_FILE}"
+</IfModule>
+# END staging ribbon
+EOL
+            fi
         fi
     fi
 
@@ -406,7 +471,7 @@ EOF
     echo "📁 Pasta:   ~/$STAGING_ROOT_DIR"
     echo "🗄️  BD:      $STAGING_DB_NAME"
     echo "👤 DB User: $STAGING_DB_USER"
-    if [ "$CREATE_NEW_USER" = "1" ]; then
+    if [ "$CREATE_NEW_USER" = "1" ] || [ "$RESET_EXISTING_PASS" = "1" ]; then
         echo "🔑 DB Pass: $STAGING_DB_PASS"
     else
         echo "🔑 DB Pass: (utilizador reutilizado, password inalterada)"

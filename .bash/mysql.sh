@@ -1,10 +1,21 @@
 #!/bin/bash
 
+# Fator de correção (%) aplicado à estimativa de tamanho da BD (information_schema)
+# antes do mysqldump, só para dar ao pv uma barra de progresso. Não há rácio
+# universal fiável entre data_length+index_length e o tamanho real do dump SQL
+# (depende do schema: tipos de coluna, nº de índices, fragmentação) — ajusta-se
+# diretamente aqui se necessário.
+DB_SIZE_ESTIMATE_FACTOR=130
+
 # Uso: get_database [--skip-dev] [nome_da_bd] [caminho_dump_ja_descarregado]
 # --skip-dev salta a preparação da configuração do PrestaShop para
 # desenvolvimento/teste (cache, SSL, mail, remoção de módulos, truncate à moloni)
 # — mantém sempre a conversão de domínio para .test (shop_url/WordPress
 # siteurl/home), que é o que torna o site utilizável localmente.
+#
+# Exit codes: 0 sucesso, 2 o utilizador recusou um dos prompts [y/N] (não é
+# uma falha real), 1 qualquer outra falha. Mesma convenção do update_prestashop
+# (prestashop.sh) e do get_site_files (site.sh).
 get_database(){
     local USAGE="Uso: get_database [--skip-dev] [nome_da_bd] [caminho_dump_ja_descarregado]"
     local SKIP_DEV=0
@@ -79,14 +90,14 @@ get_database(){
     read -r -p "Continue? [y/N] " confirm
     if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
         echo_error "Aborted."
-        return 1
+        return 2
     fi
 
     # Authenticating SSH key...
     ssh root@server "true" || { echo_error "SSH authentication failed"; return 1; }
 
     local DATABASE_PATH
-    if [ -z "$2" ]; then
+    if [ -z "${2:-}" ]; then
         DATABASE_PATH="$HOME/Downloads/$DATABASE_NAME.sql"
         echo_info "Downloading..."
 
@@ -95,7 +106,15 @@ get_database(){
 
         # Without compression
         # ssh root@server mysqldump --single-transaction --quick --ignore-table=${DATABASE_NAME}.${PS_PREFIX}_layered_category $DATABASE_NAME | pv > $DATABASE_PATH
-        ssh root@server mysqldump --single-transaction --quick $DATABASE_NAME | pv > $DATABASE_PATH
+
+        # Estimativa de tamanho via information_schema (aproximada, mas dá ao pv uma
+        # barra de progresso com % em vez de só bytes/s) — o mysqldump remoto não sabe
+        # à partida quanto vai produzir. Fator de correção (DB_SIZE_ESTIMATE_FACTOR)
+        # definido no topo do ficheiro.
+        local DB_SIZE_ESTIMATE
+        DB_SIZE_ESTIMATE=$(ssh root@server "mysql -N -e \"SELECT SUM(data_length + index_length) FROM information_schema.tables WHERE table_schema='${DATABASE_NAME}'\" 2>/dev/null")
+        DB_SIZE_ESTIMATE=$(( ${DB_SIZE_ESTIMATE:-0} * DB_SIZE_ESTIMATE_FACTOR / 100 ))
+        ssh root@server mysqldump --single-transaction --quick $DATABASE_NAME | pv --force -s "$DB_SIZE_ESTIMATE" > $DATABASE_PATH
         # PIPESTATUS[0] = exit code do ssh/mysqldump remoto (o do pipe seria só o do `pv`,
         # que "sucede" mesmo que o mysqldump falhe a meio e produza um dump vazio/truncado).
         if [ "${PIPESTATUS[0]}" -ne 0 ]; then
@@ -118,7 +137,7 @@ get_database(){
         read -r -p "Continue anyway? [y/N] " force_confirm
         if [[ ! "$force_confirm" =~ ^[Yy]$ ]]; then
             echo_error "Aborted."
-            return 1
+            return 2
         fi
     fi
 
@@ -142,7 +161,7 @@ EOF
     # without compression
     local FILE_SIZE
     FILE_SIZE=$(stat -c %s "$DATABASE_PATH")
-    pv -s "$FILE_SIZE" "$DATABASE_PATH" | "${LOCAL_MYSQL[@]}" ${DATABASE_NAME}
+    pv --force -s "$FILE_SIZE" "$DATABASE_PATH" | "${LOCAL_MYSQL[@]}" ${DATABASE_NAME}
 
     # Regex partilhada entre PrestaShop e WordPress para converter o domínio real em .test
     local DOMAIN_TO_TEST_REGEX='s/\.[^.]{2,3}(\.red\-agency|\.red\.com)?(\.[^.]{2,3})?$/.test/s'

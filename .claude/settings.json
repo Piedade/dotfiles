@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mysql *)",
+      "Bash(mysqldump *)",
+      "Bash(psql *)",
+      "Bash(pg_dump *)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "input=$(cat); cmd=$(printf \"%s\" \"$input\" | jq -r \".tool_input.command // empty\"); if printf \"%s\" \"$cmd\" | grep -Eq \"(^|[|&;]) *(mysql|mysqldump|psql|pg_dump)\\b\"; then host=$(printf \"%s\" \"$cmd\" | grep -oP \"(?:-h ?|--host[= ])\\K[^ '\\''\\\"]+\" | head -n1); if [ -n \"$host\" ] && [ \"$host\" != \"127.0.0.1\" ] && [ \"$host\" != \"localhost\" ] && [ \"$host\" != \"::1\" ]; then jq -n --arg host \"$host\" '{hookSpecificOutput:{hookEventName:\"PreToolUse\", permissionDecision:\"ask\", permissionDecisionReason:(\"Comando de BD aponta para host remoto: \" + $host + \" — a confirmar manualmente.\")}}'; fi; fi",
+            "statusMessage": "A verificar host da BD..."
+          }
+        ]
+      }
+    ]
+  },
+  "theme": "dark"
+}

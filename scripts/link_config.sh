@@ -45,8 +45,10 @@ link_file ".config/nwg-look" "$GITPATH" "$USER_HOME"
 
 link_file ".config/swaylock" "$GITPATH" "$USER_HOME"
 
-# link_file ".vscode" "$GITPATH" "$USER_HOME"
+link_file ".vscode" "$GITPATH" "$USER_HOME"
 
 link_file "bin" "$GITPATH" "$USER_HOME/.local"
+
+link_file ".claude" "$GITPATH" "$USER_HOME"
 
 echo_success "Linked config done!"

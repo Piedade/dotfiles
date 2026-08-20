@@ -80,7 +80,7 @@ help(){
 
         "site.sh :: get_site_files :: Sincroniza ficheiros de um site de produção para a pasta local via rsync"
 
-        "staging.sh :: clone_to_staging :: Clona um site de produção (ficheiros + BD) para staging.<domínio>"
+        "staging.sh :: clone_to_staging :: Clona um site de produção (ficheiros + BD) para staging.<domínio> — também serve para rebuild de staging já existente"
 
         "whm.sh :: whm_account_by_domain :: Devolve a conta cPanel dona de um domínio via WHM API"
         "whm.sh :: whm_docroot_by_domain :: Devolve o documentroot de um domínio via WHM API"

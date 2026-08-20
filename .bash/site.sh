@@ -28,6 +28,11 @@
 # IMPORTANTE (segurança): em todo o fluxo, a produção é só LIDA (rsync como
 # origem). Todas as operações destrutivas (rsync --delete) só podem apontar
 # para variáveis LOCAL_*, nunca para DOMAIN/ROOT_DIR (produção).
+#
+# Exit codes: 0 sucesso, 2 o utilizador recusou um dos prompts [y/N] (não é
+# uma falha real), 1 qualquer outra falha. Mesma convenção do update_prestashop
+# (prestashop.sh) — pensada para quem chama isto programaticamente e precisa
+# de tratar "cancelaste tu" de forma diferente de "algo correu mal".
 get_site_files() {
     local DOMAIN=$1
     local LOCAL_DOMAIN=$2
@@ -98,7 +103,7 @@ get_site_files() {
     read -rp "Continuar? [y/N]: " CONFIRM
     case "$CONFIRM" in
         [Yy]*) ;;
-        *) echo_error "Operação cancelada."; return 1 ;;
+        *) echo_error "Operação cancelada."; return 2 ;;
     esac
 
     # Shell + SSH key da conta (mesmo fluxo do staging.sh/server.sh), para o rsync dos ficheiros.
@@ -149,14 +154,16 @@ get_site_files() {
     # existirem uma vez localmente, não devem ser pisados pela cópia de produção
     # nos refreshes seguintes (senão perdíamos sempre a ligação à BD local). .git
     # também fica de fora — nunca faria sentido apagar o histórico local (commits
-    # não enviados) só porque a produção não tem repositório.
+    # não enviados) só porque a produção não tem repositório. _upgrade_fixes.sh
+    # (usado pelo UPGRADE_PRESTASHOP.sh) é a mesma história: só existe localmente,
+    # nunca é enviado para produção.
     # Pastas de cache/logs também ficam de fora — não fazem falta para desenvolver
     # localmente e só desperdiçam tempo/espaço a copiar: img/p (só as imagens de
     # produto — o resto de img/, tipo categorias/logo/tema, sincroniza normalmente)
     # é do PrestaShop, storage/framework/*+bootstrap/cache são do Laravel. upload/,
     # wp-content/uploads/ e storage/app/public/ (uploads do Laravel) sincronizam
     # normalmente (não costumam ser muitos ficheiros).
-    local RSYNC_EXCLUDES="--exclude=/wp-config.php --exclude=/config/settings.inc.php --exclude=/app/config/parameters.php --exclude=/app/config/parameters.yml --exclude=/.htaccess --exclude=/.env --exclude=/.git/"
+    local RSYNC_EXCLUDES="--exclude=/wp-config.php --exclude=/config/settings.inc.php --exclude=/app/config/parameters.php --exclude=/app/config/parameters.yml --exclude=/.htaccess --exclude=/.env --exclude=/.git/ --exclude=/_upgrade_fixes.sh"
     RSYNC_EXCLUDES="$RSYNC_EXCLUDES --exclude=/cache/ --exclude=/var/cache/ --exclude=/var/logs/ --exclude=/wp-content/cache/"
     RSYNC_EXCLUDES="$RSYNC_EXCLUDES --exclude=/img/p/"
     RSYNC_EXCLUDES="$RSYNC_EXCLUDES --exclude=/storage/framework/cache/ --exclude=/storage/framework/sessions/ --exclude=/storage/framework/views/ --exclude=/storage/logs/ --exclude=/bootstrap/cache/"
@@ -173,14 +180,18 @@ get_site_files() {
     local DRY_OUTPUT
     DRY_OUTPUT=$(rsync -an --itemize-changes --delete $RSYNC_EXCLUDES "${ACCOUNT}@server:/home/${ACCOUNT}/${ROOT_DIR}/" "${LOCAL_DIR}/" 2>&1)
     local CHANGE_COUNT
-    CHANGE_COUNT=$(echo "$DRY_OUTPUT" | grep -vE '^(sending incremental file list$|sent .* bytes|total size is)' | grep -c .)
+    # `grep -c .` exits 1 when the count is 0 (nothing to sync) — harmless when
+    # this function runs under a caller with no `set -e` (its usual case), but
+    # a caller that DOES have errexit on (e.g. a script that sources this file)
+    # would otherwise die right here on a perfectly fine "already in sync" run.
+    CHANGE_COUNT=$(echo "$DRY_OUTPUT" | grep -vE '^(sending incremental file list$|sent .* bytes|total size is)' | grep -c . || true)
     echo "$DRY_OUTPUT" | tail -n 15
     echo_info "Alterações previstas: $CHANGE_COUNT (origem: ${ACCOUNT}@server:~/$ROOT_DIR -> destino: $LOCAL_DIR)"
 
     read -rp "Aplicar rsync real dos ficheiros? [y/N]: " answer
     case "$answer" in
         [Yy]*) ;;
-        *) echo_error "Operação cancelada."; return 1 ;;
+        *) echo_error "Operação cancelada."; return 2 ;;
     esac
 
     echo_info "A sincronizar ficheiros..."
