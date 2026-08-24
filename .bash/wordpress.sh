@@ -316,27 +316,31 @@ HTACCESS_CONTENT+="
 # BEGIN cPanel-generated php ini directives, do not edit
 <IfModule php8_module>
    php_flag display_errors Off
+   php_value error_log "error_log"
+   php_flag log_errors On
    php_value max_execution_time 30
    php_value max_input_time 60
    php_value max_input_vars 1000
    php_value memory_limit 512M
    php_value post_max_size 32M
    php_value session.gc_maxlifetime 1440
-   php_value session.save_path \"/var/cpanel/php/sessions/ea-php84\"
+   php_value session.save_path "/opt/alt/php84/var/lib/php/session"
    php_value upload_max_filesize 16M
-   php_flag zlib.output_compression Off
+   php_flag zlib.output_compression On
 </IfModule>
 <IfModule lsapi_module>
    php_flag display_errors Off
+   php_value error_log "error_log"
+   php_flag log_errors On
    php_value max_execution_time 30
    php_value max_input_time 60
    php_value max_input_vars 1000
    php_value memory_limit 512M
    php_value post_max_size 32M
    php_value session.gc_maxlifetime 1440
-   php_value session.save_path \"/var/cpanel/php/sessions/ea-php84\"
+   php_value session.save_path "/opt/alt/php84/var/lib/php/session"
    php_value upload_max_filesize 16M
-   php_flag zlib.output_compression Off
+   php_flag zlib.output_compression On
 </IfModule>
 # END cPanel-generated php ini directives, do not edit"
 

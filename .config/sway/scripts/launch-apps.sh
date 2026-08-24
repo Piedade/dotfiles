@@ -41,7 +41,7 @@ launch() {
 
 launch 1 code
 
-CHROME_FLAGS="--disable-features=TabHoverCardImages"
+CHROME_FLAGS="--disable-features=TabHoverCardImages --force-prefers-reduced-motion"
 
 launch 2 google-chrome --profile-directory=Default $CHROME_FLAGS
 

@@ -1,0 +1,8 @@
+[Unit]
+Description=Watch for Chrome SIGCONT trigger after system sleep
+
+[Path]
+PathExists=/run/user/1000/chrome-needs-cont
+
+[Install]
+WantedBy=default.target

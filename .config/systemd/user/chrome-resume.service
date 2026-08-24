@@ -1,0 +1,7 @@
+[Unit]
+Description=Resume Chrome after system sleep
+
+[Service]
+Type=oneshot
+ExecStart=/home/piedade/.config/sway/scripts/chrome-resume.sh
+ExecStartPost=/usr/bin/rm -f /run/user/1000/chrome-needs-cont

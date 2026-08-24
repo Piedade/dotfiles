@@ -541,6 +541,89 @@ detect_ps_php_bin() {
     return 1
 }
 
+# Compara versões via `sort -V` (GNU) em vez de comparação string/numérica
+# ingénua — necessário porque as versões aqui (PrestaShop, PHP) têm um número
+# variável de segmentos (ex: "1.6.1.24" vs "8.1"). version_ge devolve sucesso
+# se $1 >= $2; version_lt é o inverso.
+version_ge() { [ "$(printf '%s\n%s\n' "$1" "$2" | sort -V | tail -n1)" = "$1" ]; }
+version_lt() { ! version_ge "$1" "$2"; }
+
+# Tabela de compatibilidade PrestaShop <-> PHP (gráfico oficial, transcrito
+# 2026-08-20). PODE ficar desatualizada com o lançamento de novas versões do
+# PrestaShop — revê https://devdocs.prestashop-project.org/ se uma versão
+# futura não bater certo com nenhum dos intervalos abaixo (cai no `else`).
+# Uso: ps_php_compat_range <versao_prestashop> — imprime "min max recomendado"
+# (ex: "7.2 8.1 8.1").
+ps_php_compat_range() {
+    local ps="$1"
+    if version_lt "$ps" "1.7.0"; then
+        echo "5.2 7.1 7.1"
+    elif version_lt "$ps" "1.7.4"; then
+        echo "5.4 7.1 7.1"
+    elif version_lt "$ps" "1.7.5"; then
+        echo "5.6 7.1 7.1"
+    elif version_lt "$ps" "1.7.7"; then
+        echo "5.6 7.2 7.2"
+    elif version_lt "$ps" "1.7.8"; then
+        echo "7.1 7.3 7.3"
+    elif version_lt "$ps" "8.0"; then
+        echo "7.1 7.4 7.4"
+    elif version_lt "$ps" "9.0"; then
+        echo "7.2 8.1 8.1"
+    elif version_lt "$ps" "9.1"; then
+        echo "8.1 8.4 8.4"
+    elif version_lt "$ps" "9.2"; then
+        echo "8.1 8.5 8.5"
+    else
+        echo_error "Sem intervalo de compatibilidade PHP conhecido para PrestaShop $ps — a tabela (ps_php_compat_range) pode precisar de atualização."
+        return 1
+    fi
+}
+
+# Escolhe, de entre os binários PHP instalados localmente (/usr/bin/phpX.Y),
+# o melhor dentro de [min, max]: o "recomendado" se estiver instalado, senão
+# o mais recente instalado que ainda caiba no intervalo. Devolve vazio (sem
+# erro próprio) se nada instalado servir — quem chama decide como tratar isso.
+pick_installed_php_version() {
+    local min="$1" max="$2" rec="$3"
+    local installed
+    installed=$(find /usr/bin -maxdepth 1 -name 'php[0-9]*' -printf '%f\n' 2>/dev/null \
+        | grep -oP '(?<=^php)[0-9]+\.[0-9]+$' | sort -V)
+
+    if echo "$installed" | grep -qx "$rec"; then
+        echo "$rec"
+        return 0
+    fi
+
+    local best="" v
+    for v in $installed; do
+        if version_ge "$v" "$min" && version_ge "$max" "$v"; then
+            best="$v"
+        fi
+    done
+    echo "$best"
+}
+
+# Junta ps_php_compat_range + pick_installed_php_version: devolve o path do
+# binário PHP instalado mais adequado para uma versão do PrestaShop (ex:
+# /usr/bin/php8.1), ou falha (return 1, com echo_error já impresso) se a
+# versão não bater em nenhum intervalo conhecido ou nada instalado servir.
+# Uso: ps_required_php_bin <versao_prestashop>
+ps_required_php_bin() {
+    local ps="$1"
+    local range
+    range=$(ps_php_compat_range "$ps") || return 1
+    local min max rec
+    read -r min max rec <<< "$range"
+    local chosen
+    chosen=$(pick_installed_php_version "$min" "$max" "$rec")
+    if [ -z "$chosen" ]; then
+        echo_error "Nenhuma versão de PHP instalada cabe no intervalo de compatibilidade do PrestaShop $ps ($min-$max, recomendado $rec)."
+        return 1
+    fi
+    echo "/usr/bin/php${chosen}"
+}
+
 # Detecta a versão instalada do PrestaShop. A fonte mais fiável é a própria BD
 # (PS_VERSION_DB) — é o que o instalador/autoupgrade usa para decidir se há update a
 # fazer, e ao contrário do código fonte não muda de sítio entre versões do core (já vi
@@ -582,6 +665,41 @@ detect_ps_version() {
     return 1
 }
 
+# Pastas de topo que nunca são a pasta do admin (o admin é sempre renomeada —
+# slug aleatório do instalador, ou manual tipo "cms" — por isso filtra-se por
+# exclusão, não por inclusão). Single source of truth para as duas funções
+# abaixo, e para o "melhor esforço" não-interativo em UPGRADE_PRESTASHOP.sh.
+list_ps_admin_dir_candidates() {
+    local SITE_DIR="$1"
+    find "$SITE_DIR" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' 2>/dev/null \
+        | grep -vE '^(modules|themes|js|css|img|cache|var|vendor|config|controllers|classes|src|translations|tools|tests|docs|webservice|upload|download|mails|localization|override|pdf|bin|app|\.git|\.direnv)$'
+}
+
+# Não há forma fiável de adivinhar a pasta do admin em todas as versões, por
+# isso escolhe-se via fzf. Pré-preenche a pesquisa com a pasta que já tiver um
+# autoupgrade/ lá dentro (deixado por uma tentativa anterior via backoffice),
+# quando existir. Usada por update_prestashop e por _upgrade_fixes.sh (cada
+# projeto) para não duplicar a heurística nos dois sítios.
+#
+# Uso: guess_ps_admin_dir <site_dir> [label_para_o_prompt]
+# Devolve o nome da pasta (ex: "admin758ftw3") em stdout, ou nada + exit 1 se
+# cancelado no fzf.
+guess_ps_admin_dir() {
+    local SITE_DIR="$1"
+    local LABEL="${2:-$(basename "$SITE_DIR")}"
+
+    local GUESS
+    GUESS=$(find "$SITE_DIR" -mindepth 2 -maxdepth 2 -type d -name autoupgrade 2>/dev/null \
+        | head -n1 | xargs -r dirname | xargs -r basename)
+
+    local ADMIN_DIR
+    ADMIN_DIR=$(list_ps_admin_dir_candidates "$SITE_DIR" \
+        | fzf --prompt="Select admin directory (inside $LABEL): " --query="$GUESS")
+    [ -z "$ADMIN_DIR" ] && return 1
+
+    echo "$ADMIN_DIR"
+}
+
 # Atualiza uma instalação LOCAL do PrestaShop (ex: /var/www/redpost.test) para a versão
 # mais recente disponível, usando o módulo oficial "Update Assistant" (autoupgrade)
 # descarregado sempre da última release do GitHub, e o CLI documentado em
@@ -595,6 +713,20 @@ detect_ps_version() {
 # channel: online_recommended (default, caminho seguro passo-a-passo) | online | local
 # --no-backup salta o backup:create (mais rápido para iterar em dev, mas sem rede de
 # segurança — não uses isto num site que não possas simplesmente recriar/reclonar).
+#
+# online_recommended só avança um passo seguro de cada vez — em vez de obrigar
+# a chamar isto repetidamente à mão, a própria função faz o loop internamente
+# até a versão estabilizar (duas chamadas seguidas sem mudança), perguntando
+# então se queres mesmo assim tentar outra vez (ex: canal 'online' para um
+# salto de major). A cada passo do loop, a versão de PHP do vhost é
+# reavaliada e trocada se necessário (ps_required_php_bin/set_domain_php_version)
+# — necessário porque a compatibilidade PHP muda ao longo de versões major
+# (1.6/1.7/8.x cabem em PHP 7.2, 9.x já precisa de 8.1+). A pergunta final
+# (desinstalar o módulo autoupgrade?) só acontece depois do loop todo, não a
+# cada passo — desinstalar e voltar a extrair o mesmo módulo no passo seguinte
+# seria só desperdício. Outros módulos a desinstalar ficam de fora de propósito
+# — variam por projeto, decide-se isso no _upgrade_fixes.sh de cada site.
+#
 # Exit codes: 0 sucesso (inclui "já estás atualizado, nada a fazer"), 2 o
 # utilizador recusou um dos prompts [y/N] (não é uma falha real), 1 qualquer
 # outra falha. Distinção pensada para quem chama isto programaticamente e
@@ -636,35 +768,88 @@ update_prestashop() {
         return 1
     fi
 
-    # A pasta do admin é sempre renomeada (slug aleatório do instalador, ou manual tipo
-    # "cms") — não há forma fiável de a adivinhar em todas as versões, por isso escolhe-se
-    # via fzf. Pré-preenche a pesquisa com a pasta que já tiver um autoupgrade/ lá dentro
-    # (deixado por uma tentativa anterior via backoffice), quando existir.
     if [ -z "$ADMIN_DIR" ]; then
-        local GUESS
-        GUESS=$(find "$SITE_DIR" -mindepth 2 -maxdepth 2 -type d -name autoupgrade 2>/dev/null \
-            | head -n1 | xargs -r dirname | xargs -r basename)
-
-        ADMIN_DIR=$(find "$SITE_DIR" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' 2>/dev/null \
-            | grep -vE '^(modules|themes|js|css|img|cache|var|vendor|config|controllers|classes|src|translations|tools|tests|docs|webservice|upload|download|mails|localization|override|pdf|bin|app|\.git|\.direnv)$' \
-            | fzf --prompt="Select admin directory (inside $DOMAIN): " --query="$GUESS")
-        [ -z "$ADMIN_DIR" ] && { echo_error "Admin directory is required."; return 1; }
+        ADMIN_DIR=$(guess_ps_admin_dir "$SITE_DIR" "$DOMAIN") || { echo_error "Admin directory is required."; return 1; }
     fi
     if [ ! -d "$SITE_DIR/$ADMIN_DIR" ]; then
         echo_error "'$SITE_DIR/$ADMIN_DIR' does not exist."
         return 1
     fi
 
-    local PHP_BASE
-    PHP_BASE=$(detect_ps_php_bin "$SITE_DIR")
-    if [ "$PHP_BASE" = "php" ]; then
-        echo_error "Não consegui determinar a versão de PHP do vhost de $DOMAIN; a usar '$PHP_BASE' (pode falhar)."
-    fi
-    local PHP_BIN=("$PHP_BASE" -d memory_limit=-1 -d max_execution_time=0)
+    local PS_VERSION_BEFORE PS_VERSION_AFTER
+    while true; do
+        while true; do
+            PS_VERSION_BEFORE=$(detect_ps_version "$SITE_DIR")
+            [ -z "$PS_VERSION_BEFORE" ] && PS_VERSION_BEFORE="(desconhecida)"
 
-    local CURRENT_VERSION
-    CURRENT_VERSION=$(detect_ps_version "$SITE_DIR")
-    [ -z "$CURRENT_VERSION" ] && CURRENT_VERSION="(desconhecida)"
+            local PHP_BASE
+            if [ "$PS_VERSION_BEFORE" = "(desconhecida)" ]; then
+                # Sem versão conhecida não há intervalo de compatibilidade para
+                # verificar — mantém o comportamento antigo (best-effort a
+                # partir do vhost) em vez de abortar às cegas.
+                PHP_BASE=$(detect_ps_php_bin "$SITE_DIR")
+                if [ "$PHP_BASE" = "php" ]; then
+                    echo_error "Não consegui determinar a versão de PHP do vhost de $DOMAIN; a usar '$PHP_BASE' (pode falhar)."
+                fi
+            else
+                # PHP compatibility pode mudar à medida que PS_VERSION sobe de
+                # major durante este loop (1.6/1.7/8.x cabem em PHP 7.2, 9.x já
+                # precisa de 8.1+) — reavalia e troca a cada passo, em vez de
+                # confiar no que o vhost já tinha quando esta função arrancou.
+                PHP_BASE=$(ps_required_php_bin "$PS_VERSION_BEFORE") || return 1
+                local CURRENT_PHP_BIN
+                CURRENT_PHP_BIN=$(detect_ps_php_bin "$SITE_DIR")
+                if [ "$PHP_BASE" != "$CURRENT_PHP_BIN" ]; then
+                    local REQUIRED_PHP_VERSION
+                    REQUIRED_PHP_VERSION=$(basename "$PHP_BASE" | grep -oP '[0-9]+\.[0-9]+$')
+                    echo_info "PrestaShop $PS_VERSION_BEFORE precisa de PHP $REQUIRED_PHP_VERSION (vhost atual: ${CURRENT_PHP_BIN:-desconhecido}) — a trocar..."
+                    set_domain_php_version "$DOMAIN" "$REQUIRED_PHP_VERSION" \
+                        || { echo_error "Falha a trocar a versão de PHP do vhost."; return 1; }
+                fi
+            fi
+
+            _update_prestashop_step "$SITE_DIR" "$ADMIN_DIR" "$CHANNEL" "$SKIP_BACKUP" "$PHP_BASE" "$PS_VERSION_BEFORE"
+            local STEP_RESULT=$?
+            [ "$STEP_RESULT" -ne 0 ] && return "$STEP_RESULT"
+
+            PS_VERSION_AFTER=$(detect_ps_version "$SITE_DIR")
+            [ -z "$PS_VERSION_AFTER" ] && PS_VERSION_AFTER="(desconhecida)"
+            [ "$PS_VERSION_BEFORE" = "$PS_VERSION_AFTER" ] && break
+        done
+
+        read -rp "Versão estabilizou em $PS_VERSION_AFTER. Corre outra vez? [y/N]: " answer
+        case "$answer" in
+            [Yy]*) continue ;;
+            *) break ;;
+        esac
+    done
+
+    # Cleanup final — só depois do loop todo, não a cada passo (ver comentário
+    # de uso da função acima).
+    read -rp "Desinstalar o módulo autoupgrade agora (recomendado)? [Y/n]: " answer
+    case "$answer" in
+        [Nn]*) ;;
+        *) uninstall_ps_modules "$SITE_DIR" "--admin-dir=$ADMIN_DIR" --yes autoupgrade ;;
+    esac
+
+    return 0
+}
+
+# Um único "passo" de atualização (download do módulo, check-requirements,
+# check-modules com fallback online_recommended -> online, confirmar, backup,
+# update:start). Uso interno de update_prestashop — não chamar diretamente.
+# Uso: _update_prestashop_step <site_dir> <admin_dir> <channel> <skip_backup 0|1> <php_base> <versao_atual>
+# Exit codes: mesma convenção de update_prestashop (0/2/1).
+_update_prestashop_step() {
+    local SITE_DIR="$1"
+    local ADMIN_DIR="$2"
+    local CHANNEL="$3"
+    local SKIP_BACKUP="$4"
+    local PHP_BASE="$5"
+    local CURRENT_VERSION="$6"
+    local DOMAIN
+    DOMAIN=$(basename "$SITE_DIR")
+    local PHP_BIN=("$PHP_BASE" -d memory_limit=-1 -d max_execution_time=0)
 
     echo_info "Site: $DOMAIN ($SITE_DIR)"
     echo_info "Admin dir: $ADMIN_DIR"
@@ -813,25 +998,7 @@ update_prestashop() {
     local NEW_VERSION
     NEW_VERSION=$(detect_ps_version "$SITE_DIR")
     echo_info "Versão: $CURRENT_VERSION -> ${NEW_VERSION:-desconhecida}"
-    if [ "$CHANNEL" = "online_recommended" ] && [ -n "$NEW_VERSION" ] && [ "$NEW_VERSION" != "$CURRENT_VERSION" ]; then
-        echo_info "ℹ️  'online_recommended' avança um passo seguro de cada vez — corre update_prestashop outra vez para continuar a subir, se ainda não estiveres na última versão."
-    fi
-
-    # O próprio Update Assistant recomenda desinstalar/remover o módulo depois de concluído
-    # (superfície de ataque desnecessária deixada exposta). Reaproveita uninstall_ps_modules —
-    # passa-lhe a admin dir já resolvida acima: o módulo autoupgrade precisa da constante
-    # _PS_ADMIN_DIR_ (path da admin) para o próprio uninstall() correr sem warnings/erros.
-    read -rp "Desinstalar o módulo autoupgrade agora (recomendado)? [Y/n]: " answer
-    case "$answer" in
-        [Nn]*) ;;
-        *) uninstall_ps_modules "$SITE_DIR" "--admin-dir=$ADMIN_DIR" autoupgrade ;;
-    esac
-
-    read -rp "Outros módulos a desinstalar (nomes separados por espaço, Enter para nenhum): " EXTRA_MODULES
-    if [ -n "$EXTRA_MODULES" ]; then
-        # shellcheck disable=SC2086
-        uninstall_ps_modules "$SITE_DIR" "--admin-dir=$ADMIN_DIR" $EXTRA_MODULES
-    fi
+    return 0
 }
 
 # Desinstala módulos concretos de uma instalação PrestaShop local via CLI, sem precisar de
@@ -845,22 +1012,27 @@ update_prestashop() {
 # bootstrap do admin/index.php faz normalmente) dá warning/erro consoante a versão de PHP.
 # Omite-a para módulos simples que não precisem (ex: 'welcome').
 #
-# Uso: uninstall_ps_modules <site_ou_dominio> [--admin-dir=DIR] <module1> [module2 ...]
+# --yes salta a confirmação [y/N] — para quando isto é chamado a partir de outro script
+# (ex: _upgrade_fixes.sh de um site) em vez de interativamente à mão.
+#
+# Uso: uninstall_ps_modules <site_ou_dominio> [--admin-dir=DIR] [--yes] <module1> [module2 ...]
 uninstall_ps_modules() {
     local SITE=$1
     shift
     local ADMIN_DIR=""
+    local ASSUME_YES=0
     local MODULES=()
     local arg
     for arg in "$@"; do
         case "$arg" in
             --admin-dir=*) ADMIN_DIR="${arg#--admin-dir=}" ;;
+            --yes) ASSUME_YES=1 ;;
             *) MODULES+=("$arg") ;;
         esac
     done
 
     if [ -z "$SITE" ] || [ ${#MODULES[@]} -eq 0 ]; then
-        echo_error "Usage: uninstall_ps_modules <site> [--admin-dir=DIR] <module1> [module2 ...]"
+        echo_error "Usage: uninstall_ps_modules <site> [--admin-dir=DIR] [--yes] <module1> [module2 ...]"
         return 1
     fi
 
@@ -891,11 +1063,15 @@ uninstall_ps_modules() {
 
     echo_info "Site: $SITE_DIR"
     echo_info "Modules to uninstall: ${MODULES[*]}"
-    read -rp "Continue? [y/N]: " answer
-    case "$answer" in
-        [Yy]*) ;;
-        *) echo_error "Operation cancelled."; return 1 ;;
-    esac
+    if [ "$ASSUME_YES" = "1" ]; then
+        echo_info "--yes: a saltar a confirmação."
+    else
+        read -rp "Continue? [y/N]: " answer
+        case "$answer" in
+            [Yy]*) ;;
+            *) echo_error "Operation cancelled."; return 1 ;;
+        esac
+    fi
 
     local SCRIPT_FILE
     SCRIPT_FILE=$(mktemp "$SITE_DIR/_uninstall_modules_XXXXXX.php")
@@ -908,6 +1084,13 @@ uninstall_ps_modules() {
             # altura, exatamente como o admin/index.php faz antes de incluir o bootstrap.
             echo "define('_PS_ADMIN_DIR_', '${SITE_DIR}/${ADMIN_DIR}');"
         fi
+        # Muitas classes de módulos de terceiros (não as do core) têm o guard
+        # "if (!defined('_CAN_LOAD_FILES_') ...) exit;" à cabeça do ficheiro —
+        # normalmente definida pelo index.php/admin antes de incluir o
+        # bootstrap. Sem isto aqui, Module::getInstanceByName($name) para esses
+        # módulos termina o processo PHP a meio, silenciosamente (sem exceção,
+        # sem erro no output) — confirmado em produção com nrttestimonials.
+        echo "define('_CAN_LOAD_FILES_', true);"
         echo "require '${SITE_DIR}/config/config.inc.php';"
         cat <<'PHPEOF'
 

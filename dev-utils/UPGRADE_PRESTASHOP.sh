@@ -25,21 +25,57 @@ fi
 DOMAIN="${1:?Usage: $0 <production_domain> (ex: shop.redpost.pt)}"
 LOCAL_DOMAIN="${DOMAIN%.*}.test"
 LOCAL_DIR="/var/www/${LOCAL_DOMAIN}"
-TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-BACKUP_DIR="$HOME/Downloads/.upgrade-backups/${DOMAIN}_${TIMESTAMP}"
-mkdir -p "$BACKUP_DIR"
 
 # Toolkit functions (get_site_files, get_database, update_prestashop,
 # whm_account_by_domain, echo_production_warning, ...) aren't "export -f"'d,
 # so they don't reach a new process just by living in .bashrc — they need to
 # be sourced here explicitly for the script to work even when run as
-# `bash upgrade_prestashop_LIVEv1.sh ...` outside an interactive shell.
+# `bash upgrade_prestashop_LIVEv1.sh ...` outside an interactive shell. Done
+# before resuming/creating BACKUP_DIR below so echo_*/read prompts there can
+# already use the toolkit's styled output.
 for file in "$HOME/.dotfiles/.bash"/*.sh; do
     # shellcheck disable=SC1090
     source "$file"
 done
 
+# Resume support: an earlier attempt interrupted mid-run (power loss, a
+# lockup, etc.) leaves its own timestamped BACKUP_DIR marked incomplete via
+# its .state file (LAST_STEP != done). Offer to reuse that exact directory —
+# steps 1-3 still always re-run regardless of resuming (cheap, and this
+# re-validates instead of trusting stale state), but step 4 can offer to
+# skip the full DB pull if it finds an already-valid dump inside.
+RESUME_DIR=""
+for d in $(find "$HOME/Downloads/.upgrade-backups" -maxdepth 1 -type d -name "${DOMAIN}_*" 2>/dev/null | sort -r); do
+    if [ -f "$d/.state" ] && ! grep -qx "LAST_STEP=done" "$d/.state"; then
+        RESUME_DIR="$d"
+        break
+    fi
+done
+
+if [ -n "$RESUME_DIR" ]; then
+    LAST_STEP=$(grep "^LAST_STEP=" "$RESUME_DIR/.state" | cut -d= -f2)
+    echo_info "Found an incomplete previous attempt: $RESUME_DIR (reached step: ${LAST_STEP:-unknown})"
+    read -rp "Resume from there instead of starting a fresh run? [y/N]: " resume_answer
+    case "$resume_answer" in
+        [Yy]*) BACKUP_DIR="$RESUME_DIR" ;;
+        *) RESUME_DIR="" ;;
+    esac
+fi
+
+if [ -z "$RESUME_DIR" ]; then
+    TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+    BACKUP_DIR="$HOME/Downloads/.upgrade-backups/${DOMAIN}_${TIMESTAMP}"
+    mkdir -p "$BACKUP_DIR"
+fi
+
 exec > >(tee -a "$BACKUP_DIR/upgrade.log") 2>&1
+
+# Records progress in BACKUP_DIR/.state so an interrupted run can be resumed
+# later (see RESUME_DIR above) — called after each step succeeds; "done" once
+# step 9 finishes, so a completed run is never offered up for resuming.
+save_state() {
+    echo "LAST_STEP=$1" > "$BACKUP_DIR/.state"
+}
 
 confirm_production() {
     echo_error "⚠️  PRODUCTION ($DOMAIN) — $1. Continue? [y/N]"
@@ -151,6 +187,7 @@ confirm_production "everything above is correct"
 # the very next action after that.
 echo_prestashop "Step 1: maintenance ON"
 ssh root@server "mysql ${DATABASE_NAME} -e \"UPDATE ${PS_PREFIX}_configuration SET value=0 WHERE name='PS_SHOP_ENABLE';\""
+save_state 1
 
 # ────────────────────────────────────────────────────────────────
 # Step 2 - Snapshot the real production domain(s) (cheap, read-only —
@@ -171,6 +208,7 @@ ssh root@server "mysql ${DATABASE_NAME} -N -e \"SELECT CONCAT('UPDATE ${PS_PREFI
 [ -s "$BACKUP_DIR/shop_url_restore.sql" ] \
     || { echo_error "shop_url_restore.sql is empty — check PS_PREFIX ('$PS_PREFIX') and the ${PS_PREFIX}_shop_url table before continuing."; exit 1; }
 echo_success "Domain snapshot saved to: $BACKUP_DIR/shop_url_restore.sql"
+save_state 2
 
 # ────────────────────────────────────────────────────────────────
 # Step 3 - Bring production files down to local (read-only against
@@ -187,6 +225,24 @@ run_or_abort "get_site_files" get_site_files "$DOMAIN" "$LOCAL_DOMAIN" # já tem
 # just pulled, so this check is meaningful here, before step 4 even starts.
 detect_ps_version "$LOCAL_DIR" >/dev/null \
     || { echo_error "Could not detect a PrestaShop version in '$LOCAL_DIR' — did get_site_files pull a valid install?"; exit 1; }
+
+# Sanity check: local config's own database_name must match $DATABASE_NAME
+# (resolved from production earlier). get_site_files only SEEDS config when
+# none exists yet — it never corrects an already-existing one — so a
+# $LOCAL_DIR reused from an older run/site (or a production DB that got
+# renamed since) can carry a stale database_name pointing at a DB that
+# doesn't match what step 4 is about to import. Left uncaught, this only
+# surfaces much later as a cryptic "PrestaShopException ... DbPDO ...
+# Unknown database" deep inside update_prestashop (step 5) — catch it here
+# instead, before step 4 spends time importing the whole production DB.
+LOCAL_DB_NAME=$(
+    grep -oP "(?<=define\\('_DB_NAME_', ')[^']+" "$LOCAL_DIR/config/settings.inc.php" 2>/dev/null ||
+    grep -oP "(?<='database_name' => ')[^']+" "$LOCAL_DIR/app/config/parameters.php" 2>/dev/null
+)
+if [ -n "$LOCAL_DB_NAME" ] && [ "$LOCAL_DB_NAME" != "$DATABASE_NAME" ]; then
+    echo_error "Local config's database_name ('$LOCAL_DB_NAME') doesn't match production's ('$DATABASE_NAME') — '$LOCAL_DIR' likely has stale config from an earlier run/site. Fix app/config/parameters.php (or config/settings.inc.php) before continuing."
+    exit 1
+fi
 
 # Files backup (rollback safety net): archive the copy get_site_files just
 # pulled down instead of doing a separate remote tar+scp — get_site_files
@@ -207,52 +263,59 @@ tar -cf - -C "$(dirname "$LOCAL_DIR")" "$(basename "$LOCAL_DIR")" \
 [ -s "$BACKUP_DIR/files_pre_upgrade.tar.zst" ] \
     || { echo_error "files_pre_upgrade.tar.zst is empty — check '$LOCAL_DIR' before continuing."; exit 1; }
 echo_success "Files backup saved to: $BACKUP_DIR/files_pre_upgrade.tar.zst"
+save_state 3
 
 # ────────────────────────────────────────────────────────────────
 # Step 4 - Bring the production DB down to local (name already resolved
-# above; get_database already has its own confirmation + dump validation)
+# above; get_database already has its own dump validation — --yes only
+# skips its "Continue? [y/N]" prompt, not the corrupted-dump one)
 # ────────────────────────────────────────────────────────────────
-confirm_production "pull database '$DATABASE_NAME' from production to local"
-echo_prestashop "Step 4: get_database"
-run_or_abort "get_database" get_database --skip-dev "$DATABASE_NAME"
+# This is the one step worth offering to skip on resume: unlike step 3's
+# rsync (naturally incremental — reruns fast if most files are already
+# there), get_database drops+recreates the whole local DB from scratch every
+# time, so re-pulling after an interruption redoes 100% of a possibly large
+# transfer for no reason if a valid pull is already sitting right here from
+# the previous attempt (same BACKUP_DIR) and the local DB it produced is
+# still around.
+SKIP_DB_PULL=0
+if [ -s "$BACKUP_DIR/db_pre_upgrade.sql" ] \
+    && tail -n 5 "$BACKUP_DIR/db_pre_upgrade.sql" | grep -q -- "-- Dump completed on" \
+    && mysql -h 127.0.0.1 --protocol=TCP -N -e "SHOW DATABASES LIKE '${DATABASE_NAME}'" | grep -qx "$DATABASE_NAME"; then
+    echo_info "Found an already-pulled, valid database backup from a previous attempt ($BACKUP_DIR/db_pre_upgrade.sql), and the local database still exists."
+    read -rp "Reuse it and skip re-pulling from production? [y/N]: " reuse_answer
+    case "$reuse_answer" in
+        [Yy]*) SKIP_DB_PULL=1 ;;
+    esac
+fi
 
-# DB backup (rollback safety net): get_database already downloaded the raw,
-# untouched production dump to this exact path before importing/mutating it
-# locally — reuse it instead of running a second mysqldump against production.
-check_dump "$HOME/Downloads/${DATABASE_NAME}.sql"
-cp "$HOME/Downloads/${DATABASE_NAME}.sql" "$BACKUP_DIR/db_pre_upgrade.sql"
-echo_success "Database backup saved to: $BACKUP_DIR/db_pre_upgrade.sql"
+if [ "$SKIP_DB_PULL" = "1" ]; then
+    echo_prestashop "Step 4: get_database — skipped, reusing the previous pull"
+else
+    echo_prestashop "Step 4: get_database — pulling '$DATABASE_NAME' from production to local"
+    run_or_abort "get_database" get_database --yes --skip-dev "$DATABASE_NAME"
+
+    # DB backup (rollback safety net): get_database already downloaded the raw,
+    # untouched production dump to this exact path before importing/mutating it
+    # locally — reuse it instead of running a second mysqldump against production.
+    check_dump "$HOME/Downloads/${DATABASE_NAME}.sql"
+    cp "$HOME/Downloads/${DATABASE_NAME}.sql" "$BACKUP_DIR/db_pre_upgrade.sql"
+    echo_success "Database backup saved to: $BACKUP_DIR/db_pre_upgrade.sql"
+fi
+save_state 4
 
 # ────────────────────────────────────────────────────────────────
 # Step 5 - Update locally
 # ────────────────────────────────────────────────────────────────
 echo_prestashop "Step 5: update_prestashop"
-# online_recommended (update_prestashop's default channel) only advances one
-# safe step at a time — a single call can leave the shop short of the actual
-# latest version. Auto-repeat while the version keeps moving (no prompt in
-# between); once it stabilizes (two calls in a row report the same version),
-# ask whether to run it again anyway (e.g. to try the 'online' channel for a
-# major jump) instead of just assuming "stable" means "done".
+# update_prestashop now handles its own loop-until-stable, PHP-compatibility
+# switching (as PS_VERSION climbs across majors), and final autoupgrade-module
+# cleanup internally — this used to all live here, moved into the function
+# itself so it also benefits standalone/interactive calls (prestashop.sh).
 # --no-backup: steps 3/4 already took a full files+DB backup of production
 # before touching anything, so the Update Assistant's own backup:create here
 # would just be a second, redundant local backup.
-while true; do
-    while true; do
-        PS_VERSION_BEFORE=$(detect_ps_version "$LOCAL_DIR") \
-            || { echo_error "Could not detect a PrestaShop version in '$LOCAL_DIR' — is this a valid, already-imported install?"; exit 1; }
-        run_or_abort "update_prestashop" update_prestashop --no-backup "$LOCAL_DOMAIN"
-        PS_VERSION_AFTER=$(detect_ps_version "$LOCAL_DIR") \
-            || { echo_error "Could not detect a PrestaShop version in '$LOCAL_DIR' after running update_prestashop."; exit 1; }
-        echo_info "PrestaShop version: ${PS_VERSION_BEFORE:-unknown} -> ${PS_VERSION_AFTER:-unknown}"
-        [ "$PS_VERSION_BEFORE" = "$PS_VERSION_AFTER" ] && break
-    done
-
-    read -rp "Version stabilized at ${PS_VERSION_AFTER:-unknown}. Run update_prestashop again? [y/N]: " answer
-    case "$answer" in
-        [Yy]*) continue ;;
-        *) break ;;
-    esac
-done
+run_or_abort "update_prestashop" update_prestashop --no-backup "$LOCAL_DOMAIN"
+save_state 5
 
 # ────────────────────────────────────────────────────────────────
 # Step 6 - Compatibility fixes
@@ -265,6 +328,7 @@ else
     read -r answer
     [[ "$answer" =~ ^[Yy]$ ]] || { echo_error "Aborted before applying compatibility fixes."; exit 1; }
 fi
+save_state 6
 
 # ────────────────────────────────────────────────────────────────
 # Manual confirmation - validate the local site before touching production again
@@ -303,12 +367,14 @@ confirm_production "apply the rsync for real against production (no --dry-run)"
 echo_prestashop "Step 7b: real rsync (local -> production)"
 rsync -a --delete --info=progress2 $RSYNC_EXCLUDES "${LOCAL_DIR}/" "${ACCOUNT}@server:/home/${ACCOUNT}/${ROOT_DIR}/" \
     || { echo_error "File push to production FAILED — production files may be left in a partial state. Fix the issue, then re-run manually: rsync -a --delete $RSYNC_EXCLUDES '${LOCAL_DIR}/' '${ACCOUNT}@server:/home/${ACCOUNT}/${ROOT_DIR}/'"; exit 1; }
+save_state 7
 
 # ────────────────────────────────────────────────────────────────
 # Step 8 - Push the migrated DB to production
 # ────────────────────────────────────────────────────────────────
 confirm_production "import the migrated local DB into production (replaces the current DB for '$DOMAIN')"
 echo_prestashop "Step 8: push the database"
+echo_info "Dump upgraded database from local..."
 # Likely the biggest dump in the whole run (production DB, post-upgrade) — pv
 # gives visible progress, same convention get_database (mysql.sh) already uses,
 # including the DB_SIZE_ESTIMATE_FACTOR correction (defined there, already in
@@ -328,6 +394,7 @@ DB_MIGRATED_SIZE=$(stat -c %s "$BACKUP_DIR/db_migrated.sql")
 # straight at the pre-upgrade backup rather than just letting `set -e` abort
 # with a generic message. `pipefail` (set at the top) makes `||` see ssh/mysql's
 # exit code here, not pv's.
+echo_info "Upload updated database to production..."
 pv --force -s "$DB_MIGRATED_SIZE" "$BACKUP_DIR/db_migrated.sql" | ssh root@server "mysql ${DATABASE_NAME}" \
     || { echo_error "DB import into production FAILED — production may be left in a partial state. Restore from: $BACKUP_DIR/db_pre_upgrade.sql"; exit 1; }
 
@@ -337,6 +404,7 @@ pv --force -s "$DB_MIGRATED_SIZE" "$BACKUP_DIR/db_migrated.sql" | ssh root@serve
 echo_prestashop "Step 8b: restore production domain(s) in ${PS_PREFIX}_shop_url"
 ssh root@server "mysql ${DATABASE_NAME}" < "$BACKUP_DIR/shop_url_restore.sql" \
     || { echo_error "shop_url restore FAILED — production likely still has the .test domain from the DB import. Re-run manually: ssh root@server \"mysql ${DATABASE_NAME}\" < $BACKUP_DIR/shop_url_restore.sql"; exit 1; }
+save_state 8
 
 # ────────────────────────────────────────────────────────────────
 # Step 9 - Validate, then turn maintenance off
@@ -348,12 +416,10 @@ ssh root@server "mysql ${DATABASE_NAME}" < "$BACKUP_DIR/shop_url_restore.sql" \
 # anyone confirms the migration actually worked.
 # Best-effort admin folder guess from $LOCAL_DIR — it mirrors production 1:1
 # after step 7's push, and the admin folder's random slug name isn't stored
-# anywhere else this script has access to. Same exclusion list update_prestashop
-# (prestashop.sh) uses for its own fzf pre-fill guess; here there's no fzf, so
-# it's only usable when exactly one directory survives the filter.
-ADMIN_DIR_GUESS=$(find "$LOCAL_DIR" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' 2>/dev/null \
-    | grep -vE '^(modules|themes|js|css|img|cache|var|vendor|config|controllers|classes|src|translations|tools|tests|docs|webservice|upload|download|mails|localization|override|pdf|bin|app|\.git|\.direnv)$' \
-    || true)
+# anywhere else this script has access to. Same candidate list guess_ps_admin_dir
+# (prestashop.sh) uses for its own fzf pre-fill; here there's no fzf, so it's
+# only usable when exactly one directory survives the filter.
+ADMIN_DIR_GUESS=$(list_ps_admin_dir_candidates "$LOCAL_DIR" || true)
 ADMIN_DIR_COUNT=$(printf '%s\n' "$ADMIN_DIR_GUESS" | grep -c . || true)
 
 echo_info "Validate PRODUCTION now: homepage, product, checkout, etc.."
@@ -364,6 +430,8 @@ else
 fi
 confirm_production "turn off maintenance mode (site becomes public again)"
 ssh root@server "mysql ${DATABASE_NAME} -e \"UPDATE ${PS_PREFIX}_configuration SET value=1 WHERE name='PS_SHOP_ENABLE';\""
+
+save_state done
 
 echo_success "✅ Upgrade finished! The site is public again: https://$DOMAIN"
 echo_info "Rollback available in: $BACKUP_DIR"

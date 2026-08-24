@@ -7,23 +7,28 @@
 # diretamente aqui se necessário.
 DB_SIZE_ESTIMATE_FACTOR=130
 
-# Uso: get_database [--skip-dev] [nome_da_bd] [caminho_dump_ja_descarregado]
+# Uso: get_database [--skip-dev] [--yes] [nome_da_bd] [caminho_dump_ja_descarregado]
 # --skip-dev salta a preparação da configuração do PrestaShop para
 # desenvolvimento/teste (cache, SSL, mail, remoção de módulos, truncate à moloni)
 # — mantém sempre a conversão de domínio para .test (shop_url/WordPress
 # siteurl/home), que é o que torna o site utilizável localmente.
+# --yes salta o "Continue? [y/N]" inicial (para chamadas programáticas onde a
+# confirmação já foi dada a outro nível) — NÃO salta o aviso de dump
+# corrompido/incompleto: isso continua sempre a abortar, nunca a assumir "sim".
 #
 # Exit codes: 0 sucesso, 2 o utilizador recusou um dos prompts [y/N] (não é
 # uma falha real), 1 qualquer outra falha. Mesma convenção do update_prestashop
 # (prestashop.sh) e do get_site_files (site.sh).
 get_database(){
-    local USAGE="Uso: get_database [--skip-dev] [nome_da_bd] [caminho_dump_ja_descarregado]"
+    local USAGE="Uso: get_database [--skip-dev] [--yes] [nome_da_bd] [caminho_dump_ja_descarregado]"
     local SKIP_DEV=0
+    local YES=0
     local POSITIONAL=()
     local arg
     for arg in "$@"; do
         case "$arg" in
             --skip-dev) SKIP_DEV=1 ;;
+            --yes) YES=1 ;;
             *) POSITIONAL+=("$arg") ;;
         esac
     done
@@ -86,11 +91,13 @@ get_database(){
         echo_info "--skip-dev: a ignorar as configurações para desenvolvimento/teste"
     fi
 
-    local confirm
-    read -r -p "Continue? [y/N] " confirm
-    if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
-        echo_error "Aborted."
-        return 2
+    if [ "$YES" != "1" ]; then
+        local confirm
+        read -r -p "Continue? [y/N] " confirm
+        if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
+            echo_error "Aborted."
+            return 2
+        fi
     fi
 
     # Authenticating SSH key...

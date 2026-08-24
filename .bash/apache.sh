@@ -76,6 +76,33 @@ EOF
     echo_success "Virtual host for https://$DOMAIN has been created (PHP ${PHP_VERSION})."
 }
 
+# Troca a versão de PHP-FPM de um vhost LOCAL já criado (ex: por create_domain),
+# reescrevendo a linha SetHandler e recarregando o Apache — ao contrário de
+# create_domain, que só define a versão na criação e nunca mais a revisita.
+# Uso: set_domain_php_version <dominio_local> <versao_php, ex: 8.1>
+set_domain_php_version() {
+    local DOMAIN="$1"
+    local PHP_VERSION="$2"
+    local VHOST_CONF="/etc/apache2/sites-available/$DOMAIN.conf"
+
+    if [ ! -f "$VHOST_CONF" ]; then
+        echo_error "Vhost config '$VHOST_CONF' não existe."
+        return 1
+    fi
+    if [ ! -S "/run/php/php${PHP_VERSION}-fpm.sock" ]; then
+        echo_error "Socket PHP-FPM '/run/php/php${PHP_VERSION}-fpm.sock' não existe — o serviço php${PHP_VERSION}-fpm está instalado/ativo?"
+        return 1
+    fi
+
+    sudo -v &>/dev/null
+    sudo sed -i -E "s#(proxy:unix:/run/php/php)[0-9]+\.[0-9]+(-fpm\.sock)#\1${PHP_VERSION}\2#" "$VHOST_CONF" \
+        || { echo_error "Falha a atualizar '$VHOST_CONF'."; return 1; }
+    sudo systemctl reload apache2 > /dev/null \
+        || { echo_error "Falha a recarregar o Apache."; return 1; }
+
+    echo_success "Vhost '$DOMAIN' agora usa PHP ${PHP_VERSION}."
+}
+
 fix_permissions() {
     COMPOSER_FILE="composer.lock"
 

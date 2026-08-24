@@ -28,7 +28,7 @@ set $config_dir ~/.config/sway
 exec swayidle -w \
     timeout 300   'pgrep swaylock || swaylock -f' \
     timeout 600   'swaymsg "output * dpms off"' \
-    resume       'swaymsg "output * dpms on"; ~/.config/sway/scripts/chrome-resume.sh &' \
+    resume       'swaymsg "output * dpms on"' \
     timeout 900   'systemctl suspend' \
     before-sleep 'pgrep swaylock || swaylock -f'
 
