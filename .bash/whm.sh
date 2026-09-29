@@ -16,6 +16,26 @@ is_noindex_domain() {
     return 1
 }
 
+# Devolve o nome base de um domínio de dev gerido internamente pela agência
+# (conta.dev.red.com.pt, conta.dev.red-agency.pt, conta.desenvolvimento.redpost.pt
+# — os mesmos 3 padrões de is_noindex_domain acima, sem o "staging." que não é
+# relevante aqui; atualizar os dois sítios se este padrão de nomes mudar). Ex:
+# "digiwest.dev.red.com.pt" -> "digiwest". Se não bater com nenhum destes sufixos
+# (domínio normal de cliente), devolve o domínio tal e qual e falha — quem chama
+# decide o que fazer nesse caso (ex: get_site_files só troca o TLD final).
+# Uso: strip_agency_dev_suffix <dominio>
+strip_agency_dev_suffix() {
+    local DOMAIN=$1
+    if [[ "$DOMAIN" =~ ^(.+)\.dev\.red\.com\.pt$ ]] \
+        || [[ "$DOMAIN" =~ ^(.+)\.dev\.red-agency\.pt$ ]] \
+        || [[ "$DOMAIN" =~ ^(.+)\.desenvolvimento\.redpost\.pt$ ]]; then
+        echo "${BASH_REMATCH[1]}"
+        return 0
+    fi
+    echo "$DOMAIN"
+    return 1
+}
+
 # Devolve a conta (user) dona de um domínio, ou falha se não existir.
 # Uso interno por outros scripts (ex: emails.sh) que precisem resolver
 # domínio -> conta sem imprimir mensagens.

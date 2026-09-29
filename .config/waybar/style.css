@@ -37,9 +37,11 @@ window#waybar > box {
 #custom-mic,
 #custom-notification,
 #cpu,
+#custom-gpu,
 #memory,
 #custom-vpn,
 #custom-idle,
+#custom-camera,
 #custom-mouse-battery,
 #tray {
     padding: 4px 6px 2px;
@@ -60,7 +62,9 @@ window#waybar > box {
 #custom-notification:hover,
 #custom-vpn:hover,
 #custom-idle:hover,
+#custom-camera:hover,
 #cpu:hover,
+#custom-gpu:hover,
 #memory:hover {
     background-color: @bg-alt;
 }
@@ -132,6 +136,15 @@ window#waybar > box {
 
 #custom-idle.paused {
     color: @alert;
+}
+
+#custom-idle.error {
+    color: @critical;
+}
+
+#custom-camera.recording {
+    color: @critical;
+    font-weight: bold;
 }
 
 #custom-network {

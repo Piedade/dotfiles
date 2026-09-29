@@ -11,11 +11,39 @@ get_dns(){
         echo
     fi
 
+    local IP_REDPOST="194.39.126.152"
+
     for t in A AAAA MX NS TXT CNAME SOA SRV CAA; do
         RESULT=$(dig "$DOMAIN" "$t" +short)
         if [ -n "$RESULT" ]; then
             echo_success "$t"
-            echo "$RESULT"
+            while IFS= read -r LINE; do
+                case "$t" in
+                    A)
+                        # A record is the IP itself, compare directly
+                        if [ "$LINE" = "$IP_REDPOST" ]; then
+                            echo -e "$LINE ${BOLD}${RED}(REDPOST)${RESET}"
+                        else
+                            echo "$LINE"
+                        fi
+                        ;;
+                    MX)
+                        # MX is "<priority> <host>.", resolve the host to compare its IP
+                        local MX_HOST="${LINE#* }"
+                        MX_HOST="${MX_HOST%.}"
+                        local MX_IP
+                        MX_IP=$(dig "$MX_HOST" A +short | head -n1)
+                        if [ "$MX_IP" = "$IP_REDPOST" ]; then
+                            echo -e "$LINE ${BOLD}${RED}(REDPOST)${RESET}"
+                        else
+                            echo "$LINE"
+                        fi
+                        ;;
+                    *)
+                        echo "$LINE"
+                        ;;
+                esac
+            done <<< "$RESULT"
             echo
         fi
     done

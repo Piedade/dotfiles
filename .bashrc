@@ -464,6 +464,10 @@ export PATH="$PATH:/usr/sbin"
 eval "$(starship init bash)"
 
 # the z command magic
+# Never track paths under /run/user (GVFS/FUSE mounts, e.g. SMB shares) --
+# gvfsd-fuse can hang for seconds on an unresponsive network share, and
+# zoxide stat()s every stored path on `zi`, freezing the whole shell.
+export _ZO_EXCLUDE_DIRS="/run/user/*"
 eval "$(zoxide init bash)"
 
 # load variables per folder
@@ -481,3 +485,5 @@ done
 # export XKB_DEFAULT_COMPILE_DIRECTORY=/usr/share/X11/locale
 # export XKB_CONFIG_ROOT=/usr/share/X11/xkb
 export LC_ALL=en_US.UTF-8
+
+export SYMFONY_IDE="vscode"

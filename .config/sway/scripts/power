@@ -14,26 +14,34 @@
 chosen=$(printf '%s\n' "Shutdown" "Reboot" "Logout" "Cancel" | \
     fuzzel --dmenu --prompt "Power: ")
 
-close_chrome() {
-    # Find main Chrome processes (exclude renderer/gpu/zygote with --type=)
+close_browser() {
+    # Identify main browser processes by their launch pattern (see
+    # launch-apps.sh's --profile-directory=Default), not by binary path or
+    # process name — this avoids wrapper scripts that stay alive as a parent
+    # of a differently-named real binary (e.g. brave-browser wrapping brave)
+    # and needs no editing when the browser changes, as long as
+    # launch-apps.sh keeps using --profile-directory=Default. Renderer/gpu/
+    # utility subprocesses don't carry this flag, so --type= exclusion is
+    # just extra safety, not load-bearing.
+    local pattern="--profile-directory=Default"
     local mains
-    mains=$(pgrep -af "/opt/google/chrome/chrome" | grep -v -- "--type=" | cut -d" " -f1)
+    mains=$(pgrep -af -- "$pattern" | grep -v -- "--type=" | cut -d" " -f1)
     [ -z "$mains" ] && return
-    # SIGTERM lets Chrome save its session state cleanly (no restore dialog next boot)
+    # SIGTERM lets the browser save its session state cleanly (no restore dialog next boot)
     kill -TERM $mains 2>/dev/null
-    # Wait up to 15s for Chrome to exit before proceeding with shutdown
+    # Wait up to 15s for it to exit before proceeding with shutdown
     for i in $(seq 1 30); do
-        pgrep -x chrome >/dev/null 2>&1 || return
+        pgrep -f "$pattern" >/dev/null 2>&1 || return
         sleep 0.5
     done
-    # Force kill if Chrome didn't exit in time
-    pkill -KILL -x chrome 2>/dev/null
+    # Force kill if it didn't exit in time
+    pkill -KILL -f "$pattern" 2>/dev/null
 }
 
 case "$chosen" in
-    "Logout")   close_chrome; swaymsg exit ;;
-    "Shutdown") close_chrome; systemctl poweroff ;;
-    "Reboot")   close_chrome; systemctl reboot ;;
+    "Logout")   close_browser; swaymsg exit ;;
+    "Shutdown") close_browser; systemctl poweroff ;;
+    "Reboot")   close_browser; systemctl reboot ;;
     *)          exit 0 ;;
 esac
 

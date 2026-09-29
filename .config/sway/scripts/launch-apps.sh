@@ -4,6 +4,11 @@ until [ -f "${XDG_RUNTIME_DIR}/autostart-done" ]; do sleep 0.1; done
 
 export SSH_AUTH_SOCK="${XDG_RUNTIME_DIR}/keyring/ssh"
 
+source "$(dirname "${BASH_SOURCE[0]}")/../browser.conf"
+
+## Background radio (Antena 1)
+pgrep -x vlc > /dev/null || cvlc https://streaming-live.rtp.pt/liveradio/antena180a/chunklist_DVR.m3u8 &>/dev/null &
+
 win_count() {
     swaymsg -t get_tree | jq "
         (first(.. | objects | select(.type == \"workspace\" and .name == \"$1\")) // {})
@@ -41,19 +46,18 @@ launch() {
 
 launch 1 code
 
-CHROME_FLAGS="--disable-features=TabHoverCardImages --force-prefers-reduced-motion"
+BROWSER_FLAGS="--disable-features=TabHoverCardImages"
 
-launch 2 google-chrome --profile-directory=Default $CHROME_FLAGS
+launch 2 "$BROWSER_CMD" --profile-directory=Default $BROWSER_FLAGS
 
 launch 3 alacritty
 launch 3 alacritty
 launch 3 alacritty
 
-# launch 7 google-chrome --profile-directory="Profile 1"
-launch 7 google-chrome --profile-directory="Profile 1" $CHROME_FLAGS
+launch 7 "$BROWSER_CMD" --profile-directory="Profile 1" $BROWSER_FLAGS
 
-launch 8 tabbed google-chrome --profile-directory="Profile 1" --app-id=kjbdgfilnfhdoflbpgamdcdgpehopbep $CHROME_FLAGS
-launch 8 tabbed google-chrome --profile-directory="Profile 1" --app-id=hnpfjngllnobngcgfapefoaidbinmjnm $CHROME_FLAGS
+launch 8 tabbed "$BROWSER_CMD" --profile-directory="Profile 1" --app-id=kjbdgfilnfhdoflbpgamdcdgpehopbep $BROWSER_FLAGS
+launch 8 tabbed "$BROWSER_CMD" --profile-directory="Profile 1" --app-id=hnpfjngllnobngcgfapefoaidbinmjnm $BROWSER_FLAGS
 launch 8 tabbed obsidian
 
 # lets go back to work

@@ -12,14 +12,16 @@
         // "disk",
         // "custom/sep",
         // "custom/network",
+        "custom/mouse-battery",
+        "custom/camera",
         "custom/vpn",
         "custom/idle",
         "custom/mic",
         "custom/vol",
         // "pulseaudio",
         "cpu",
+        "custom/gpu",
         "memory",
-        "custom/mouse-battery",
         "clock",
         // "custom/sep",
         // "network",
@@ -113,6 +115,13 @@
         "tooltip-format": "CPU Usage: {usage}%\nAverage Frequency: {avg_frequency}GHz\nLoad: {load}",
         "interval": 2,
         "on-click": "alacritty -e ~/.config/waybar/scripts/btop-sort.sh cpu",
+    },
+
+    "custom/gpu": {
+        "exec": "~/.config/waybar/scripts/gpu-status.sh",
+        "tooltip": false,
+        "interval": 2,
+        "on-click": "alacritty -e nvtop",
     },
 
     "memory": {
@@ -225,6 +234,15 @@
         "on-click": "~/.config/sway/scripts/idle-toggle",
         "interval": 10,
         "signal": 4,
+        "tooltip": true,
+    },
+
+    "custom/camera": {
+        "exec": "~/.config/waybar/scripts/camera-status.sh",
+        "on-click": "swaymsg workspace 10",
+        "return-type": "json",
+        "interval": 2,
+        "hide-empty-text": true,
         "tooltip": true,
     },
 

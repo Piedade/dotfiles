@@ -8,14 +8,23 @@ create_qrcode() {
         read -p "Enter the URL (e.g., https://example.com): " URL
     fi
 
-    OPTIONS="-s 10 -l H"
+    local OPTIONS="-s 10 -l H"
     if [ -z "$OUT" ]; then
         qrencode -t ansiutf8 $OPTIONS "$URL"
     else
-        [[ "$OUT" != *.png ]] && OUT_PNG="$OUT-qrcode.png"
+        local OUT_PNG OUT_SVG
+        if [[ "$OUT" == *.png ]]; then
+            OUT_PNG="$OUT"
+        else
+            OUT_PNG="$OUT-qrcode.png"
+        fi
         qrencode -o "$OUT_PNG" $OPTIONS "$URL"
 
-        [[ "$OUT" != *.svg ]] && OUT_SVG="$OUT-qrcode.svg"
+        if [[ "$OUT" == *.svg ]]; then
+            OUT_SVG="$OUT"
+        else
+            OUT_SVG="$OUT-qrcode.svg"
+        fi
         qrencode -o "$OUT_SVG" -t SVG $OPTIONS "$URL"
     fi
 
@@ -25,6 +34,6 @@ create_qrcode() {
         echo "Pode validar o QR code? Em anexo encontra duas versões: uma em formato de imagem normal e outra em formato vectorial, que permite aumentar as dimensões sem perder qualidade."
     else
         echo_error "Error: Failed to create qrcode for '$URL'." >&2
-        exit 1
+        return 1
     fi
 }

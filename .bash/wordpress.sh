@@ -37,6 +37,8 @@ create_wordpress() {
     local ROOT_DIR=$3
     local DB_NAME=$4
     local ENABLE_MULTI_PHP=$5
+    local SKIP_PHP_UPDATE
+    local CURRENT_PHP
 
     # Se não passou ACCOUNT → fzf local
     if [ -z "$ACCOUNT" ]; then
@@ -46,7 +48,41 @@ create_wordpress() {
     local _main_domain
     _main_domain=$(select_domain "$ACCOUNT") || _main_domain=""
 
+    # Shell access + our SSH key must exist before the PHP-version probe further down
+    # (whm_php_version_by_account needs to SSH into the account) — for a brand-new account
+    # this used to run only after the confirmation prompt below, so the probe always failed
+    # silently and "Enable MultiPHP?" never had a current version to show.
+    check_shell_access "$ACCOUNT" 1
+    case $? in
+        1)
+            echo "Activating shell access..."
+            add_shell_access "$ACCOUNT" || { echo_error "Failed to activate shell"; return 1; }
+            ;;
+        2)
+            echo_error "$ACCOUNT not found."
+            return 1
+            ;;
+        3)
+            echo_error "$ACCOUNT has an unusual shell. Please check manually."
+            return 1
+            ;;
+    esac
+
+    setup_ssh_key "$ACCOUNT"
+
     if [ $# -eq 0 ]; then
+        # Shows what's already on this account before asking for Domain/Root directory — the
+        # "public_html" ROOT_DIR default and the MultiPHP question further down both assume you
+        # know whether this account is a blank slate or already hosts other domains/folders.
+        local _existing_vhosts
+        _existing_vhosts=$(list_account_vhosts "$ACCOUNT")
+        if [ -n "$_existing_vhosts" ]; then
+            echo_info "Existing domains on this account:"
+            while IFS='|' read -r _vh _doc; do
+                echo_info "  $_vh -> $_doc"
+            done <<< "$_existing_vhosts"
+        fi
+
         local _default_domain="$ACCOUNT.dev.red.com.pt"
         read -rp "Domain [$_default_domain]: " DOMAIN
         [ -z "$DOMAIN" ] && DOMAIN="$_default_domain"
@@ -65,37 +101,67 @@ create_wordpress() {
         read -rp "Site title [$ACCOUNT]: " SITE_TITLE
         [ -z "$SITE_TITLE" ] && SITE_TITLE="$ACCOUNT"
 
-        # Mostra a versão de PHP que a conta/domínio já usa, para ajudar a decidir
-        # se vale a pena forçar 8.4 via .htaccess (mesma lógica do get_site_files(),
-        # em site.sh: whm_resolve_php_version tenta primeiro o .htaccess do domínio
-        # e só depois o default da conta via MultiPHP Manager — ver comentário em
-        # whm.sh). Best-effort: se o domínio ainda não tiver vhost (ex.: addon
-        # domain a ser criado agora), a consulta falha e segue sem info extra.
-        local RESULT
-        RESULT=$(whm_resolve_php_version "$DOMAIN" "$ACCOUNT" "$ROOT_DIR")
-        if [ -n "$RESULT" ]; then
-            local CANDIDATE SOURCE RAW
-            IFS='|' read -r CANDIDATE SOURCE RAW <<< "$RESULT"
-            echo_info "PHP atual do domínio: $RAW (via $SOURCE)"
-        else
-            # Domínio novo ainda sem vhost (caso mais comum aqui) — não há
-            # .htaccess nem entrada no MultiPHP Manager para ele ainda, por isso
-            # whm_resolve_php_version falha sempre. Pergunta diretamente à conta
-            # via selectorctl (ver nota em project_cpanel_deploy_scripts: MultiPHP
-            # é opt-in por domínio, não garantidamente herdado — isto é só
-            # indicativo, não o valor real que este domínio novo vai ter).
+        if [ "$ROOT_DIR" = "public_html" ]; then
+            # Only site on this docroot: what matters is the account-wide default
+            # (selectorctl), not this domain's own MultiPHP Manager vhost pin — the two can
+            # drift apart (see feedback_php_version_via_account memory / whm_resolve_php_version
+            # comment above whm_php_version_by_account in whm.sh), so checking the vhost here
+            # would show a stale per-domain override instead of what's actually about to
+            # change. No other domain's PHP to protect either, so the per-domain .htaccess
+            # override (MultiPHP) doesn't apply — ask about the account-wide change instead.
             local ACCOUNT_PHP
             ACCOUNT_PHP=$(whm_php_version_by_account "$ACCOUNT")
             if [ -n "$ACCOUNT_PHP" ]; then
                 echo_info "PHP atual da conta: $ACCOUNT_PHP"
+                CURRENT_PHP="$ACCOUNT_PHP"
             fi
-        fi
 
-        read -rp "Enable MultiPHP? [y/N]: " _multi
-        case "$_multi" in
-            [Yy]*) ENABLE_MULTI_PHP="yes" ;;
-            *) ENABLE_MULTI_PHP="" ;;
-        esac
+            if [ "$ACCOUNT_PHP" = "8.4" ]; then
+                SKIP_PHP_UPDATE=""
+            else
+                read -rp "Update account PHP version to 8.4 via cPanel API? [Y/n]: " _update_php
+                case "$_update_php" in
+                    [Nn]*) SKIP_PHP_UPDATE="yes" ;;
+                    *) SKIP_PHP_UPDATE="" ;;
+                esac
+            fi
+        else
+            # Mostra a versão de PHP que este domínio em concreto já usa (não a da conta —
+            # este domínio pode ter um pin próprio no MultiPHP Manager, distinto de outros
+            # domínios/pastas na mesma conta), para ajudar a decidir se vale a pena forçar 8.4
+            # via .htaccess (mesma lógica do get_site_files(), em site.sh: whm_resolve_php_version
+            # tenta primeiro o .htaccess do domínio e só depois o default da conta via MultiPHP
+            # Manager — ver comentário em whm.sh). Best-effort: se o domínio ainda não tiver
+            # vhost (ex.: addon domain a ser criado agora), a consulta falha e segue sem info extra.
+            local RESULT
+            RESULT=$(whm_resolve_php_version "$DOMAIN" "$ACCOUNT" "$ROOT_DIR")
+            local CANDIDATE SOURCE RAW
+            [ -n "$RESULT" ] && IFS='|' read -r CANDIDATE SOURCE RAW <<< "$RESULT"
+            if [ -n "$RESULT" ] && [ "$SOURCE" = ".htaccess" ]; then
+                # Só um override .htaccess é um valor realmente em vigor para este domínio.
+                echo_info "PHP atual do domínio: $RAW (via $SOURCE)"
+                CURRENT_PHP="$RAW"
+            else
+                # Sem override .htaccess — ou porque o domínio é novo/sem vhost, ou porque
+                # RESULT veio do "default da conta" que o MultiPHP Manager reporta. Nos dois
+                # casos pergunta-se diretamente à conta via selectorctl: no CloudLinux deste
+                # servidor esse "default" reportado não é necessariamente o que serve o site —
+                # o selectorctl da conta tem precedência quando não há pin explícito
+                # (confirmado ao vivo — ver project_cpanel_deploy_scripts).
+                local ACCOUNT_PHP
+                ACCOUNT_PHP=$(whm_php_version_by_account "$ACCOUNT")
+                if [ -n "$ACCOUNT_PHP" ]; then
+                    echo_info "PHP atual da conta: $ACCOUNT_PHP"
+                    CURRENT_PHP="$ACCOUNT_PHP"
+                fi
+            fi
+
+            read -rp "Enable MultiPHP? [y/N]: " _multi
+            case "$_multi" in
+                [Yy]*) ENABLE_MULTI_PHP="yes" ;;
+                *) ENABLE_MULTI_PHP="" ;;
+            esac
+        fi
     else
         [ -z "$DOMAIN" ] && DOMAIN="$ACCOUNT.dev.red.com.pt"
         if [ -z "$ROOT_DIR" ]; then
@@ -148,6 +214,9 @@ create_wordpress() {
     if [ -n "$ENABLE_MULTI_PHP" ]; then
         echo_info "Enable MultiPHP: $ENABLE_MULTI_PHP"
     fi
+    if [ "$SKIP_PHP_UPDATE" = "yes" ]; then
+        echo_info "PHP version: ${CURRENT_PHP:-current} (not updated)"
+    fi
 
     # Ask the user for confirmation if the variables are correct
     read -rp "Do you want to continue? [y/N]: " answer
@@ -162,31 +231,15 @@ create_wordpress() {
     esac
 
 
-    # Check shell access
-    check_shell_access "$ACCOUNT" 1
-    case $? in
-        1)
-            # User exists but no shell → ask if should activate
-            echo "Activating shell access..."
-            add_shell_access "$ACCOUNT" || { echo_error "Failed to activate shell"; return; }
-            ;;
-        2)
-            echo_error "$ACCOUNT not found."
-            return 1
-            ;;
-        3)
-            echo_error "$ACCOUNT has an unusual shell. Please check manually."
-            return 1
-            ;;
-    esac
-
-    setup_ssh_key "$ACCOUNT"
-
     # Abort early rather than hitting "wp core download" refusing to run on top of an existing
     # install (which would kill the whole session via run_remote's exit-on-failure) or generating
     # a fresh password that won't match an existing DB user's real one further down the line.
     if remote_file_exists "$ACCOUNT" "$ROOT_DIR/wp-config.php"; then
-        echo_error "~/$ROOT_DIR already has an installed WordPress (wp-config.php found). Aborting."
+        echo_error "~/$ROOT_DIR already has an installed WordPress. Aborting."
+        return 1
+    fi
+    if remote_dir_nonempty "$ACCOUNT" "$ROOT_DIR"; then
+        echo_error "~/$ROOT_DIR already exists and is not empty. Aborting."
         return 1
     fi
     if mysql_database_exists "$ACCOUNT" "${ACCOUNT}_${DB_NAME}"; then
@@ -228,7 +281,7 @@ create_wordpress() {
 
     if [ "$ENABLE_MULTI_PHP" = "yes" ] || [ "$ENABLE_MULTI_PHP" = "true" ]; then
         echo_info "MultiPHP enabled: skipping account-wide default (this domain forces 8.4 via .htaccess)."
-    else
+    elif [ "$SKIP_PHP_UPDATE" != "yes" ]; then
         echo_info "Setting PHP version to 8.4..."
         run_remote_wp "$ACCOUNT" "selectorctl --interpreter=php --set-user-current=8.4"
     fi
@@ -245,10 +298,36 @@ create_wordpress() {
     run_remote_wp "$ACCOUNT" "uapi Mysql set_privileges_on_database user='${ACCOUNT}_${DB_NAME}' database='${ACCOUNT}_${DB_NAME}' privileges='ALL PRIVILEGES'"
 
 
-    echo_info "Creating email..."
-    run_remote_wp "$ACCOUNT" "uapi Email add_pop email='noreply@${DOMAIN}' password='${EMAIL_PASS}'"
-    run_remote_wp "$ACCOUNT" "uapi Email suspend_incoming email='noreply@${DOMAIN}'"
+    # Checks against the account's root domain (e.g. redpost.pt), not this site's own domain
+    # (e.g. dev.redpost.pt): a root noreply@ mailbox is often already set up for the main site,
+    # and reusing it avoids piling up one throwaway mailbox per dev/staging subdomain.
+    local NOREPLY_DOMAIN="${_main_domain:-$DOMAIN}"
+    local NOREPLY_EMAIL="noreply@${NOREPLY_DOMAIN}"
+    if email_account_exists "$ACCOUNT" "$NOREPLY_EMAIL"; then
+        read -rp "Email $NOREPLY_EMAIL already exists. Use it? [y/N]: " _reuse_email
+        case "$_reuse_email" in
+            [Yy]*)
+                read -rp "Password for $NOREPLY_EMAIL: " EMAIL_PASS
+                ;;
+            *)
+                NOREPLY_EMAIL="noreply@${DOMAIN}"
+                echo_info "Creating email..."
+                run_remote_wp "$ACCOUNT" "uapi Email add_pop email='${NOREPLY_EMAIL}' password='${EMAIL_PASS}'"
+                run_remote_wp "$ACCOUNT" "uapi Email suspend_incoming email='${NOREPLY_EMAIL}'"
+                ;;
+        esac
+    else
+        NOREPLY_EMAIL="noreply@${DOMAIN}"
+        echo_info "Creating email..."
+        run_remote_wp "$ACCOUNT" "uapi Email add_pop email='${NOREPLY_EMAIL}' password='${EMAIL_PASS}'"
+        run_remote_wp "$ACCOUNT" "uapi Email suspend_incoming email='${NOREPLY_EMAIL}'"
+    fi
 
+    # A reused email's password is user-typed/pasted and may contain characters that would
+    # otherwise break the shell quoting further down (gen_pass()'s own output never does,
+    # since it only draws from a safe A-Za-z0-9_~- charset). @Q produces a bash-safe quoted
+    # literal to embed as-is (no extra surrounding quotes needed).
+    local EMAIL_PASS_Q="${EMAIL_PASS@Q}"
 
     # NginxCaching não tem uma função UAPI de "status" (só clear/disable/enable/
     # reset_cache_config), mas o estado fica em /var/cpanel/userdata/<conta>/
@@ -372,10 +451,10 @@ EOL"
     echo_info "Mail config..."
     run_remote_wp "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN config set SMTP_HOST 'localhost'"
     run_remote_wp "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN config set SMTP_AUTH 1 --raw"
-    run_remote_wp "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN config set SMTP_USER 'noreply@${DOMAIN}'"
-    run_remote_wp "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN config set SMTP_PASS '${EMAIL_PASS}'"
-    run_remote_wp "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN config set SMTP_FROM 'noreply@${DOMAIN}'"
-    run_remote_wp "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN config set SMTP_FROMNAME '${ACCOUNT}'"
+    run_remote_wp "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN config set SMTP_USER '${NOREPLY_EMAIL}'"
+    run_remote_wp "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN config set SMTP_PASS ${EMAIL_PASS_Q}"
+    run_remote_wp "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN config set SMTP_FROM '${NOREPLY_EMAIL}'"
+    run_remote_wp "$ACCOUNT" "cd ~/$ROOT_DIR && $WP_BIN config set SMTP_FROMNAME '${SITE_TITLE}'"
 
 
     echo_info "Cleaning default plugins/themes..."
@@ -462,6 +541,6 @@ EOL"
     echo "Pass: $DB_PASS"
 
     echo "📧 Email:"
-    echo "noreply@$DOMAIN"
+    echo "$NOREPLY_EMAIL"
     echo "Pass: $EMAIL_PASS"
 }

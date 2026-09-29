@@ -22,6 +22,8 @@ help(){
         "apache.sh :: create_domain :: Cria vhost Apache, pasta em /var/www e certificado mkcert"
         "apache.sh :: fix_permissions :: Aplica permissões corretas a um projeto Laravel/PrestaShop local"
 
+        "compress.sh :: compress :: Comprime uma pasta para .tar.zst usando todos os núcleos (zstd -T0)"
+
         "cpanel.sh :: change_cpanel_password :: Gera nova password cPanel via WHM e mostra dados de acesso"
 
         "dns.sh :: get_dns :: Mostra os registos DNS de um domínio (A, MX, TXT, etc.)"
@@ -85,6 +87,10 @@ help(){
         "whm.sh :: whm_account_by_domain :: Devolve a conta cPanel dona de um domínio via WHM API"
         "whm.sh :: whm_docroot_by_domain :: Devolve o documentroot de um domínio via WHM API"
         "whm.sh :: check_domain :: Mostra a conta cPanel dona de um domínio (ou os NS se não encontrado)"
+
+        "vite.sh :: deploy_laravel :: Builda e envia os assets Vite (public/build) de um projeto Laravel local para a conta cPanel, detetando conta/domínio automaticamente"
+
+        "wireguard.sh :: wireguard_add_user :: Cria um novo peer WireGuard (servidor + ficheiros locais) com o próximo IP livre"
 
         "wordpress.sh :: create_wordpress :: Cria de raiz um site WordPress numa conta cPanel (BD, install, plugins, email)"
 

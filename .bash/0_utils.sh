@@ -102,7 +102,7 @@ setup_ssh_key() {
 
     [ ! -f "$pub_key_file" ] && { echo_error "~/.ssh/id_ed25519.pub not found"; return 1; }
 
-    echo_info "Checking SSH key ($key_name) for $account..."
+    echo "Checking SSH key ($key_name) for $account..."
     ssh "$SERVER" "
         mkdir -p /home/$account/.ssh &&
         chown $account:$account /home/$account/.ssh &&

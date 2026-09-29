@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# Fuzzel menu to pick a radio station and (re)launch VLC with it.
+
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source "$SCRIPT_DIR/radio-stations.sh"
+
+current_url=$(pgrep -a -x vlc 2>/dev/null | awk '{print $NF}')
+
+# Bash variables can't hold NUL bytes (needed for fuzzel's icon protocol,
+# "text\0icon\x1f<name>"), so the list is streamed straight into fuzzel's
+# stdin via printf instead of being built up in a string first.
+choice=$(
+    for i in "${!NAMES[@]}"; do
+        if [ -n "$current_url" ] && [ "${URLS[$i]}" = "$current_url" ]; then
+            printf '%s\0icon\x1fmedia-playback-start\n' "${NAMES[$i]}"
+        else
+            printf '%s\n' "${NAMES[$i]}"
+        fi
+    done | fuzzel --dmenu --no-sort --prompt "Rádio: "
+)
+[ -z "$choice" ] && exit 0
+
+url=""
+for i in "${!NAMES[@]}"; do
+    if [ "${NAMES[$i]}" = "$choice" ]; then
+        url="${URLS[$i]}"
+        break
+    fi
+done
+[ -z "$url" ] && exit 0
+
+if launch_station "$url"; then
+    notify-send -a "radio" -u low "$choice" "▶ A tocar"
+else
+    notify-send -a "radio" -u critical "$choice" "⚠ Não foi possível ligar à estação"
+fi

@@ -150,6 +150,39 @@ remote_file_exists() {
     ssh "${ACCOUNT}@server" "[ -e ~/${REL_PATH} ]"
 }
 
+# Checks whether a directory (relative to the account's home) exists remotely and already
+# has files in it. Catches the case a specific "is this app already installed" check (e.g.
+# wp-config.php/parameters.php) would miss: some unrelated content (a different app, a
+# cPanel default placeholder page, leftovers from a previous failed attempt) already sitting
+# in the target folder, which unzip -o / wp core download would otherwise mix into.
+# Usage: remote_dir_nonempty <account> <relative_path>
+remote_dir_nonempty() {
+    local ACCOUNT="$1"
+    local REL_PATH="$2"
+    ssh "${ACCOUNT}@server" "[ -d ~/${REL_PATH} ] && [ -n \"\$(ls -A ~/${REL_PATH} 2>/dev/null)\" ]"
+}
+
+# Lists every domain (main + addon + sub) already on this account, with its docroot — via
+# `uapi DomainInfo domains_data`, run as the account itself (no root/WHM API needed). Meant to
+# be shown before the user picks a ROOT_DIR or decides on MultiPHP in create_wordpress/
+# create_prestashop — a domain sharing docroot with an existing site changes both answers, and
+# there was previously no way to see that up front. Parked domains are skipped: uapi reports
+# them as bare names with no docroot of their own (they inherit their target's).
+# uapi's plain-text output sorts each hash's keys alphabetically, so "documentroot:" always
+# comes before "domain:" within the same entry — pairing on that order (print + reset once
+# both are seen) avoids needing to track the different list markers main_domain/addon_domains/
+# sub_domains each use.
+# Usage: list_account_vhosts <account>
+# Prints one "<domain>|<documentroot>" line per domain (nothing if the account has none, or the
+# uapi call fails).
+list_account_vhosts() {
+    local ACCOUNT="$1"
+    ssh "${ACCOUNT}@server" "uapi DomainInfo domains_data" 2>/dev/null | awk '
+        /^[[:space:]]*documentroot:/ { doc=$2 }
+        /^[[:space:]]*domain:/ { dom=$2; if (doc!="") { print dom"|"doc; doc=""; dom="" } }
+    '
+}
+
 # Checks whether a MySQL database already exists on the account (cPanel-level, uapi).
 # Usage: mysql_database_exists <account> <db_name>
 mysql_database_exists() {
@@ -168,6 +201,16 @@ mysql_user_exists() {
     local USERS_LIST
     USERS_LIST=$(ssh "${ACCOUNT}@server" "uapi Mysql list_users" 2>/dev/null)
     grep -qE "^[[:space:]]*user:[[:space:]]*${DB_USER}\$" <<< "$USERS_LIST"
+}
+
+# Checks whether an email account already exists on the account (cPanel-level, uapi).
+# Usage: email_account_exists <account> <email>
+email_account_exists() {
+    local ACCOUNT="$1"
+    local EMAIL="$2"
+    local POP_LIST
+    POP_LIST=$(ssh "${ACCOUNT}@server" "uapi Email list_pops" 2>/dev/null)
+    grep -qE "^[[:space:]]*email:[[:space:]]*${EMAIL}\$" <<< "$POP_LIST"
 }
 
 server() {

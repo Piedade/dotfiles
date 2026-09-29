@@ -160,10 +160,10 @@ create_email() {
     echo "Utilizador: $EMAIL"
     echo "Palavra-passe: $EMAIL_PASS"
     echo
-    echo "Servidor de entrada: $DOMAIN"
+    echo "Servidor de entrada: mail.$DOMAIN"
     echo "Porta: 993 (IMAP)"
     echo
-    echo "Servidor de saída: $DOMAIN"
+    echo "Servidor de saída: mail.$DOMAIN"
     echo "Porta: 465 (SMTP)"
     echo
     echo "Nota: IMAP e SMTP requerem autenticação SSL/TLS"

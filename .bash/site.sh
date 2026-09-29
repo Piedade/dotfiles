@@ -14,6 +14,10 @@
 # PHP (MultiPHP) da produção — só se já estiver instalada localmente, senão
 # cai no default do create_domain.
 #
+# Laravel: se o docroot do vhost for .../public, sobe automaticamente para a
+# pasta do projeto (artisan/app/vendor/.env) quando confirma que existe artisan
+# lá — senão só avisa e pergunta antes de sincronizar a pasta pai.
+#
 # A base de dados NÃO é duplicada automaticamente — no final, o script mostra
 # o comando para o fazeres manualmente: get_database <bd_produção> (mysql.sh),
 # que já trata PrestaShop/WordPress e importa localmente com o mesmo nome.
@@ -72,8 +76,41 @@ get_site_files() {
         return 1
     fi
 
-    # Domínio local: mesmo nome, TLD trocado por .test (ex: redpost.pt -> redpost.test)
-    [ -z "$LOCAL_DOMAIN" ] && LOCAL_DOMAIN="${DOMAIN%.*}.test"
+    # Laravel: o docroot do vhost costuma apontar para .../public (o front
+    # controller), mas o projeto real (artisan, app/, routes/, vendor/, .env) fica
+    # na pasta pai — sincronizar só o docroot dava só os assets públicos e o
+    # index.php, sem a aplicação. Deteta-se via SSH root (leitura, sem precisar de
+    # shell access ainda na conta, que só é ativado mais abaixo) se a pasta pai tem
+    # artisan; se detetar, sobe logo. Se a pasta se chamar "public" mas não for
+    # Laravel confirmado, só avisa e pergunta.
+    if [ "$(basename "$ROOT_DIR")" = "public" ]; then
+        local PARENT_ROOT_DIR
+        PARENT_ROOT_DIR=$(dirname "$ROOT_DIR")
+        if ssh "$SERVER" "test -f /home/${ACCOUNT}/${PARENT_ROOT_DIR}/artisan" 2>/dev/null; then
+            echo_laravel "Laravel detetado: pasta do vhost é 'public/', mas o projeto está em ~/$PARENT_ROOT_DIR — a sincronizar a partir daí."
+            ROOT_DIR="$PARENT_ROOT_DIR"
+        else
+            echo_error "A pasta do vhost chama-se 'public' mas não encontrei 'artisan' em ~/$PARENT_ROOT_DIR — pode não ser Laravel."
+            local USE_PARENT
+            read -rp "Sincronizar a partir de ~/$PARENT_ROOT_DIR em vez de ~/$ROOT_DIR? [y/N]: " USE_PARENT
+            case "$USE_PARENT" in
+                [Yy]*) ROOT_DIR="$PARENT_ROOT_DIR" ;;
+            esac
+        fi
+    fi
+
+    # Domínio local: mesmo nome, TLD trocado por .test (ex: redpost.pt -> redpost.test).
+    # Domínios de dev da agência (conta.dev.red.com.pt e afins — ver
+    # strip_agency_dev_suffix em whm.sh) têm o sufixo inteiro trocado, não só o TLD
+    # (ex: digiwest.dev.red.com.pt -> digiwest.test, não digiwest.dev.red.com.test).
+    if [ -z "$LOCAL_DOMAIN" ]; then
+        local BASE_NAME
+        if BASE_NAME=$(strip_agency_dev_suffix "$DOMAIN"); then
+            LOCAL_DOMAIN="${BASE_NAME}.test"
+        else
+            LOCAL_DOMAIN="${DOMAIN%.*}.test"
+        fi
+    fi
     # Guarda-redes: LOCAL_DIR é construído diretamente a partir disto e depois alvo de
     # rsync --delete, por isso não pode conter '/' nem '..' (evita sair de /var/www).
     if [[ "$LOCAL_DOMAIN" != *.test ]] || [[ "$LOCAL_DOMAIN" == *".."* ]] || [[ "$LOCAL_DOMAIN" == */* ]]; then
@@ -131,9 +168,24 @@ get_site_files() {
         local PROD_PHP_VERSION=""
         local RESULT
         RESULT=$(whm_resolve_php_version "$DOMAIN" "$ACCOUNT" "$ROOT_DIR")
-        if [ -n "$RESULT" ]; then
-            local CANDIDATE SOURCE RAW
-            IFS='|' read -r CANDIDATE SOURCE RAW <<< "$RESULT"
+        local CANDIDATE SOURCE RAW
+        [ -n "$RESULT" ] && IFS='|' read -r CANDIDATE SOURCE RAW <<< "$RESULT"
+        if [ -z "$RESULT" ] || [ "$SOURCE" != ".htaccess" ]; then
+            # Sem override .htaccess — RESULT (se existir) vem do "default da conta" que o
+            # MultiPHP Manager reporta, mas neste servidor CloudLinux esse "default" não é
+            # necessariamente o que está mesmo em produção: o selectorctl da conta tem
+            # precedência quando não há pin explícito (confirmado ao vivo — ver
+            # project_cpanel_deploy_scripts). Substitui por esse valor quando disponível.
+            local ACCOUNT_PHP
+            ACCOUNT_PHP=$(whm_php_version_by_account "$ACCOUNT")
+            if [ -n "$ACCOUNT_PHP" ]; then
+                CANDIDATE="$ACCOUNT_PHP"
+                SOURCE="conta (selectorctl)"
+                RAW="$ACCOUNT_PHP"
+            fi
+        fi
+
+        if [ -n "$CANDIDATE" ]; then
             if dpkg -s "php${CANDIDATE}-fpm" &>/dev/null; then
                 PROD_PHP_VERSION="$CANDIDATE"
                 echo_info "PHP de produção: $RAW (via $SOURCE) -> a usar php${PROD_PHP_VERSION}-fpm localmente."
@@ -161,8 +213,9 @@ get_site_files() {
     # localmente e só desperdiçam tempo/espaço a copiar: img/p (só as imagens de
     # produto — o resto de img/, tipo categorias/logo/tema, sincroniza normalmente)
     # é do PrestaShop, storage/framework/*+bootstrap/cache são do Laravel. upload/,
-    # wp-content/uploads/ e storage/app/public/ (uploads do Laravel) sincronizam
-    # normalmente (não costumam ser muitos ficheiros).
+    # wp-content/uploads/ e storage/app/ (uploads do Laravel) sincronizam normalmente
+    # por default — só ficam de fora se o tamanho em produção disparar o aviso mais
+    # abaixo e a resposta for não.
     local RSYNC_EXCLUDES="--exclude=/wp-config.php --exclude=/config/settings.inc.php --exclude=/app/config/parameters.php --exclude=/app/config/parameters.yml --exclude=/.htaccess --exclude=/.env --exclude=/.git/ --exclude=/_upgrade_fixes.sh"
     RSYNC_EXCLUDES="$RSYNC_EXCLUDES --exclude=/cache/ --exclude=/var/cache/ --exclude=/var/logs/ --exclude=/wp-content/cache/"
     RSYNC_EXCLUDES="$RSYNC_EXCLUDES --exclude=/img/p/"
@@ -173,8 +226,32 @@ get_site_files() {
     # pasta, tal como .htaccess, o PHP lê-os em qualquer subpasta) podem aparecer em
     # qualquer subpasta, por isso sem a "/" inicial. O html de verificação do Google
     # Search Console (googleXXXXXXXXXXXXXXXX.html) é sempre na raiz e específico de
-    # produção — não faz sentido para um domínio .test.
-    RSYNC_EXCLUDES="$RSYNC_EXCLUDES --exclude=/cgi-bin/ --exclude=/.well-known/ --exclude=__MACOSX/ --exclude=error_log --exclude=.user.ini --exclude=php.ini --exclude=/google*.html"
+    # produção — não faz sentido para um domínio .test. node_modules/ e .direnv/ sem
+    # "/" inicial porque podem existir em mais do que uma pasta — reinstala-se
+    # localmente com npm/yarn e direnv, não vale a pena copiar.
+    # vendor/ (composer) fica de fora desta lista de propósito — sincroniza normalmente.
+    RSYNC_EXCLUDES="$RSYNC_EXCLUDES --exclude=/cgi-bin/ --exclude=/.well-known/ --exclude=__MACOSX/ --exclude=error_log --exclude=.user.ini --exclude=php.ini --exclude=/google*.html --exclude=node_modules/ --exclude=.direnv/"
+
+    # Pastas de media (storage/app do Laravel, wp-content/uploads do WordPress,
+    # upload/ do PrestaShop) sincronizam por default, mas podem ser gigantes sem
+    # nenhuma vantagem para dev local — em vez de excluir sempre ou nunca, pergunta-se
+    # quando uma delas passa de MEDIA_SIZE_THRESHOLD_MB em produção (via root@server,
+    # leitura, sem precisar de shell access na conta ainda).
+    local MEDIA_SIZE_THRESHOLD_MB=500
+    local MEDIA_DIR
+    for MEDIA_DIR in "storage/app" "wp-content/uploads" "upload"; do
+        local MEDIA_SIZE_MB
+        MEDIA_SIZE_MB=$(ssh "$SERVER" "du -sm '/home/${ACCOUNT}/${ROOT_DIR}/${MEDIA_DIR}' 2>/dev/null" | awk '{print $1}')
+        if [ -n "$MEDIA_SIZE_MB" ] && [ "$MEDIA_SIZE_MB" -ge "$MEDIA_SIZE_THRESHOLD_MB" ]; then
+            echo_error "'$MEDIA_DIR' tem ${MEDIA_SIZE_MB}MB em produção."
+            local SYNC_MEDIA
+            read -rp "Sincronizar '$MEDIA_DIR' mesmo assim? [y/N]: " SYNC_MEDIA
+            case "$SYNC_MEDIA" in
+                [Yy]*) ;;
+                *) RSYNC_EXCLUDES="$RSYNC_EXCLUDES --exclude=/${MEDIA_DIR}/" ;;
+            esac
+        fi
+    done
 
     echo_info "A calcular alterações de ficheiros (dry-run)..."
     local DRY_OUTPUT
@@ -185,7 +262,7 @@ get_site_files() {
     # a caller that DOES have errexit on (e.g. a script that sources this file)
     # would otherwise die right here on a perfectly fine "already in sync" run.
     CHANGE_COUNT=$(echo "$DRY_OUTPUT" | grep -vE '^(sending incremental file list$|sent .* bytes|total size is)' | grep -c . || true)
-    echo "$DRY_OUTPUT" | tail -n 15
+    echo "$DRY_OUTPUT"
     echo_info "Alterações previstas: $CHANGE_COUNT (origem: ${ACCOUNT}@server:~/$ROOT_DIR -> destino: $LOCAL_DIR)"
 
     read -rp "Aplicar rsync real dos ficheiros? [y/N]: " answer
@@ -220,6 +297,24 @@ get_site_files() {
             sed -i "s/define( *'DB_USER', *'[^']*'/define( 'DB_USER', 'root'/" "$f"
             sed -i "s/define( *'DB_PASSWORD', *'[^']*'/define( 'DB_PASSWORD', 'admin'/" "$f"
             sed -i "s/define( *'DB_HOST', *'[^']*'/define( 'DB_HOST', '127.0.0.1'/" "$f"
+
+            # SMTP: aponta para o Mailpit local em vez do servidor de mail de produção
+            # (evita enviar emails a sério a partir do dev, e limpa a password de
+            # produção que o scp acima acabou de copiar tal e qual para o ficheiro local).
+            # sed -i "s/define( *'SMTP_HOST', *'[^']*'/define( 'SMTP_HOST', '127.0.0.1'/" "$f"
+            sed -i "s/define( *'SMTP_AUTH', *[0-9]*/define( 'SMTP_AUTH', 0/" "$f"
+            sed -i "s/define( *'SMTP_USER', *'[^']*'/define( 'SMTP_USER', ''/" "$f"
+            sed -i "s/define( *'SMTP_PASS', *'[^']*'/define( 'SMTP_PASS', ''/" "$f"
+            # Mailpit escuta em 1025, não na porta SMTP normal (25/587) — sem isto o
+            # mail continua a tentar sair pela porta de produção. Se já existir a
+            # constante, só reescreve o valor; senão insere-a a seguir a SMTP_HOST.
+            if grep -q "define( *'SMTP_PORT'" "$f"; then
+                sed -i "s/define( *'SMTP_PORT', *[0-9]*/define( 'SMTP_PORT', 1025/" "$f"
+            else
+                sed -i "/define( *'SMTP_HOST'/a define( 'SMTP_PORT', 1025 );" "$f"
+            fi
+            # sed -i "s/define( *'SMTP_FROM', *'[^']*'/define( 'SMTP_FROM', 'dev@${LOCAL_DOMAIN}'/" "$f"
+            # sed -i "s/define( *'SMTP_FROMNAME', *'[^']*'/define( 'SMTP_FROMNAME', '${LOCAL_DOMAIN}'/" "$f"
         fi
 
         f="${LOCAL_DIR}/config/settings.inc.php"
@@ -267,13 +362,19 @@ get_site_files() {
     # de voltar a ligar por SSH. Nota: nenhum ramo pode terminar em "| tr" aqui — tr
     # devolve sempre exit 0 mesmo com entrada vazia, o que quebraria o encadeamento ||
     # e faria os ramos seguintes nunca correr; a limpeza fica toda no fim.
+    # \K em vez de lookbehind (?<=...): o grep desta máquina é o ugrep, cujo PCRE2
+    # exige lookbehind de largura fixa — não dava para tolerar espaço opcional (ex:
+    # "define( 'DB_NAME'," vs "define('DB_NAME',") com (?<=...\s*...). \K não tem
+    # essa restrição. Confirmado com um caso real (sucessoemvendas.test) que usa
+    # "define( 'DB_NAME', ...)" com espaço a seguir ao parêntesis — o lookbehind
+    # antigo, sem \s*, nunca dava match nesse formato.
     local DB_NAME
     DB_NAME=$({
-        grep -oP "(?<=define\('DB_NAME', ')[^']+" "${LOCAL_DIR}/wp-config.php" 2>/dev/null ||
-        grep -oP "(?<=define\('_DB_NAME_', ')[^']+" "${LOCAL_DIR}/config/settings.inc.php" 2>/dev/null ||
-        grep -oP "(?<='database_name' => ')[^']+" "${LOCAL_DIR}/app/config/parameters.php" 2>/dev/null ||
-        grep -oP "(?<=database_name:).*" "${LOCAL_DIR}/app/config/parameters.yml" 2>/dev/null ||
-        grep -oP "(?<=^DB_DATABASE=).*" "${LOCAL_DIR}/.env" 2>/dev/null
+        grep -oP "define\(\s*'DB_NAME'\s*,\s*'\K[^']+" "${LOCAL_DIR}/wp-config.php" 2>/dev/null ||
+        grep -oP "define\(\s*'_DB_NAME_'\s*,\s*'\K[^']+" "${LOCAL_DIR}/config/settings.inc.php" 2>/dev/null ||
+        grep -oP "'database_name'\s*=>\s*'\K[^']+" "${LOCAL_DIR}/app/config/parameters.php" 2>/dev/null ||
+        grep -oP "database_name:\K.*" "${LOCAL_DIR}/app/config/parameters.yml" 2>/dev/null ||
+        grep -oP "^DB_DATABASE=\K.*" "${LOCAL_DIR}/.env" 2>/dev/null
     } | head -n1 | tr -d " '\"\r")
 
     echo_info "Para ir buscar a base de dados:"

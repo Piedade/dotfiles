@@ -1,13 +1,5 @@
 #!/bin/bash
 
-# GitHub CLI login check
-if command -v gh >/dev/null 2>&1; then
-    if ! gh auth status >/dev/null 2>&1; then
-        echo -e "${YELLOW}[GitHub]${WHITE} You are not logged in to GitHub CLI."
-        echo -e "${CYAN}Run ${GREEN}gh auth login${CYAN} to authenticate.${RESET}"
-    fi
-fi
-
 # Function to zip the last commit files
 zipLastCommitFiles(){
     if [ -z ${1+x} ]; then

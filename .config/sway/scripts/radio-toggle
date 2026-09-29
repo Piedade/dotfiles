@@ -1,0 +1,41 @@
+#!/bin/bash
+
+# Toggles the radio: if VLC is running, quits it (and switches output to
+# headphones); otherwise relaunches whichever station was last playing
+# (and switches output to the monitor).
+
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source "$SCRIPT_DIR/radio-stations.sh"
+
+HEADPHONES="alsa_output.pci-0000_12_00.6.analog-stereo"
+MONITOR="alsa_output.pci-0000_03_00.1.hdmi-stereo-extra4"
+LAST_URL_FILE="${XDG_RUNTIME_DIR:-/tmp}/radio-last-url"
+DEFAULT_URL="${URLS[0]}"
+
+sink_id() {
+    pw-dump | jq -r --arg name "$1" '.[] | select(.info.props."node.name" == $name) | .id' | head -n1
+}
+
+if pgrep -x vlc > /dev/null; then
+    url=$(pgrep -a -x vlc | awk '{print $NF}')
+    echo "$url" > "$LAST_URL_FILE"
+    name=$(station_name_for_url "$url")
+    [ -z "$name" ] && name="Rádio"
+    wpctl set-default "$(sink_id "$HEADPHONES")"
+    pkill -SIGRTMIN+2 waybar
+    pkill -x vlc; pidwait -x vlc 2>/dev/null
+    notify-send -a "radio" -u low "$name" "⏸ Desligado"
+else
+    url=$(cat "$LAST_URL_FILE" 2>/dev/null)
+    [ -z "$url" ] && url="$DEFAULT_URL"
+    name=$(station_name_for_url "$url")
+    [ -z "$name" ] && name="Rádio"
+    wpctl set-default "$(sink_id "$MONITOR")"
+    pkill -SIGRTMIN+2 waybar
+
+    if launch_station "$url"; then
+        notify-send -a "radio" -u low "$name" "▶ A tocar"
+    else
+        notify-send -a "radio" -u critical "$name" "⚠ Não foi possível ligar à estação"
+    fi
+fi

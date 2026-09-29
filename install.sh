@@ -39,7 +39,6 @@ source ./scripts/audio.sh
 source ./scripts/networkmanager.sh
 source ./scripts/sway.sh
 source ./scripts/xhci-resume-fix.sh
-source ./scripts/cpu-gpu-performance.sh
 source ./scripts/nwg-displays.sh
 source ./scripts/nwg-look.sh
 source ./scripts/swaync.sh
@@ -75,8 +74,10 @@ source ./scripts/thunderbird.sh
 source ./scripts/bruno.sh
 source ./scripts/gimp.sh
 source ./scripts/inkscape.sh
+source ./scripts/vlc.sh
 source ./scripts/libreoffice.sh
 source ./scripts/galculator.sh
+source ./scripts/qrencode.sh
 source ./scripts/direnv.sh
 source ./scripts/dnsmasq.sh
 source ./scripts/kvm.sh

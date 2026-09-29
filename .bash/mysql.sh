@@ -184,7 +184,7 @@ UPDATE ${PS_PREFIX}_configuration SET value = 1 WHERE name = 'PS_SSL_ENABLED';
 UPDATE ${PS_PREFIX}_configuration SET value = 1 WHERE name = 'PS_SSL_ENABLED_EVERYWHERE';
 UPDATE ${PS_PREFIX}_configuration SET value = NULL WHERE name = 'PS_MAIL_USER';
 UPDATE ${PS_PREFIX}_configuration SET value = NULL WHERE name = 'PS_MAIL_PASSWD';
-UPDATE ${PS_PREFIX}_configuration SET value = NULL WHERE name = 'PS_MAIL_SMTP_ENCRYPTION';
+UPDATE ${PS_PREFIX}_configuration SET value = 'off' WHERE name = 'PS_MAIL_SMTP_ENCRYPTION';
 UPDATE ${PS_PREFIX}_configuration SET value = 1025 WHERE name = 'PS_MAIL_SMTP_PORT';
 UPDATE ${PS_PREFIX}_configuration SET value = 'localhost' WHERE name = 'PS_MAIL_SERVER';
 UPDATE ${PS_PREFIX}_configuration SET value = 1 WHERE name = 'PS_SHOP_ENABLE';

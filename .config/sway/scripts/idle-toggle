@@ -1,22 +1,30 @@
 #!/bin/bash
 
 # Pausa/retoma o swayidle (bloqueio de ecrã, dpms off e suspensão automática,
-# ver exec swayidle em sway/config) suspendendo o próprio processo com
-# SIGSTOP/SIGCONT. Enquanto está em STOP, nenhum dos timeouts dispara —
-# não há necessidade de matar/relançar o swayidle nem duplicar a config.
+# ver swayidle-start.sh). O idle-notify do Wayland conta a inatividade real
+# desde a última atividade, não desde que o processo é retomado — por isso
+# um SIGSTOP/SIGCONT não pausa mesmo a contagem, só atrasa o processamento
+# do evento: se já tivesse passado tempo suficiente de inatividade durante a
+# pausa, o ecrã bloqueava logo ao retomar. Por isso aqui termina-se o
+# swayidle por completo ao pausar, e relança-se do zero ao retomar, para que
+# a contagem recomece nesse momento.
 
-pid=$(pgrep -x swayidle)
-if [ -z "$pid" ]; then
-    notify-send "Idle" "swayidle não está a correr."
-    exit 1
-fi
+state_file="${XDG_RUNTIME_DIR:-/tmp}/swayidle-paused"
 
-if [[ "$(ps -o stat= -p "$pid")" == T* ]]; then
-    kill -CONT "$pid"
-    notify-send "Idle" "▶ Bloqueio/suspensão automática retomados"
+if [ -f "$state_file" ]; then
+    rm -f "$state_file"
+    setsid ~/.config/sway/scripts/swayidle-start.sh >/dev/null 2>&1 &
+    disown
+    notify-send "Idle" "▶ Bloqueio automático ativo."
 else
-    kill -STOP "$pid"
-    notify-send "Idle" "⏸ Bloqueio/suspensão automática em pausa"
+    pid=$(pgrep -x swayidle)
+    if [ -z "$pid" ]; then
+        notify-send "Idle" "swayidle não está a correr."
+        exit 1
+    fi
+    kill "$pid"
+    touch "$state_file"
+    notify-send "Idle" "⏸ Bloqueio automático pausado."
 fi
 
 pkill -SIGRTMIN+4 waybar 2>/dev/null

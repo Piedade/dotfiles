@@ -6,6 +6,8 @@ create_prestashop() {
     local ENABLE_MULTI_PHP=$5
     local FIXTURES=$6
     local SHOP_NAME
+    local SKIP_PHP_UPDATE
+    local CURRENT_PHP
 
     if [ -z "$ACCOUNT" ]; then
         ACCOUNT=$(select_account) || { echo_error "Account is required."; return 1; }
@@ -14,7 +16,41 @@ create_prestashop() {
     local _main_domain
     _main_domain=$(select_domain "$ACCOUNT") || _main_domain=""
 
+    # Shell access + our SSH key must exist before the PHP-version probe further down
+    # (whm_php_version_by_account needs to SSH into the account) — for a brand-new account
+    # this used to run only after the confirmation prompt below, so the probe always failed
+    # silently and "Enable MultiPHP?" never had a current version to show.
+    check_shell_access "$ACCOUNT" 1
+    case $? in
+        1)
+            echo "Activating shell access..."
+            add_shell_access "$ACCOUNT" || { echo_error "Failed to activate shell"; return 1; }
+            ;;
+        2)
+            echo_error "$ACCOUNT not found."
+            return 1
+            ;;
+        3)
+            echo_error "$ACCOUNT has an unusual shell. Please check manually."
+            return 1
+            ;;
+    esac
+
+    setup_ssh_key "$ACCOUNT"
+
     if [ $# -eq 0 ]; then
+        # Shows what's already on this account before asking for Domain/Root directory — the
+        # "public_html" ROOT_DIR default and the MultiPHP question further down both assume you
+        # know whether this account is a blank slate or already hosts other domains/folders.
+        local _existing_vhosts
+        _existing_vhosts=$(list_account_vhosts "$ACCOUNT")
+        if [ -n "$_existing_vhosts" ]; then
+            echo_info "Existing domains on this account:"
+            while IFS='|' read -r _vh _doc; do
+                echo_info "  $_vh -> $_doc"
+            done <<< "$_existing_vhosts"
+        fi
+
         local _default_domain="$ACCOUNT.dev.red.com.pt"
         read -rp "Domain [$_default_domain]: " DOMAIN
         [ -z "$DOMAIN" ] && DOMAIN="$_default_domain"
@@ -33,32 +69,64 @@ create_prestashop() {
         read -rp "Shop name [$ACCOUNT]: " SHOP_NAME
         [ -z "$SHOP_NAME" ] && SHOP_NAME="$ACCOUNT"
 
-        # Mostra a versão de PHP que a conta/domínio já usa, para ajudar a decidir
-        # se vale a pena forçar 8.4 via .htaccess (mesma lógica do create_wordpress —
-        # ver comentário em whm.sh). Best-effort: se o domínio ainda não tiver vhost
-        # (ex.: addon domain a ser criado agora), a consulta falha e segue sem info extra.
-        local RESULT
-        RESULT=$(whm_resolve_php_version "$DOMAIN" "$ACCOUNT" "$ROOT_DIR")
-        if [ -n "$RESULT" ]; then
-            local CANDIDATE SOURCE RAW
-            IFS='|' read -r CANDIDATE SOURCE RAW <<< "$RESULT"
-            echo_info "PHP atual do domínio: $RAW (via $SOURCE)"
-        else
-            # Domínio novo ainda sem vhost (caso mais comum aqui) — pergunta diretamente
-            # à conta via selectorctl (só indicativo: MultiPHP é opt-in por domínio,
-            # não garantidamente herdado — ver project_cpanel_deploy_scripts).
+        if [ "$ROOT_DIR" = "public_html" ]; then
+            # Only site on this docroot: what matters is the account-wide default
+            # (selectorctl), not this domain's own MultiPHP Manager vhost pin — the two can
+            # drift apart (see feedback_php_version_via_account memory / whm_resolve_php_version
+            # comment above whm_php_version_by_account in whm.sh), so checking the vhost here
+            # would show a stale per-domain override instead of what's actually about to
+            # change. No other domain's PHP to protect either, so the per-domain .htaccess
+            # override (MultiPHP) doesn't apply — ask about the account-wide change instead.
             local ACCOUNT_PHP
             ACCOUNT_PHP=$(whm_php_version_by_account "$ACCOUNT")
             if [ -n "$ACCOUNT_PHP" ]; then
                 echo_info "PHP atual da conta: $ACCOUNT_PHP"
+                CURRENT_PHP="$ACCOUNT_PHP"
             fi
-        fi
 
-        read -rp "Enable MultiPHP? [y/N]: " _multi
-        case "$_multi" in
-            [Yy]*) ENABLE_MULTI_PHP="yes" ;;
-            *) ENABLE_MULTI_PHP="" ;;
-        esac
+            if [ "$ACCOUNT_PHP" = "8.4" ]; then
+                SKIP_PHP_UPDATE=""
+            else
+                read -rp "Update account PHP version to 8.4? [Y/n]: " _update_php
+                case "$_update_php" in
+                    [Nn]*) SKIP_PHP_UPDATE="yes" ;;
+                    *) SKIP_PHP_UPDATE="" ;;
+                esac
+            fi
+        else
+            # Mostra a versão de PHP que este domínio em concreto já usa (não a da conta —
+            # este domínio pode ter um pin próprio no MultiPHP Manager, distinto de outros
+            # domínios/pastas na mesma conta), para ajudar a decidir se vale a pena forçar 8.4
+            # via .htaccess. Best-effort: se o domínio ainda não tiver vhost (ex.: addon domain
+            # a ser criado agora), a consulta falha e segue sem info extra.
+            local RESULT
+            RESULT=$(whm_resolve_php_version "$DOMAIN" "$ACCOUNT" "$ROOT_DIR")
+            local CANDIDATE SOURCE RAW
+            [ -n "$RESULT" ] && IFS='|' read -r CANDIDATE SOURCE RAW <<< "$RESULT"
+            if [ -n "$RESULT" ] && [ "$SOURCE" = ".htaccess" ]; then
+                # Só um override .htaccess é um valor realmente em vigor para este domínio.
+                echo_info "PHP atual do domínio: $RAW (via $SOURCE)"
+                CURRENT_PHP="$RAW"
+            else
+                # Sem override .htaccess, RESULT (se existir) vem do "default da conta" que o
+                # MultiPHP Manager reporta — mas neste servidor CloudLinux esse "default" não é
+                # necessariamente o que serve o site: o selectorctl da conta tem precedência
+                # quando não há pin explícito (confirmado ao vivo — ver project_cpanel_deploy_
+                # scripts). Por isso pergunta-se sempre à conta em vez de confiar nesse valor.
+                local ACCOUNT_PHP
+                ACCOUNT_PHP=$(whm_php_version_by_account "$ACCOUNT")
+                if [ -n "$ACCOUNT_PHP" ]; then
+                    echo_info "PHP atual da conta: $ACCOUNT_PHP"
+                    CURRENT_PHP="$ACCOUNT_PHP"
+                fi
+            fi
+
+            read -rp "Enable MultiPHP? [y/N]: " _multi
+            case "$_multi" in
+                [Yy]*) ENABLE_MULTI_PHP="yes" ;;
+                *) ENABLE_MULTI_PHP="" ;;
+            esac
+        fi
 
         read -rp "Install demo fixtures? [Y/n]: " _fixtures
         case "$_fixtures" in
@@ -119,6 +187,9 @@ create_prestashop() {
     if [ -n "$ENABLE_MULTI_PHP" ]; then
         echo_info "Enable MultiPHP: $ENABLE_MULTI_PHP"
     fi
+    if [ "$SKIP_PHP_UPDATE" = "yes" ]; then
+        echo_info "PHP version: ${CURRENT_PHP:-current} (not updated)"
+    fi
 
     read -rp "Do you want to continue? [y/N]: " answer
     case "$answer" in
@@ -131,31 +202,16 @@ create_prestashop() {
             ;;
     esac
 
-    # Check shell access
-    check_shell_access "$ACCOUNT" 1
-    case $? in
-        1)
-            echo "Activating shell access..."
-            add_shell_access "$ACCOUNT" || { echo_error "Failed to activate shell"; return 1; }
-            ;;
-        2)
-            echo_error "$ACCOUNT not found."
-            return 1
-            ;;
-        3)
-            echo_error "$ACCOUNT has an unusual shell. Please check manually."
-            return 1
-            ;;
-    esac
-
-    setup_ssh_key "$ACCOUNT"
-
     # Abort early rather than silently overwriting an existing site (unzip -o would clobber
     # matching files) or generating a fresh password that won't match an existing DB user's
     # real one — that mismatch only surfaces later as an opaque DB-connection failure.
     if remote_file_exists "$ACCOUNT" "$ROOT_DIR/app/config/parameters.php" \
         || remote_file_exists "$ACCOUNT" "$ROOT_DIR/config/settings.inc.php"; then
-        echo_error "~/$ROOT_DIR already has an installed PrestaShop (parameters.php/settings.inc.php found). Aborting."
+        echo_error "~/$ROOT_DIR already has an installed PrestaShop. Aborting."
+        return 1
+    fi
+    if remote_dir_nonempty "$ACCOUNT" "$ROOT_DIR"; then
+        echo_error "~/$ROOT_DIR already exists and is not empty. Aborting."
         return 1
     fi
     if mysql_database_exists "$ACCOUNT" "${ACCOUNT}_${DB_NAME}"; then
@@ -200,7 +256,7 @@ create_prestashop() {
 
     if [ "$ENABLE_MULTI_PHP" = "yes" ] || [ "$ENABLE_MULTI_PHP" = "true" ]; then
         echo_info "MultiPHP enabled: skipping account-wide default (this domain forces 8.4 via .htaccess)."
-    else
+    elif [ "$SKIP_PHP_UPDATE" != "yes" ]; then
         echo_info "Setting PHP version to 8.4..."
         run_remote "$ACCOUNT" "selectorctl --interpreter=php --set-user-current=8.4"
     fi
@@ -215,9 +271,38 @@ create_prestashop() {
     run_remote "$ACCOUNT" "uapi Mysql create_user name='${ACCOUNT}_${DB_NAME}' password='${DB_PASS}'"
     run_remote "$ACCOUNT" "uapi Mysql set_privileges_on_database user='${ACCOUNT}_${DB_NAME}' database='${ACCOUNT}_${DB_NAME}' privileges='ALL PRIVILEGES'"
 
-    echo_info "Creating email..."
-    run_remote "$ACCOUNT" "uapi Email add_pop email='noreply@${DOMAIN}' password='${EMAIL_PASS}'"
-    run_remote "$ACCOUNT" "uapi Email suspend_incoming email='noreply@${DOMAIN}'"
+    # Checks against the account's root domain (e.g. redpost.pt), not this site's own domain
+    # (e.g. dev.redpost.pt): a root noreply@ mailbox is often already set up for the main site,
+    # and reusing it avoids piling up one throwaway mailbox per dev/staging subdomain.
+    local NOREPLY_DOMAIN="${_main_domain:-$DOMAIN}"
+    local NOREPLY_EMAIL="noreply@${NOREPLY_DOMAIN}"
+    if email_account_exists "$ACCOUNT" "$NOREPLY_EMAIL"; then
+        read -rp "Email $NOREPLY_EMAIL already exists. Use it? [y/N]: " _reuse_email
+        case "$_reuse_email" in
+            [Yy]*)
+                read -rp "Password for $NOREPLY_EMAIL: " EMAIL_PASS
+                ;;
+            *)
+                NOREPLY_EMAIL="noreply@${DOMAIN}"
+                echo_info "Creating email..."
+                run_remote "$ACCOUNT" "uapi Email add_pop email='${NOREPLY_EMAIL}' password='${EMAIL_PASS}'"
+                run_remote "$ACCOUNT" "uapi Email suspend_incoming email='${NOREPLY_EMAIL}'"
+                ;;
+        esac
+    else
+        NOREPLY_EMAIL="noreply@${DOMAIN}"
+        echo_info "Creating email..."
+        run_remote "$ACCOUNT" "uapi Email add_pop email='${NOREPLY_EMAIL}' password='${EMAIL_PASS}'"
+        run_remote "$ACCOUNT" "uapi Email suspend_incoming email='${NOREPLY_EMAIL}'"
+    fi
+
+    # A reused email's password is user-typed/pasted and may contain characters that would
+    # otherwise break the shell/SQL quoting further down (gen_pass()'s own output never does,
+    # since it only draws from a safe A-Za-z0-9_~- charset). @Q produces a bash-safe quoted
+    # literal for remote shell args; the SQL variant escapes backslashes/quotes MySQL-style.
+    local EMAIL_PASS_Q="${EMAIL_PASS@Q}"
+    local EMAIL_PASS_SQL="${EMAIL_PASS//\\/\\\\}"
+    EMAIL_PASS_SQL="${EMAIL_PASS_SQL//\'/\\\'}"
 
     # NginxCaching não tem uma função UAPI de "status" (só clear/disable/enable/
     # reset_cache_config), mas o estado fica em /var/cpanel/userdata/<conta>/
@@ -361,6 +446,35 @@ EOL"
 # END cPanel-generated php ini directives, do not edit
 EOL"
 
+    # Defense in depth beyond PS_SSL_ENABLED (app-level, only enforced once the FrontController
+    # runs) and the chmod 400 above: force https/non-www at the web server, and block direct
+    # access to composer.json (exposes the internal package name this script just wrote) and the
+    # DB credentials files even if a misconfigured PHP handler ever served them as static text.
+    echo_info "Adding security hardening to .htaccess..."
+    run_remote "$ACCOUNT" "cat >> ~/$ROOT_DIR/.htaccess <<EOL
+
+# http to https
+RewriteEngine On
+RewriteCond %{SERVER_PORT} 80
+RewriteRule (.*) https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+
+# www to non-www
+RewriteCond %{HTTP_HOST} ^www\.(.*)\$ [NC]
+RewriteRule ^(.*)\$ http://%1%{REQUEST_URI} [R=301,QSA,NC,L]
+
+# Block composer.json/composer.lock
+<FilesMatch \"^composer\.(json|lock)\$\">
+order allow,deny
+deny from all
+</FilesMatch>
+
+# Block PrestaShop DB credentials files
+<FilesMatch \"^(parameters\.php|settings\.inc\.php)\$\">
+order allow,deny
+deny from all
+</FilesMatch>
+EOL"
+
     echo_info "📝 Creating composer.json on the server..."
     ssh "${ACCOUNT}@server" "cat > ~/$ROOT_DIR/composer.json" <<EOF
 {
@@ -432,8 +546,8 @@ EOF
     MAIL_SQL=$(cat <<EOF
 UPDATE ps_configuration SET value='2' WHERE name='PS_MAIL_METHOD';
 UPDATE ps_configuration SET value='${MAIL_SERVER}' WHERE name='PS_MAIL_SERVER';
-UPDATE ps_configuration SET value='noreply@${DOMAIN}' WHERE name='PS_MAIL_USER';
-UPDATE ps_configuration SET value='${EMAIL_PASS}' WHERE name='PS_MAIL_PASSWD';
+UPDATE ps_configuration SET value='${NOREPLY_EMAIL}' WHERE name='PS_MAIL_USER';
+UPDATE ps_configuration SET value='${EMAIL_PASS_SQL}' WHERE name='PS_MAIL_PASSWD';
 UPDATE ps_configuration SET value='${MAIL_ENCRYPTION}' WHERE name='PS_MAIL_SMTP_ENCRYPTION';
 UPDATE ps_configuration SET value='${MAIL_PORT}' WHERE name='PS_MAIL_SMTP_PORT';
 EOF
@@ -474,7 +588,7 @@ PHPEOF
     # this one call, not a generic wrapper: PrestaShop doesn't have WP's Elementor-noise problem
     # that run_remote_wp was actually built to solve, so a whole parallel wrapper isn't warranted.
     ssh "${ACCOUNT}@server" /bin/bash <<-EOF | awk '{b="\033[1m";g="\033[32m";r="\033[31m";z="\033[0m";if($0~/Email sent successfully/){print b g $0 z}else if($0~/^Error:/){print b r $0 z}else{print}}'
-        cd ~/$ROOT_DIR && $PHP_BIN _test_mail.php '$MAIL_SERVER' 'webmaster@redpost.pt' 'noreply@${DOMAIN}' 'noreply@${DOMAIN}' '${EMAIL_PASS}' '$MAIL_PORT' '$MAIL_ENCRYPTION'; rm -f _test_mail.php
+        cd ~/$ROOT_DIR && $PHP_BIN _test_mail.php '$MAIL_SERVER' 'webmaster@redpost.pt' '${NOREPLY_EMAIL}' '${NOREPLY_EMAIL}' ${EMAIL_PASS_Q} '$MAIL_PORT' '$MAIL_ENCRYPTION'; rm -f _test_mail.php
 EOF
     local MAIL_TEST_STATUS=${PIPESTATUS[0]}
     if [ $MAIL_TEST_STATUS -ne 0 ]; then
@@ -515,7 +629,7 @@ EOF
     echo "User: ${ACCOUNT}_${DB_NAME}"
     echo "Pass: $DB_PASS"
     echo "📧 Email:"
-    echo "noreply@$DOMAIN"
+    echo "$NOREPLY_EMAIL"
     echo "Pass: $EMAIL_PASS"
 }
 

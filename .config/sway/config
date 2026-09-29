@@ -25,12 +25,7 @@ set $config_dir ~/.config/sway
 #     resume       'swaymsg "output * dpms on"' \
 #     before-sleep 'pgrep gtklock || gtklock -d'
 
-exec swayidle -w \
-    timeout 300   'pgrep swaylock || swaylock -f' \
-    timeout 600   'swaymsg "output * dpms off"' \
-    resume       'swaymsg "output * dpms on"' \
-    timeout 900   'systemctl suspend' \
-    before-sleep 'pgrep swaylock || swaylock -f'
+exec $config_dir/scripts/swayidle-start.sh
 
 
 ### Input configuration
@@ -47,6 +42,11 @@ input type:keyboard {
     xkb_numlock enabled
     repeat_delay 300
     repeat_rate 50
+}
+
+input "1133:16507:Logitech_MX_Vertical" {
+    accel_profile flat
+    pointer_accel 0
 }
 
 # don't warp the mouse cursor when focus/workspace changes

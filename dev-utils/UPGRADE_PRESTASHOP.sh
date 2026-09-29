@@ -258,7 +258,7 @@ echo_prestashop "Archiving files for backup..."
 FILES_SIZE=$(du -sb "$LOCAL_DIR" | cut -f1)
 tar -cf - -C "$(dirname "$LOCAL_DIR")" "$(basename "$LOCAL_DIR")" \
     | pv --force -s "$FILES_SIZE" \
-    | zstd -T0 > "$BACKUP_DIR/files_pre_upgrade.tar.zst" \
+    | zstd -q -T0 > "$BACKUP_DIR/files_pre_upgrade.tar.zst" \
     || { echo_error "Archiving '$LOCAL_DIR' failed (tar/pv/zstd)."; exit 1; }
 [ -s "$BACKUP_DIR/files_pre_upgrade.tar.zst" ] \
     || { echo_error "files_pre_upgrade.tar.zst is empty — check '$LOCAL_DIR' before continuing."; exit 1; }

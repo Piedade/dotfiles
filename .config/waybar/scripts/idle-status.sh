@@ -1,7 +1,10 @@
 #!/bin/bash
-pid=$(pgrep -x swayidle)
-if [ -n "$pid" ] && [[ "$(ps -o stat= -p "$pid")" == T* ]]; then
-    echo '{"text":"IDLE","class":"paused","tooltip":"Bloqueio/suspensão automático PAUSADO — clica para retomar"}'
+state_file="${XDG_RUNTIME_DIR:-/tmp}/swayidle-paused"
+
+if [ -f "$state_file" ]; then
+    echo '{"text":"IDLE","class":"paused","tooltip":"Bloqueio automático PAUSADO"}'
+elif pgrep -x swayidle >/dev/null; then
+    echo '{"text":"IDLE","class":"active","tooltip":"Bloqueio automático ativo"}'
 else
-    echo '{"text":"IDLE","class":"active","tooltip":"Bloqueio/suspensão automático ativo — clica para pausar"}'
+    echo '{"text":"IDLE","class":"error","tooltip":"swayidle não está a correr"}'
 fi
