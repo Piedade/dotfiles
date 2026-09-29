@@ -20,3 +20,4 @@ tmp/**/*
 install.log
 
 **/.claude/settings.local.json
+bin/claude
