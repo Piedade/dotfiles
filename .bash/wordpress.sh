@@ -423,6 +423,30 @@ HTACCESS_CONTENT+="
 </IfModule>
 # END cPanel-generated php ini directives, do not edit"
 
+    # WP-CLI's own "rewrite structure --hard" further down is meant to write this same block,
+    # but in this environment (WP-CLI has no SERVER_SOFTWARE to detect Apache/LiteSpeed from,
+    # since there's no real HTTP request in a CLI context) it silently does NOT — confirmed:
+    # Elementor's admin panel 404'd on /wp-json/* until saving Permalinks by hand in wp-admin
+    # regenerated this block. Write it ourselves so pretty permalinks/REST API routing work
+    # from the first request, without needing that manual step.
+    HTACCESS_CONTENT+="
+
+# BEGIN WordPress
+# As directivas (linhas) entre \"BEGIN WordPress\" e \"END WordPress\" são geradas
+# dinamicamente e não deverão ser modificadas através de filtros do WordPress.
+# Qualquer alteração às instruções entre estes marcadores será sobreposta.
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+RewriteBase /
+RewriteRule ^index\.php\$ - [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /index.php [L]
+</IfModule>
+
+# END WordPress"
+
     run_remote_wp "$ACCOUNT" "cat > ~/$ROOT_DIR/.htaccess <<EOL
 $HTACCESS_CONTENT
 EOL"

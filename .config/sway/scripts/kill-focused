@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# Logs which window $mod+q is about to close before actually closing it.
+#
+# Why: on 2026-09-29 Brave quit silently with zero trace anywhere (no crash
+# dump, no kernel/journal error) right after the user closed AnyDesk — the
+# working theory is $mod+q (kill) was pressed more than once, and once
+# AnyDesk's window disappeared, focus moved to a Brave window that got
+# closed by the next press. Sway itself logs nothing about which window a
+# keybinding-triggered kill hits, so this wraps the binding to record it.
+#
+# See project memory (project_sway_quirks.md) for the full story.
+
+LOG="$HOME/.cache/kill-focused.log"
+mkdir -p "$(dirname "$LOG")"
+
+info=$(swaymsg -t get_tree 2>/dev/null | jq -c '
+    .. | objects | select(.focused == true) |
+    {app_id, name, pid}
+' 2>/dev/null)
+
+echo "$(date '+%Y-%m-%d %H:%M:%S.%3N') $info" >> "$LOG"
+
+swaymsg kill
